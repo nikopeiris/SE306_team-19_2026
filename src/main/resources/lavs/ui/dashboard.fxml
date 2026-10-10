@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="lavs.ui.DashboardController">
+    <top>
+        <HBox styleClass="toolbar" spacing="12" alignment="CENTER_LEFT">
+            <padding><Insets top="8" right="16" bottom="8" left="16"/></padding>
+            <Label text="LAVS" styleClass="toolbar-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="userLabel"/>
+            <Button text="Log out" onAction="#onLogout"/>
+        </HBox>
+    </top>
+    <center>
+        <Label text="Customer search and loan applications will appear here." styleClass="hint"/>
+    </center>
+</BorderPane>
