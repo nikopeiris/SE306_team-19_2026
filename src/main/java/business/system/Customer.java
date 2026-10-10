@@ -8,7 +8,6 @@ import mainframe.client.Status;
 import mainframe.client.messages.customer.Create;
 
 import java.io.IOException;
-import java.util.function.Function;
 
 /**
  * Business service for adding customers through the mainframe adapter.
@@ -64,15 +63,15 @@ public class Customer {
             String title) throws ValidationException {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("dateOfBirth", dateOfBirth,
-                        "Date of birth cannot empty")
+                        "Date of birth cannot be empty")
                 .requireNotBlank("familyName", familyName,
-                        "Family name cannot empty")
+                        "Family name cannot be empty")
                 .requireNotBlank("firstName", firstName,
-                        "First name cannot empty")
+                        "First name cannot be empty")
                 .requireNotBlank("nationality", nationality,
-                        "Nationality cannot empty")
+                        "Nationality cannot be empty")
                 .requireNotBlank("title", title,
-                        "Title cannot empty");
+                        "Title cannot be empty");
 
         if (organisation == null) {
             result.addError("organisation", "Organisation cannot be empty");
