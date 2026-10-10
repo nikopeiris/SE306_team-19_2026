@@ -1,6 +1,6 @@
 package business.system;
 
-import dataaccess.systemadapters.AuthAdapter;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 
 import java.io.IOException;
@@ -9,9 +9,9 @@ import java.io.IOException;
  * Business service responsible for user login
  */
 public class LoginService {
-    private final AuthAdapter authAdapter;
+    private final MainframeAdapter authAdapter;
 
-    public LoginService(AuthAdapter authAdapter) {
+    public LoginService(MainframeAdapter authAdapter) {
         this.authAdapter = authAdapter;
     }
 

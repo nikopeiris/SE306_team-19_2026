@@ -1,6 +1,6 @@
 package business.system;
 
-import dataaccess.systemadapters.AuthAdapter;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.user.Create;
 import business.Main;
@@ -13,9 +13,9 @@ import java.util.Map;
  * on the mainframe
  */
 public class SignupService {
-    private final AuthAdapter authAdapter;
+    private final MainframeAdapter authAdapter;
 
-    public SignupService(AuthAdapter authAdapter) {
+    public SignupService(MainframeAdapter authAdapter) {
         this.authAdapter = authAdapter;
     }
 

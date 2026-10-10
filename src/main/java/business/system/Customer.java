@@ -3,19 +3,20 @@ package business.system;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
-import dataaccess.systemadapters.CustomerAdapter;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.Create;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 /**
  * Business service for adding customers through the mainframe adapter.
  */
 public class Customer {
-    private final CustomerAdapter customerAdapter;
+    private final MainframeAdapter customerAdapter;
 
-    public Customer(CustomerAdapter customerAdapter) {
+    public Customer(MainframeAdapter customerAdapter) {
         if (customerAdapter == null) {
             throw new IllegalArgumentException("Customer adapter cannot be null");
         }
@@ -63,18 +64,18 @@ public class Customer {
             String title) throws ValidationException {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("dateOfBirth", dateOfBirth,
-                        "Date of birth cannot be null or empty")
+                        "Date of birth cannot empty")
                 .requireNotBlank("familyName", familyName,
-                        "Family name cannot be null or empty")
+                        "Family name cannot empty")
                 .requireNotBlank("firstName", firstName,
-                        "First name cannot be null or empty")
+                        "First name cannot empty")
                 .requireNotBlank("nationality", nationality,
-                        "Nationality cannot be null or empty")
+                        "Nationality cannot empty")
                 .requireNotBlank("title", title,
-                        "Title cannot be null or empty");
+                        "Title cannot empty");
 
         if (organisation == null) {
-            result.addError("organisation", "Organisation cannot be null");
+            result.addError("organisation", "Organisation cannot be empty");
         } else if (organisation < 1) {
             result.addError("organisation", "Organisation must be a positive integer");
         }

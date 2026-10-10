@@ -1,14 +1,12 @@
 package business;
 
-import dataaccess.systemadapters.MainframeAuthAdapter;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import dataaccess.systemadapters.AuthAdapter;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import business.system.LoginService;
@@ -17,7 +15,7 @@ import business.system.SignupService;
 public class Main {
   private String userName;
   private Connection connection = new HttpConnection("https://animating-eraser-arrogance.ngrok-free.dev/");
-  private AuthAdapter adapter = new MainframeAuthAdapter(connection);
+  private MainframeAdapter adapter = new MainframeAdapter(connection);
 
   public boolean login(String userName, String password) throws IOException {
     LoginService loginService = new LoginService(adapter);
