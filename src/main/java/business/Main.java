@@ -2,16 +2,21 @@ package business;
 
 import dataaccess.MainframeAuthAdapter;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import dataaccess.AuthAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import business.system.LoginService;
+import business.system.SignupService;
 
 public class Main {
   private String userName;
-  private Connection connection = new HttpConnection("https://localhost:8080");
+  private Connection connection = new HttpConnection("https://animating-eraser-arrogance.ngrok-free.dev/");
 
   public boolean login(String userName, String password) throws IOException {
     AuthAdapter adapter = new MainframeAuthAdapter(connection);
@@ -23,7 +28,67 @@ public class Main {
     return false;
   }
 
+  /**
+   * Signs up a new user via admin credentials, then logs in as that user.
+   *
+   * @param login        the login/username for the new user
+   * @param name         the display name for the new user
+   * @param password     the password for the new user
+   * @param organisation the organisation id
+   * @param permissions  the permissions level
+   * @throws IOException if network or mainframe connection fails
+   */
+  public boolean signup(String login, String name, String password, long organisation, long permissions) throws IOException {
+    // Create the user on the mainframe (logs in as admin internally)
+    AuthAdapter adapter = new MainframeAuthAdapter(connection);
+    SignupService signupService = new SignupService(adapter);
+    signupService.signup(login, name, password, organisation, permissions);
+
+    // Log out the admin session so we can log in as the new user
+    connection.Logout();
+
+    // Log in as the newly created user using the existing attemptLogin flow
+    LoginService loginService = new LoginService(adapter);
+    if (loginService.attemptLogin(login, password)) {
+      this.userName = login;
+      return true;
+    }
+    return false;
+  }
+
+  public boolean logOut(){
+    connection.Logout();
+    userName = null;
+    return true;
+  }
+
   public String getUserName(){
     return userName;
   }
+
+  /**
+     * Loads key-value pairs from the .env file in the project root.
+     *
+     * @return a map of environment variable names to values
+     * @throws IOException if the .env file cannot be read
+     */
+    public static Map<String, String> loadEnv() throws IOException {
+        Map<String, String> envMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(".env"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                int equalsIndex = line.indexOf('=');
+                if (equalsIndex > 0) {
+                    String key = line.substring(0, equalsIndex).trim();
+                    String value = line.substring(equalsIndex + 1).trim();
+                    envMap.put(key, value);
+                }
+            }
+        }
+        return envMap;
+    }
 }
