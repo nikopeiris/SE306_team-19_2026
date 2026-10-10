@@ -15,7 +15,33 @@ The project specification is available [on Canvas](https://canvas.auckland.ac.nz
 * *Neia Tererei - @rbntres*
 * *Shenol Peiris - @nikopeiris*
 
-You must also update this file to contain either the instructions for running your code or a link to the instructions.
+## Building, Testing and Running LAVS
+
+Requires a Java 17+ JDK (`java -version`). Maven does not need to be installed; use the included wrapper
+(`mvnw.cmd` on Windows, `./mvnw` on macOS/Linux).
+
+| Task | Command |
+|---|---|
+| Run the application | `mvnw.cmd javafx:run` |
+| Run the unit tests (offline) | `mvnw.cmd test` |
+| Tests + coverage report and 95% business-logic coverage check | `mvnw.cmd verify` (report: `target/site/jacoco/index.html`) |
+| Also run the provided mainframe tests against the live server | `mvnw.cmd test -Plive` |
+
+The mainframe URL is set in [lavs.properties](src/main/resources/lavs.properties) and can be overridden with
+`-Dmainframe.baseUrl=...`.
+
+### Code layout
+
+* `lavs.ui` – JavaFX controllers (views are in `src/main/resources/lavs/ui`). No business logic.
+* `lavs.service`, `lavs.validation`, `lavs.model`, `lavs.data` – business logic layer; must keep ≥95% line coverage.
+* `lavs.app` – application start-up and wiring.
+* `lavs.testutil.QueueStubConnection` (test) – fake mainframe connection that returns queued responses and records requests.
+
+### Third-party libraries
+
+* [OpenJFX](https://openjfx.io/) 21 – GPL v2 with Classpath Exception
+* [OkHttp](https://square.github.io/okhttp/) and [json-simple](https://github.com/fangyidong/json-simple) – Apache 2.0 (provided)
+* [JUnit 5](https://junit.org/junit5/) – EPL 2.0; [Mockito](https://site.mockito.org/) – MIT; [JaCoCo](https://www.jacoco.org/) – EPL 2.0
 
 ## Initial Repository Code
 

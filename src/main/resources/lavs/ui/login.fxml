@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="lavs.ui.LoginController" styleClass="login-root">
+    <VBox fx:id="formPane" styleClass="card" maxWidth="360" maxHeight="-Infinity" spacing="12">
+        <padding><Insets top="32" right="32" bottom="32" left="32"/></padding>
+        <Label text="LAVS" styleClass="title"/>
+        <Label text="Loan Application and Verification System" styleClass="subtitle" wrapText="true"/>
+        <Label text="Username" labelFor="$usernameField"/>
+        <TextField fx:id="usernameField" promptText="Username" onAction="#onLogin"/>
+        <Label text="Password" labelFor="$passwordField"/>
+        <PasswordField fx:id="passwordField" promptText="Password" onAction="#onLogin"/>
+        <Label fx:id="errorLabel" styleClass="error" wrapText="true"/>
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Button text="Log in" defaultButton="true" onAction="#onLogin" styleClass="primary"/>
+            <ProgressIndicator fx:id="busyIndicator" prefWidth="24" prefHeight="24"/>
+        </HBox>
+        <Label fx:id="connectionLabel" styleClass="hint" wrapText="true"/>
+    </VBox>
+</StackPane>
