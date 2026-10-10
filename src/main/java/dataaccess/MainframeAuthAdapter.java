@@ -3,6 +3,7 @@ package dataaccess;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import mainframe.client.Status;
+import mainframe.client.messages.user.Create;
 
 import java.io.IOException;
 
@@ -28,5 +29,15 @@ public class MainframeAuthAdapter implements AuthAdapter {
     @Override
     public Connection getConnection() {
         return connection;
+    }
+
+    @Override 
+    public void logOut(){
+        connection.Logout();
+    }
+
+    @Override 
+    public Status signUp(Create createMessage) throws IOException{
+      return createMessage.send(connection);
     }
 }

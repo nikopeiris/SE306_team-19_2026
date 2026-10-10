@@ -17,9 +17,9 @@ import business.system.SignupService;
 public class Main {
   private String userName;
   private Connection connection = new HttpConnection("https://animating-eraser-arrogance.ngrok-free.dev/");
+  private AuthAdapter adapter = new MainframeAuthAdapter(connection);
 
   public boolean login(String userName, String password) throws IOException {
-    AuthAdapter adapter = new MainframeAuthAdapter(connection);
     LoginService loginService = new LoginService(adapter);
     if (loginService.attemptLogin(userName, password)){
       this.userName = userName;
@@ -40,12 +40,11 @@ public class Main {
    */
   public boolean signup(String login, String name, String password, long organisation, long permissions) throws IOException {
     // Create the user on the mainframe (logs in as admin internally)
-    AuthAdapter adapter = new MainframeAuthAdapter(connection);
     SignupService signupService = new SignupService(adapter);
     signupService.signup(login, name, password, organisation, permissions);
 
     // Log out the admin session so we can log in as the new user
-    connection.Logout();
+    adapter.logOut();
 
     // Log in as the newly created user using the existing attemptLogin flow
     LoginService loginService = new LoginService(adapter);
@@ -57,7 +56,7 @@ public class Main {
   }
 
   public boolean logOut(){
-    connection.Logout();
+    adapter.logOut();
     userName = null;
     return true;
   }

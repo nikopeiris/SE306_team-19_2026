@@ -52,7 +52,7 @@ public class SignupService {
 
         // Create the new user 
         Create createMessage = new Create(login, name, organisation, password, permissions);
-        Status createStatus = createMessage.send(authAdapter.getConnection());
+        Status createStatus = authAdapter.signUp(createMessage);
         if (!createStatus.getWasSuccessful()) {
             throw new RuntimeException("User creation failed: " + createStatus.getErrorMessage());
         }
