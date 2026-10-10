@@ -1,6 +1,7 @@
 package business.system;
 
 import dataaccess.AuthAdapter;
+import mainframe.client.Status;
 
 import java.io.IOException;
 
@@ -23,9 +24,13 @@ public class LoginService {
      * @throws IllegalArgumentException if validation fails (empty/null inputs)
      * @throws IOException if network or mainframe connection fails
      */
-    public boolean login(String username, String password) throws IOException {
+    public boolean attemptLogin(String username, String password) throws IOException {
         validateCredentials(username, password);
-        return authAdapter.login(username.trim(), password);
+        Status status = authAdapter.login(username.trim(), password);
+        if (!status.getWasSuccessful()) {
+            throw new RuntimeException("Login failed: " + status.getErrorMessage());
+        }
+        return true;
     }
 
     /**

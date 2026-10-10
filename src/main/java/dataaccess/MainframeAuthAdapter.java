@@ -10,7 +10,7 @@ import java.io.IOException;
  * Adapter implementation wrapping Mainframe HttpConnection for authentication.
  */
 public class MainframeAuthAdapter implements AuthAdapter {
-    private final Connection connection;
+    private Connection connection;
 
     public MainframeAuthAdapter(String baseUrl) {
         this.connection = new HttpConnection(baseUrl);
@@ -21,9 +21,8 @@ public class MainframeAuthAdapter implements AuthAdapter {
     }
 
     @Override
-    public boolean login(String username, String password) throws IOException {
-        Status status = connection.Login(username, password);
-        return status != null && status.getWasSuccessful();
+    public Status login(String username, String password) throws IOException {
+        return connection.Login(username, password);
     }
 
     @Override
