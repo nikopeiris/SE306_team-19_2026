@@ -1,4 +1,4 @@
-package dataaccess;
+package dataaccess.systemadapters;
 
 import mainframe.client.Connection;
 import mainframe.client.Status;
