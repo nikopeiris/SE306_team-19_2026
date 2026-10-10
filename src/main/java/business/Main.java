@@ -1,6 +1,6 @@
 package business;
 
-import dataaccess.MainframeAuthAdapter;
+import dataaccess.systemadapters.MainframeAuthAdapter;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import dataaccess.AuthAdapter;
+import dataaccess.systemadapters.AuthAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import business.system.LoginService;

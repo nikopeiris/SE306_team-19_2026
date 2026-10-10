@@ -1,6 +1,6 @@
 package business.system;
 
-import dataaccess.AuthAdapter;
+import dataaccess.systemadapters.AuthAdapter;
 import mainframe.client.Status;
 
 import java.io.IOException;

@@ -1,6 +1,6 @@
 package business.system;
 
-import dataaccess.AuthAdapter;
+import dataaccess.systemadapters.AuthAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.user.Create;
 import business.Main;
