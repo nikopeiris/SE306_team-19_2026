@@ -3,7 +3,7 @@ package dataaccess.systemadapters;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import mainframe.client.Status;
-import mainframe.client.messages.user.Create;
+import mainframe.client.Message;
 
 import java.io.IOException;
 
@@ -33,11 +33,7 @@ public class MainframeAdapter {
         connection.Logout();
     }
 
-    public Status signUp(Create createMessage) throws IOException{
-      return createMessage.send(connection);
-    }
-
-    public Status addCustomer(mainframe.client.messages.customer.Create createMessage) throws IOException{
+    public Status send(Message createMessage) throws IOException{
       return createMessage.send(connection);
     }
 }

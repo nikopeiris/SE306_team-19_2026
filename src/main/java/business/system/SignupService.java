@@ -56,7 +56,7 @@ public class SignupService {
 
         // Create the new user 
         Create createMessage = new Create(login, name, organisation, password, permissions);
-        Status createStatus = authAdapter.signUp(createMessage);
+        Status createStatus = authAdapter.send(createMessage);
         if (!createStatus.getWasSuccessful()) {
             throw new LavsException(createStatus);
         }
