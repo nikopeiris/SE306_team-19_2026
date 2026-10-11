@@ -62,7 +62,7 @@ class LoginServiceTest {
     }
 
     @Test
-    void attemptLoginThrowsLavsExceptionWhenMainframeRejectsLogin() {
+    void attemptLoginThrowsLavsExceptionWhenMainframeRejectsLogin() throws IOException {
         when(adapter.login(anyString(), anyString()))
                 .thenReturn(new Status(401, "Invalid credentials", 2));
 

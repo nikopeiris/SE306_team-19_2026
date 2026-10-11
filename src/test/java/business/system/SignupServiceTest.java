@@ -67,7 +67,7 @@ class SignupServiceTest {
     }
 
     @Test
-    void signupThrowsLavsExceptionWhenAdminLoginFails() {
+    void signupThrowsLavsExceptionWhenAdminLoginFails() throws IOException {
         when(adapter.login(anyString(), anyString()))
                 .thenReturn(new Status(401, "Admin login failed", 1));
 
@@ -79,7 +79,7 @@ class SignupServiceTest {
     }
 
     @Test
-    void signupThrowsLavsExceptionWhenUserCreationFails() {
+    void signupThrowsLavsExceptionWhenUserCreationFails() throws IOException {
         when(adapter.login(anyString(), anyString())).thenReturn(new Status(1));
         when(adapter.send(any(Create.class)))
                 .thenReturn(new Status(400, "User creation failed", 2));
