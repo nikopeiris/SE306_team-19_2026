@@ -12,7 +12,6 @@ import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
 import business.system.LoginService;
 import business.system.SignupService;
-import business.lavsexceptions.LavsException;
 import business.system.Customer;
 
 public class Main {
@@ -83,6 +82,40 @@ public class Main {
   public boolean addCustomer(String dateOfBirth, String familyName, String firstName, String nationality, Long organisation, String title) throws IOException, LavsException {
     Customer customerService = new Customer(adapter);
     customerService.addCustomer(dateOfBirth, familyName, firstName, nationality, organisation, title);
+    return true;
+  }
+
+  /**
+   * Adds an address to an existing customer via the mainframe adapter after validating the address fields.
+   * @param city city of the address
+   * @param country country of the address
+   * @param customer customer number to which the address belongs
+   * @param isMailing true if the address is a mailing address
+   * @param isPrimary true if the address is the primary address
+   * @param line1 first line of the address
+   * @param line2 second line of the address
+   * @param otherType other type of the address
+   * @param postCode postcode of the address
+   * @param suburb suburb of the address
+   * @param type type of the address
+   * @return true if the address was added successfully
+   * @throws ValidationException  if a required field or address type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addAddress(String city,
+            String country,
+            String customer,
+            boolean isMailing,
+            boolean isPrimary,
+            String line1,
+            String line2,
+            String otherType,
+            String postCode,
+            String suburb,
+            String type) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    customerService.addAddress(city,  country,  customer,  isMailing,  isPrimary,  line1,  line2,  otherType,  postCode,  suburb,  type);
     return true;
   }
   /**
