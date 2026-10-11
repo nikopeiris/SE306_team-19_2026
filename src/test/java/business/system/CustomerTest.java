@@ -1,0 +1,139 @@
+package business.system;
+
+import business.lavsexceptions.LavsException;
+import business.validation.ValidationException;
+import dataaccess.systemadapters.MainframeAdapter;
+import mainframe.client.Message;
+import mainframe.client.Status;
+import mainframe.client.messages.customer.AddAddress;
+import mainframe.client.messages.customer.Create;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class CustomerTest {
+    @Mock
+    private MainframeAdapter adapter;
+
+    private Customer customer;
+
+    @BeforeEach
+    void setUp() {
+        customer = new Customer(adapter);
+    }
+
+    @Test
+    void addCustomerSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Create.class)))
+                .thenReturn(new Status(1));
+
+        Create result = customer.addCustomer(
+                "  1990-01-01 ", " Smith ", " Jane ",
+                " NZ ", 7L, " Ms ");
+
+        ArgumentCaptor<Create> captor = ArgumentCaptor.forClass(Create.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+        assertEquals("1990-01-01", result.getDateOfBirth());
+        assertEquals("Smith", result.getFamilyName());
+        assertEquals("Jane", result.getFirstName());
+        assertEquals("NZ", result.getNationality());
+        assertEquals("Ms", result.getTitle());
+    }
+
+    @Test
+    void addAddressSendsAddressDetailsAndReturnsMessage() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(AddAddress.class)))
+                .thenReturn(new Status(2));
+
+        AddAddress result = customer.addAddress(
+                " Auckland ", " New Zealand ", " C123 ",
+                true, false, " 1 Main Street ", " Flat 2 ",
+                null, " 1010 ", " Ponsonby ", AddAddress.TYPE_POSTAL);
+
+        ArgumentCaptor<AddAddress> captor = ArgumentCaptor.forClass(AddAddress.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+        assertEquals("Auckland", result.getCity());
+        assertEquals("New Zealand", result.getCountry());
+        assertEquals("C123", result.getCustomer());
+        assertEquals("1 Main Street", result.getLine1());
+        assertEquals("Flat 2", result.getLine2());
+        assertEquals("1010", result.getPostCode());
+        assertEquals("Ponsonby", result.getSuburb());
+        assertEquals(AddAddress.TYPE_POSTAL, result.getType());
+        assertTrue(result.getIsMailing());
+    }
+
+    @Test
+    void addAddressRequiresOtherTypeWhenTypeIsOther() {
+        assertThrows(ValidationException.class, () -> customer.addAddress(
+                "Auckland", "New Zealand", "C123",
+                false, false, "1 Main Street", null,
+                null, "1010", "Ponsonby", AddAddress.TYPE_OTHER));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void addAddressRejectsBlankRequiredFields() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.addAddress(
+                        " ", "New Zealand", "C123",
+                        false, false, "1 Main Street", null,
+                        null, "1010", "Ponsonby", AddAddress.TYPE_POSTAL));
+
+        assertTrue(exception.getResult().getErrors().containsKey("city"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void addAddressRejectsUnsupportedType() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.addAddress(
+                        "Auckland", "New Zealand", "C123",
+                        false, false, "1 Main Street", null,
+                        null, "1010", "Ponsonby", "Unknown"));
+
+        assertEquals("Address type is invalid", exception.getResult().getError("type"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void addCustomerThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        Status failure = new Status(500, "Customer rejected", 3);
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Create.class))).thenReturn(failure);
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                customer.addCustomer(
+                        "1990-01-01", "Smith", "Jane", "NZ", 7L, "Ms"));
+
+        assertEquals("Customer rejected", exception.getMessage());
+    }
+
+    @Test
+    void addAddressPropagatesConnectionFailure() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(AddAddress.class)))
+                .thenThrow(new IOException("connection unavailable"));
+
+        IOException exception = assertThrows(IOException.class, () -> customer.addAddress(
+                "Auckland", "New Zealand", "C123",
+                false, false, "1 Main Street", null,
+                null, "1010", "Ponsonby", AddAddress.TYPE_POSTAL));
+
+        assertEquals("connection unavailable", exception.getMessage());
+    }
+}
