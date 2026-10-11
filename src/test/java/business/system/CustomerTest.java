@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -86,6 +87,78 @@ class CustomerTest {
                 null, "1010", "Ponsonby", AddAddress.TYPE_OTHER));
 
         verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void addAddressThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        Status failure = new Status(400, "Address rejected", 4);
+        when(adapter.send(org.mockito.ArgumentMatchers.any(AddAddress.class)))
+                .thenReturn(failure);
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                customer.addAddress(
+                        "Auckland", "New Zealand", "C123",
+                        false, false, "1 Main Street", null,
+                        null, "1010", "Ponsonby", AddAddress.TYPE_POSTAL));
+
+        assertEquals("Address rejected", exception.getMessage());
+    }
+
+    @Test
+    void validateAddressDetailsAcceptsOtherTypeWithValue() {
+        assertDoesNotThrow(() -> customer.validateAddressDetails(
+                "Auckland", "New Zealand", "C123",
+                "1 Main Street", "Apartment", "1010",
+                "Ponsonby", AddAddress.TYPE_OTHER));
+    }
+
+    @Test
+    void validateAddressDetailsAcceptsNonOtherTypeWithoutOtherType() {
+        assertDoesNotThrow(() -> customer.validateAddressDetails(
+                "Auckland", "New Zealand", "C123",
+                "1 Main Street", null, "1010",
+                "Ponsonby", AddAddress.TYPE_POSTAL));
+    }
+
+    @Test
+    void validateAddressDetailsRejectsOtherTypeWhenOtherTypeIsBlank() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.validateAddressDetails(
+                        "Auckland", "New Zealand", "C123",
+                        "1 Main Street", " ", "1010",
+                        "Ponsonby", AddAddress.TYPE_OTHER));
+
+        assertEquals("Other address type cannot be empty",
+                exception.getResult().getError("otherType"));
+    }
+
+    @Test
+    void validateCustomerDetailsRejectsMissingOrganisation() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.validateCustomerDetails(
+                        "1990-01-01", "Smith", "Jane",
+                        "NZ", null, "Ms"));
+
+        assertEquals("Organisation cannot be empty",
+                exception.getResult().getError("organisation"));
+    }
+
+    @Test
+    void validateCustomerDetailsRejectsNonPositiveOrganisation() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.validateCustomerDetails(
+                        "1990-01-01", "Smith", "Jane",
+                        "NZ", 0L, "Ms"));
+
+        assertEquals("Organisation must be a positive integer",
+                exception.getResult().getError("organisation"));
+    }
+
+    @Test
+    void validateCustomerDetailsAcceptsPositiveOrganisation() {
+        assertDoesNotThrow(() -> customer.validateCustomerDetails(
+                "1990-01-01", "Smith", "Jane",
+                "NZ", 7L, "Ms"));
     }
 
     @Test
