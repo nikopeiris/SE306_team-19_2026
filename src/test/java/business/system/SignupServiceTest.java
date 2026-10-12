@@ -1,19 +1,24 @@
 package business.system;
 
+import business.Main;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.user.Create;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -31,10 +37,23 @@ class SignupServiceTest {
     private MainframeAdapter adapter;
 
     private SignupService signupService;
+    private MockedStatic<Main> mockedMain;
 
     @BeforeEach
     void setUp() {
+        Map<String, String> env = new HashMap<>();
+        env.put("ADMIN_USERNAME", "admin");
+        env.put("ADMIN_PASSWORD", "secret");
+
+        mockedMain = mockStatic(Main.class);
+        mockedMain.when(Main::loadEnv).thenReturn(env);
+
         signupService = new SignupService(adapter);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockedMain.close();
     }
 
     @Test
