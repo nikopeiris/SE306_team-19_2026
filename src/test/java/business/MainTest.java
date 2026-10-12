@@ -22,12 +22,10 @@ import static org.mockito.Mockito.when;
 
 class MainTest {
     private Main main;
-    private Path tempDir;
     private MainframeAdapter adapter;
 
     @BeforeEach
     void setUp() throws Exception {
-        tempDir = Files.createTempDirectory("main-test-");
         main = new Main();
         adapter = mock(MainframeAdapter.class);
         injectField(main, "adapter", adapter);
@@ -54,11 +52,6 @@ class MainTest {
 
     @Test
     void signupCreatesUserAndLogsInAsNewUser() throws Exception {
-        Path projectRoot = tempDir.resolve("project-root");
-        Files.createDirectories(projectRoot);
-        System.setProperty("user.dir", projectRoot.toString());
-        Files.writeString(projectRoot.resolve(".env"),
-                "ADMIN_USERNAME=admin\nADMIN_PASSWORD=admin123\n");
 
         when(adapter.login("admin", "admin123")).thenReturn(new Status(1));
         when(adapter.send(any(Message.class))).thenReturn(new Status(2));
