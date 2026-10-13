@@ -10,6 +10,7 @@ import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 
 import java.io.IOException;
 
@@ -122,10 +123,39 @@ public class Customer {
    * Retrieves a customer by their unique customer number.
    */
   public Retrieve retrieveCustomer(String number) throws IOException, LavsException {
+      if (number == null || number.isBlank()) {
+          throw new IllegalArgumentException("Customer number cannot be null or empty");
+      }
       Retrieve retrieveMessage = new Retrieve(number);
       Status status = customerAdapter.send(retrieveMessage);
       Main.isValidStatus(status);
       return retrieveMessage;
+  }
+
+  /**
+   * Lists the addresses belonging to a customer using the mainframe's
+   * paginated customer-address list operation.
+   *
+   * @param customerNumber the customer's unique number
+   * @param page the one-based page number
+   * @param size the maximum number of addresses to return
+   * @return the addresses returned for the requested page
+   * @throws ValidationException if page or size is missing or invalid
+   * @throws IllegalArgumentException if the customer number is missing or blank
+   * @throws IOException if the mainframe cannot be reached
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public List.Item[] listAddresses(String customerNumber, Long page, Long size)
+          throws IOException, LavsException {
+      if (customerNumber == null || customerNumber.isBlank()) {
+          throw new IllegalArgumentException("Customer number cannot be null or empty");
+      }
+      validateAddressListDetails(page, size);
+
+      List listMessage = new List(customerNumber.trim(), page, size);
+      Status status = customerAdapter.send(listMessage);
+      Main.isValidStatus(status);
+      return listMessage.getItems();
   }
 
   private void validateCustomerSearchDetails(Long page, String search, Long size)
@@ -138,6 +168,24 @@ public class Customer {
       }
       if (search == null) {
           result.addError("search", "Search cannot be null");
+      }
+      if (size == null) {
+          result.addError("size", "Size cannot be empty");
+      } else if (size < 1) {
+          result.addError("size", "Size must be a positive integer");
+      }
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+  }
+
+  private void validateAddressListDetails(Long page, Long size)
+          throws ValidationException {
+      ValidationResult result = new ValidationResult();
+      if (page == null) {
+          result.addError("page", "Page cannot be empty");
+      } else if (page < 1) {
+          result.addError("page", "Page must be a positive integer");
       }
       if (size == null) {
           result.addError("size", "Size cannot be empty");

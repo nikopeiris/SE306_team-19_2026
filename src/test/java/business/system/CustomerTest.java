@@ -7,7 +7,9 @@ import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
+import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,6 +80,102 @@ class CustomerTest {
         assertEquals("Ponsonby", result.getSuburb());
         assertEquals(AddAddress.TYPE_POSTAL, result.getType());
         assertTrue(result.getIsMailing());
+    }
+
+    @Test
+    void constructorRejectsNullAdapter() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> new Customer(null));
+
+        assertEquals("Customer adapter cannot be null", exception.getMessage());
+    }
+
+    @Test
+    void retrieveCustomerSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        Retrieve result = customer.retrieveCustomer("C123");
+
+        assertEquals("C123", result.getNumber());
+        verify(adapter).send(org.mockito.ArgumentMatchers.same(result));
+    }
+
+    @Test
+    void retrieveCustomerRejectsMissingCustomerNumber() {
+        assertThrows(IllegalArgumentException.class,
+                () -> customer.retrieveCustomer(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> customer.retrieveCustomer(" "));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void retrieveCustomerThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Retrieve.class)))
+                .thenReturn(new Status(404, "Customer not found", 1));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.retrieveCustomer("C123"));
+
+        assertEquals("Customer not found", exception.getMessage());
+    }
+
+    @Test
+    void listAddressesSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(List.class)))
+                .thenReturn(new Status(1));
+
+        List.Item[] result = customer.listAddresses(" C123 ", 1L, 25L);
+
+        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(1L, captor.getValue().getPage());
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void listAddressesRejectsMissingCustomerNumber() {
+        assertThrows(IllegalArgumentException.class,
+                () -> customer.listAddresses(null, 1L, 25L));
+        assertThrows(IllegalArgumentException.class,
+                () -> customer.listAddresses(" ", 1L, 25L));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void listAddressesRejectsInvalidPageAndSize() {
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> customer.listAddresses("C123", 0L, 0L));
+
+        assertEquals("Page must be a positive integer",
+                exception.getResult().getError("page"));
+        assertEquals("Size must be a positive integer",
+                exception.getResult().getError("size"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void listAddressesPropagatesNetworkFailure() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(List.class)))
+                .thenThrow(new IOException("connection unavailable"));
+
+        IOException exception = assertThrows(IOException.class,
+                () -> customer.listAddresses("C123", 1L, 25L));
+
+        assertEquals("connection unavailable", exception.getMessage());
+    }
+
+    @Test
+    void listAddressesThrowsLavsExceptionWhenMainframeRejectsRequest()
+            throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(List.class)))
+                .thenReturn(new Status(500, "Address list rejected", 1));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.listAddresses("C123", 1L, 25L));
+
+        assertEquals("Address list rejected", exception.getMessage());
     }
 
     @Test
