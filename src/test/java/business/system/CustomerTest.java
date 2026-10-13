@@ -7,6 +7,10 @@ import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
+<<<<<<< HEAD
+=======
+import mainframe.client.messages.customer.Search;
+>>>>>>> feat/new-customer
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,6 +84,74 @@ class CustomerTest {
     }
 
     @Test
+<<<<<<< HEAD
+=======
+    void listCustomersSendsSearchAndReturnsItems() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
+                .thenReturn(new Status(2));
+
+        Search.Item[] result = customer.listCustomers(1L, " Jane ", 25L);
+
+        ArgumentCaptor<Search> captor = ArgumentCaptor.forClass(Search.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(1L, captor.getValue().getPage());
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void listCustomersAllowsBlankSearchToReturnAllCustomers() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
+                .thenReturn(new Status(1));
+
+        assertEquals(0, customer.listCustomers(1L, "", 25L).length);
+        verify(adapter).send(org.mockito.ArgumentMatchers.any(Search.class));
+    }
+
+    @Test
+    void listCustomersRejectsMissingRequiredParameters() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.listCustomers(null, null, null));
+
+        assertEquals("Page cannot be empty", exception.getResult().getError("page"));
+        assertEquals("Search cannot be null", exception.getResult().getError("search"));
+        assertEquals("Size cannot be empty", exception.getResult().getError("size"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void listCustomersRejectsNonPositivePageAndSize() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                customer.listCustomers(0L, "Jane", 0L));
+
+        assertEquals("Page must be a positive integer", exception.getResult().getError("page"));
+        assertEquals("Size must be a positive integer", exception.getResult().getError("size"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void listCustomersPropagatesNetworkFailure() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
+                .thenThrow(new IOException("connection unavailable"));
+
+        IOException exception = assertThrows(IOException.class, () ->
+                customer.listCustomers(1L, "", 25L));
+
+        assertEquals("connection unavailable", exception.getMessage());
+    }
+
+    @Test
+    void listCustomersThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
+                .thenReturn(new Status(500, "Search rejected", 3));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                customer.listCustomers(1L, "", 25L));
+
+        assertEquals("Search rejected", exception.getMessage());
+    }
+
+    @Test
+>>>>>>> feat/new-customer
     void addAddressRequiresOtherTypeWhenTypeIsOther() {
         assertThrows(ValidationException.class, () -> customer.addAddress(
                 "Auckland", "New Zealand", "C123",

@@ -7,6 +7,10 @@ import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
+<<<<<<< HEAD
+=======
+import mainframe.client.messages.customer.Search;
+>>>>>>> feat/new-customer
 
 import java.io.IOException;
 
@@ -97,6 +101,54 @@ public class Customer {
         return addMessage;
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Searches for customers using the mainframe's paginated customer search.
+     * An empty search string returns customers without filtering by name.
+     *
+     * @param page the one-based page number
+     * @param search the customer search text, or an empty string for all customers
+     * @param size the maximum number of customers to return
+     * @return the customers returned for the requested page
+     * @throws ValidationException if a required parameter is missing or invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public Search.Item[] listCustomers(Long page, String search, Long size)
+            throws IOException, LavsException {
+        validateCustomerSearchDetails(page, search, size);
+
+        Search searchMessage = new Search(page, search.trim(), size);
+        Status status = customerAdapter.send(searchMessage);
+        if (!status.getWasSuccessful()) {
+            throw new LavsException(status);
+        }
+        return searchMessage.getItems();
+    }
+
+    private void validateCustomerSearchDetails(Long page, String search, Long size)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult();
+        if (page == null) {
+            result.addError("page", "Page cannot be empty");
+        } else if (page < 1) {
+            result.addError("page", "Page must be a positive integer");
+        }
+        if (search == null) {
+            result.addError("search", "Search cannot be null");
+        }
+        if (size == null) {
+            result.addError("size", "Size cannot be empty");
+        } else if (size < 1) {
+            result.addError("size", "Size must be a positive integer");
+        }
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+>>>>>>> feat/new-customer
     public void validateAddressDetails(
             String city,
             String country,
