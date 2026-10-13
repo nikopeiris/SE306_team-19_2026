@@ -136,10 +136,15 @@ class CustomerTest {
 
     @Test
     void listAddressesRejectsMissingCustomerNumber() {
-        assertThrows(IllegalArgumentException.class,
+        ValidationException nullException = assertThrows(ValidationException.class,
                 () -> customer.listAddresses(null, 1L, 25L));
-        assertThrows(IllegalArgumentException.class,
+        ValidationException blankException = assertThrows(ValidationException.class,
                 () -> customer.listAddresses(" ", 1L, 25L));
+
+        assertEquals("Customer number cannot be null or empty",
+                nullException.getResult().getError("customerNumber"));
+        assertEquals("Customer number cannot be null or empty",
+                blankException.getResult().getError("customerNumber"));
         verifyNoInteractions(adapter);
     }
 
@@ -176,6 +181,66 @@ class CustomerTest {
                 () -> customer.listAddresses("C123", 1L, 25L));
 
         assertEquals("Address list rejected", exception.getMessage());
+    }
+
+    @Test
+    void retrieveAddressSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerAddress.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.customerAddress.Retrieve result =
+                customer.retrieveAddress(" C123 ", 17L);
+
+        assertEquals(17L, result.getId());
+        verify(adapter).send(org.mockito.ArgumentMatchers.same(result));
+    }
+
+    @Test
+    void retrieveAddressRejectsMissingOrInvalidIdentifiers() {
+        ValidationException missingCustomerException = assertThrows(ValidationException.class,
+                () -> customer.retrieveAddress(null, 17L));
+        ValidationException blankCustomerException = assertThrows(ValidationException.class,
+                () -> customer.retrieveAddress(" ", 17L));
+        ValidationException missingIdException = assertThrows(ValidationException.class,
+                () -> customer.retrieveAddress("C123", null));
+        ValidationException invalidIdException = assertThrows(ValidationException.class,
+                () -> customer.retrieveAddress("C123", 0L));
+
+        assertEquals("Customer number cannot be null or empty",
+                missingCustomerException.getResult().getError("customerNumber"));
+        assertEquals("Customer number cannot be null or empty",
+                blankCustomerException.getResult().getError("customerNumber"));
+        assertEquals("Address id cannot be empty",
+                missingIdException.getResult().getError("addressId"));
+        assertEquals("Address id must be a positive integer",
+                invalidIdException.getResult().getError("addressId"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void retrieveAddressPropagatesNetworkFailure() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerAddress.Retrieve.class)))
+                .thenThrow(new IOException("connection unavailable"));
+
+        IOException exception = assertThrows(IOException.class,
+                () -> customer.retrieveAddress("C123", 17L));
+
+        assertEquals("connection unavailable", exception.getMessage());
+    }
+
+    @Test
+    void retrieveAddressThrowsLavsExceptionWhenMainframeRejectsRequest()
+            throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerAddress.Retrieve.class)))
+                .thenReturn(new Status(404, "Address not found", 1));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.retrieveAddress("C123", 17L));
+
+        assertEquals("Address not found", exception.getMessage());
     }
 
     @Test

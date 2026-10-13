@@ -141,21 +141,66 @@ public class Customer {
    * @param size the maximum number of addresses to return
    * @return the addresses returned for the requested page
    * @throws ValidationException if page or size is missing or invalid
-   * @throws IllegalArgumentException if the customer number is missing or blank
+   * @throws ValidationException if the customer number, page, or size is missing or invalid
    * @throws IOException if the mainframe cannot be reached
    * @throws LavsException if the mainframe rejects the request
    */
   public List.Item[] listAddresses(String customerNumber, Long page, Long size)
           throws IOException, LavsException {
-      if (customerNumber == null || customerNumber.isBlank()) {
-          throw new IllegalArgumentException("Customer number cannot be null or empty");
-      }
+      validateAddressListCustomerNumber(customerNumber);
       validateAddressListDetails(page, size);
 
       List listMessage = new List(customerNumber.trim(), page, size);
       Status status = customerAdapter.send(listMessage);
       Main.isValidStatus(status);
       return listMessage.getItems();
+  }
+
+  /**
+   * Retrieves one address belonging to a customer.
+   *
+   * @param customerNumber the customer's unique number
+   * @param addressId the address identifier
+   * @return the retrieved address and its full details
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if the mainframe cannot be reached
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerAddress.Retrieve retrieveAddress(
+          String customerNumber, Long addressId) throws IOException, LavsException {
+      ValidationResult result = new ValidationResult();
+      addCustomerNumberValidation(result, customerNumber);
+      if (addressId == null) {
+          result.addError("addressId", "Address id cannot be empty");
+      } else if (addressId < 1) {
+          result.addError("addressId", "Address id must be a positive integer");
+      }
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+
+      mainframe.client.messages.customerAddress.Retrieve retrieveMessage =
+              new mainframe.client.messages.customerAddress.Retrieve(
+                      addressId, customerNumber.trim());
+      Status status = customerAdapter.send(retrieveMessage);
+      Main.isValidStatus(status);
+      return retrieveMessage;
+  }
+
+  private void validateAddressListCustomerNumber(String customerNumber)
+          throws ValidationException {
+      ValidationResult result = new ValidationResult();
+      addCustomerNumberValidation(result, customerNumber);
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+  }
+
+  private void addCustomerNumberValidation(
+          ValidationResult result, String customerNumber) {
+      if (customerNumber == null || customerNumber.isBlank()) {
+          result.addError("customerNumber", "Customer number cannot be null or empty");
+      }
   }
 
   private void validateCustomerSearchDetails(Long page, String search, Long size)
