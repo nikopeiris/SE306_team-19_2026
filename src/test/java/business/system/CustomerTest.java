@@ -244,6 +244,84 @@ class CustomerTest {
     }
 
     @Test
+    void listPhoneNumbersSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerPhoneNumber.List.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.customerPhoneNumber.List.Item[] result =
+                customer.listPhoneNumbers(" C123 ", 1L, 25L);
+
+        verify(adapter).send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerPhoneNumber.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void retrievePhoneNumberSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerPhoneNumber.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.customerPhoneNumber.Retrieve result =
+                customer.retrievePhoneNumber("C123", 17L);
+
+        assertEquals(17L, result.getId());
+        verify(adapter).send(org.mockito.ArgumentMatchers.same(result));
+    }
+
+    @Test
+    void listEmailsSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerEmail.List.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmail.List.Item[] result =
+                customer.listEmails(" C123 ", 1L, 25L);
+
+        verify(adapter).send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerEmail.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void retrieveEmailSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(
+                mainframe.client.messages.customerEmail.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmail.Retrieve result =
+                customer.retrieveEmail("C123", 17L);
+
+        assertEquals(17L, result.getId());
+        verify(adapter).send(org.mockito.ArgumentMatchers.same(result));
+    }
+
+    @Test
+    void phoneAndEmailMethodsRejectInvalidParametersWithValidationException() {
+        ValidationException phoneException = assertThrows(ValidationException.class,
+                () -> customer.retrievePhoneNumber(null, 0L));
+        ValidationException emailException = assertThrows(ValidationException.class,
+                () -> customer.retrieveEmail("C123", null));
+        ValidationException phoneListException = assertThrows(ValidationException.class,
+                () -> customer.listPhoneNumbers("C123", 0L, 25L));
+        ValidationException emailListException = assertThrows(ValidationException.class,
+                () -> customer.listEmails("C123", 1L, 0L));
+
+        assertEquals("Customer number cannot be null or empty",
+                phoneException.getResult().getError("customerNumber"));
+        assertEquals("Phone number id must be a positive integer",
+                phoneException.getResult().getError("phoneNumberId"));
+        assertEquals("Email id cannot be empty",
+                emailException.getResult().getError("emailId"));
+        assertEquals("Page must be a positive integer",
+                phoneListException.getResult().getError("page"));
+        assertEquals("Size must be a positive integer",
+                emailListException.getResult().getError("size"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
     void listCustomersSendsSearchAndReturnsItems() throws Exception {
         when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
                 .thenReturn(new Status(2));

@@ -147,8 +147,8 @@ public class Customer {
    */
   public List.Item[] listAddresses(String customerNumber, Long page, Long size)
           throws IOException, LavsException {
-      validateAddressListCustomerNumber(customerNumber);
-      validateAddressListDetails(page, size);
+      validateCustomerNumber(customerNumber);
+      validatePageDetails(page, size);
 
       List listMessage = new List(customerNumber.trim(), page, size);
       Status status = customerAdapter.send(listMessage);
@@ -187,7 +187,94 @@ public class Customer {
       return retrieveMessage;
   }
 
-  private void validateAddressListCustomerNumber(String customerNumber)
+  /**
+   * Lists a customer's phone numbers using the mainframe's paginated operation.
+   */
+  public mainframe.client.messages.customerPhoneNumber.List.Item[] listPhoneNumbers(
+          String customerNumber, Long page, Long size)
+          throws IOException, LavsException {
+      validateCustomerNumber(customerNumber);
+      validatePageDetails(page, size);
+
+      mainframe.client.messages.customerPhoneNumber.List listMessage =
+              new mainframe.client.messages.customerPhoneNumber.List(
+                      customerNumber.trim(), page, size);
+      Status status = customerAdapter.send(listMessage);
+      Main.isValidStatus(status);
+      return listMessage.getItems();
+  }
+
+  /**
+   * Retrieves one phone number belonging to a customer.
+   */
+  public mainframe.client.messages.customerPhoneNumber.Retrieve retrievePhoneNumber(
+          String customerNumber, Long phoneNumberId)
+          throws IOException, LavsException {
+      ValidationResult result = validateContactIdentifier(
+              customerNumber, phoneNumberId, "Phone number id");
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+
+      mainframe.client.messages.customerPhoneNumber.Retrieve retrieveMessage =
+              new mainframe.client.messages.customerPhoneNumber.Retrieve(
+                      phoneNumberId, customerNumber.trim());
+      Status status = customerAdapter.send(retrieveMessage);
+      Main.isValidStatus(status);
+      return retrieveMessage;
+  }
+
+  /**
+   * Lists a customer's email addresses using the mainframe's paginated operation.
+   */
+  public mainframe.client.messages.customerEmail.List.Item[] listEmails(
+          String customerNumber, Long page, Long size)
+          throws IOException, LavsException {
+      validateCustomerNumber(customerNumber);
+      validatePageDetails(page, size);
+
+      mainframe.client.messages.customerEmail.List listMessage =
+              new mainframe.client.messages.customerEmail.List(
+                      customerNumber.trim(), page, size);
+      Status status = customerAdapter.send(listMessage);
+      Main.isValidStatus(status);
+      return listMessage.getItems();
+  }
+
+  /**
+   * Retrieves one email address belonging to a customer.
+   */
+  public mainframe.client.messages.customerEmail.Retrieve retrieveEmail(
+          String customerNumber, Long emailId)
+          throws IOException, LavsException {
+      ValidationResult result = validateContactIdentifier(
+              customerNumber, emailId, "Email id");
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+
+      mainframe.client.messages.customerEmail.Retrieve retrieveMessage =
+              new mainframe.client.messages.customerEmail.Retrieve(
+                      emailId, customerNumber.trim());
+      Status status = customerAdapter.send(retrieveMessage);
+      Main.isValidStatus(status);
+      return retrieveMessage;
+  }
+
+  private ValidationResult validateContactIdentifier(
+          String customerNumber, Long identifier, String identifierLabel) {
+      ValidationResult result = new ValidationResult();
+      addCustomerNumberValidation(result, customerNumber);
+      String fieldName = identifierLabel.startsWith("Phone") ? "phoneNumberId" : "emailId";
+      if (identifier == null) {
+          result.addError(fieldName, identifierLabel + " cannot be empty");
+      } else if (identifier < 1) {
+          result.addError(fieldName, identifierLabel + " must be a positive integer");
+      }
+      return result;
+  }
+
+  private void validateCustomerNumber(String customerNumber)
           throws ValidationException {
       ValidationResult result = new ValidationResult();
       addCustomerNumberValidation(result, customerNumber);
@@ -224,7 +311,7 @@ public class Customer {
       }
   }
 
-  private void validateAddressListDetails(Long page, Long size)
+  private void validatePageDetails(Long page, Long size)
           throws ValidationException {
       ValidationResult result = new ValidationResult();
       if (page == null) {
