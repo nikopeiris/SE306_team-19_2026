@@ -7,10 +7,7 @@ import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
-<<<<<<< HEAD
-=======
 import mainframe.client.messages.customer.Search;
->>>>>>> feat/new-customer
 
 import java.io.IOException;
 
@@ -101,8 +98,6 @@ public class Customer {
         return addMessage;
     }
 
-<<<<<<< HEAD
-=======
     /**
      * Searches for customers using the mainframe's paginated customer search.
      * An empty search string returns customers without filtering by name.
@@ -148,7 +143,6 @@ public class Customer {
         }
     }
 
->>>>>>> feat/new-customer
     public void validateAddressDetails(
             String city,
             String country,

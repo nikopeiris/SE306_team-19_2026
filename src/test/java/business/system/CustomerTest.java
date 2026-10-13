@@ -7,10 +7,7 @@ import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
-<<<<<<< HEAD
-=======
 import mainframe.client.messages.customer.Search;
->>>>>>> feat/new-customer
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,8 +81,6 @@ class CustomerTest {
     }
 
     @Test
-<<<<<<< HEAD
-=======
     void listCustomersSendsSearchAndReturnsItems() throws Exception {
         when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
                 .thenReturn(new Status(2));
@@ -151,7 +146,6 @@ class CustomerTest {
     }
 
     @Test
->>>>>>> feat/new-customer
     void addAddressRequiresOtherTypeWhenTypeIsOther() {
         assertThrows(ValidationException.class, () -> customer.addAddress(
                 "Auckland", "New Zealand", "C123",
