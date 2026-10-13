@@ -10,15 +10,37 @@ import java.util.Map;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
+import mainframe.client.messages.customer.Search;
 import business.system.LoginService;
 import business.system.SignupService;
+import business.validation.ValidationException;
 import business.system.Customer;
+import mainframe.client.Status;
 
 public class Main {
   private String userName;
   private Connection connection = new HttpConnection("https://animating-eraser-arrogance.ngrok-free.dev/");
   private MainframeAdapter adapter = new MainframeAdapter(connection);
 
+  /**
+   * Validates the status of a mainframe response.
+   * @param status the status to validate
+   * @throws LavsException if the status is not successful
+   */
+  public static boolean isValidStatus(Status status) throws LavsException {
+        if (!status.getWasSuccessful()) {
+          throw new LavsException(status);
+        }
+        return true;
+  } 
+  /**
+   * Attempts to log in a user with the provided username and password.
+   * @param userName the username of the user to log in
+   * @param password the password of the user to log in
+   * @return true if the login was successful
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
   public boolean login(String userName, String password) throws IOException, LavsException {
     LoginService loginService = new LoginService(adapter);
     if (loginService.attemptLogin(userName, password)){
@@ -56,12 +78,20 @@ public class Main {
     return false;
   }
 
+  /**
+   * Logs out the currently logged-in user.
+   * @return true if logout was successful
+   */
   public boolean logOut(){
     adapter.logOut();
     userName = null;
     return true;
   }
 
+  /**
+   * Returns the username of the currently logged-in user.
+   * @return  the username of the logged-in user, or null if no user is logged in
+   */
   public String getUserName(){
     return userName;
   }
@@ -117,6 +147,20 @@ public class Main {
     Customer customerService = new Customer(adapter);
     customerService.addAddress(city,  country,  customer,  isMailing,  isPrimary,  line1,  line2,  otherType,  postCode,  suburb,  type);
     return true;
+  }
+
+  /**
+   * Lists customers via the mainframe adapter.
+   * @param name the name of the customer to search for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer items
+   * @throws IOException
+   * @throws LavsException
+   */
+  public Search.Item[] listCustomers(String name, int page, int size) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.listCustomers((long) page, name, (long) size);
   }
   /**
      * Loads key-value pairs from the .env file in the project root.

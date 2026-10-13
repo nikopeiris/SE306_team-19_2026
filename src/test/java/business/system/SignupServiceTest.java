@@ -30,6 +30,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Answers.CALLS_REAL_METHODS;
 
 @ExtendWith(MockitoExtension.class)
 class SignupServiceTest {
@@ -45,7 +46,7 @@ class SignupServiceTest {
         env.put("ADMIN_USERNAME", "admin");
         env.put("ADMIN_PASSWORD", "secret");
 
-        mockedMain = mockStatic(Main.class);
+        mockedMain = mockStatic(Main.class, CALLS_REAL_METHODS);
         mockedMain.when(Main::loadEnv).thenReturn(env);
 
         signupService = new SignupService(adapter);

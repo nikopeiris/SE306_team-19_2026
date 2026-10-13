@@ -1,15 +1,18 @@
 package business;
 
 import business.lavsexceptions.LavsException;
+import business.system.SignupService;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
 import mainframe.client.Status;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,18 +20,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Answers.CALLS_REAL_METHODS;
 
 class MainTest {
     private Main main;
     private MainframeAdapter adapter;
+    private MockedStatic<Main> mockedMain;
 
     @BeforeEach
     void setUp() throws Exception {
+        Map<String, String> env = new HashMap<>();
+        env.put("ADMIN_USERNAME", "admin");
+        env.put("ADMIN_PASSWORD", "secret");
+
+        mockedMain = mockStatic(Main.class, CALLS_REAL_METHODS);
+        mockedMain.when(Main::loadEnv).thenReturn(env);
+
         main = new Main();
         adapter = mock(MainframeAdapter.class);
         injectField(main, "adapter", adapter);
+    }
+
+    @AfterEach
+    void tearDown() {
+        mockedMain.close();
     }
 
     @Test
@@ -53,14 +71,14 @@ class MainTest {
     @Test
     void signupCreatesUserAndLogsInAsNewUser() throws Exception {
 
-        when(adapter.login("admin", "admin123")).thenReturn(new Status(1));
+        when(adapter.login("admin", "secret")).thenReturn(new Status(1));
         when(adapter.send(any(Message.class))).thenReturn(new Status(2));
         when(adapter.login("newuser", "s3cr3t")).thenReturn(new Status(1));
 
         assertTrue(main.signup("newuser", "New User", "s3cr3t", 42L, 2L));
         assertEquals("newuser", main.getUserName());
 
-        verify(adapter).login("admin", "admin123");
+        verify(adapter).login("admin", "secret");
         verify(adapter).send(any(Message.class));
         verify(adapter).login("newuser", "s3cr3t");
     }
