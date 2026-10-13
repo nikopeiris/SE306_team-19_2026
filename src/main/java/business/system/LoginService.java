@@ -5,6 +5,7 @@ import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import business.Main;
 
 import java.io.IOException;
 
@@ -32,9 +33,7 @@ public class LoginService {
             throws IOException, LavsException {
         validateCredentials(username, password);
         Status status = authAdapter.login(username.trim(), password);
-        if (!status.getWasSuccessful()) {
-            throw new LavsException(status);
-        }
+        Main.isValidStatus(status);
         return true;
     }
 

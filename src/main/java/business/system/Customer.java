@@ -1,5 +1,6 @@
 package business.system;
 
+import business.Main;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -50,9 +51,7 @@ public class Customer {
                 organisation,
                 title.trim());
         Status status = customerAdapter.send(createMessage);
-        if (!status.getWasSuccessful()) {
-            throw new LavsException(status);
-        }
+        Main.isValidStatus(status);
         return createMessage;
     }
 
@@ -92,9 +91,7 @@ public class Customer {
                 suburb.trim(),
                 type.trim());
         Status status = customerAdapter.send(addMessage);
-        if (!status.getWasSuccessful()) {
-            throw new LavsException(status);
-        }
+        Main.isValidStatus(status);
         return addMessage;
     }
 
@@ -116,9 +113,7 @@ public class Customer {
 
         Search searchMessage = new Search(page, search.trim(), size);
         Status status = customerAdapter.send(searchMessage);
-        if (!status.getWasSuccessful()) {
-            throw new LavsException(status);
-        }
+        Main.isValidStatus(status);
         return searchMessage.getItems();
     }
 

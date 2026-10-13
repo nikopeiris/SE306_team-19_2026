@@ -50,16 +50,12 @@ public class SignupService {
 
         // Login as admin
         Status loginStatus = authAdapter.login(adminUsername, adminPassword);
-        if (!loginStatus.getWasSuccessful()) {
-            throw new LavsException(loginStatus);
-        }
+        Main.isValidStatus(loginStatus);
 
         // Create the new user 
         Create createMessage = new Create(login, name, organisation, password, permissions);
         Status createStatus = authAdapter.send(createMessage);
-        if (!createStatus.getWasSuccessful()) {
-            throw new LavsException(createStatus);
-        }
+        Main.isValidStatus(createStatus);
 
         return true;
     }
