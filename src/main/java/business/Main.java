@@ -10,8 +10,10 @@ import java.util.Map;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
+import mainframe.client.messages.customer.Search;
 import business.system.LoginService;
 import business.system.SignupService;
+import business.validation.ValidationException;
 import business.system.Customer;
 
 public class Main {
@@ -117,6 +119,20 @@ public class Main {
     Customer customerService = new Customer(adapter);
     customerService.addAddress(city,  country,  customer,  isMailing,  isPrimary,  line1,  line2,  otherType,  postCode,  suburb,  type);
     return true;
+  }
+
+  /**
+   * Lists customers via the mainframe adapter.
+   * @param name the name of the customer to search for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer items
+   * @throws IOException
+   * @throws LavsException
+   */
+  public Search.Item[] listCustomers(String name, int page, int size) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.listCustomers((long) page, name, (long) size);
   }
   /**
      * Loads key-value pairs from the .env file in the project root.
