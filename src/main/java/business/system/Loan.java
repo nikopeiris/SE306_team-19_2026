@@ -80,6 +80,7 @@ public class Loan {
                 loanType,
                 paymentFrequency,
                 compoundType, renewalDate, startDate);
+        mailingAddressCheck(customerNumber);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
@@ -199,13 +200,17 @@ public class Loan {
                 result.addError("startDate", "Start date must be in yyyy-MM-dd format");
             }
         }
-
-        Customer customerService = new Customer(loanAdapter);
-        if(customerService.findMailingAddress(customerNumber) == null) {
-            result.addError("addressId", "Does not have a mailing address. Please add a mailing address before adding a loan.");
-        }
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
+    }
+
+    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
+      if (customerNumber != null && !customerNumber.isBlank()) {
+        Customer customerService = new Customer(loanAdapter);
+        if (customerService.findMailingAddress(customerNumber.trim()) == null) {
+            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
+        }
+      }
     }
 }

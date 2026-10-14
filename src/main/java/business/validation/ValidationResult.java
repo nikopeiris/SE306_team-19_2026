@@ -16,7 +16,7 @@ public final class ValidationResult {
 
     // records an error against a field if the value is null or blank
     public ValidationResult requireNotBlank(String field, String value, String message) {
-        if (value == null || value.isBlank()) {
+        if (value == null || value.isBlank() || value.trim().isEmpty()) {
             addError(field, message);
         }
         return this;

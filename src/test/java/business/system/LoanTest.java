@@ -4,6 +4,7 @@ import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import mainframe.client.messages.customerAddress.List;
 import mainframe.client.messages.loan.Create;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,12 +14,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -35,6 +39,18 @@ class LoanTest {
         loan = new Loan(adapter);
     }
 
+    private void stubMailingAddress() throws Exception {
+        lenient().when(adapter.send(any(List.class))).thenAnswer(invocation -> {
+            List listMessage = invocation.getArgument(0);
+            Field dataField = List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            ArrayList<List.Item> items = (ArrayList<List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item("Auckland", "NZ", 5L, "y", "n", "Home"));
+            return new Status(0, null, 1L);
+        });
+    }
+
     @Test
     void constructorRejectsNullAdapter() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
@@ -45,7 +61,8 @@ class LoanTest {
 
     @Test
     void addLoanSendsTrimmedMessageAndReturnsIt() throws Exception {
-        when(adapter.send(any(Create.class))).thenReturn(new Status(1));
+        stubMailingAddress();
+        when(adapter.send(any(Create.class))).thenReturn(new Status(1L));
 
         String futureRenewalDate = LocalDate.now().plusDays(30).toString();
         String futureStartDate = LocalDate.now().plusDays(5).toString();
@@ -93,7 +110,23 @@ class LoanTest {
     }
 
     @Test
-    void addLoanRejectsInvalidPrincipalRateTermAndCodes() {
+    void addLoanRejectsCustomerWithoutMailingAddress() throws Exception {
+        when(adapter.send(any(List.class))).thenReturn(new Status(1L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                loan.addLoan("C123", 1000.0, 5.0, 12,
+                        "Fixed", "Monthly", "Monthly",
+                        LocalDate.now().plusDays(30).toString(),
+                        LocalDate.now().plusDays(5).toString()));
+
+        assertEquals("Does not have a mailing address. Please add a mailing address before adding a loan.",
+                exception.getMessage());
+    }
+
+    @Test
+    void addLoanRejectsInvalidPrincipalRateTermAndCodes() throws Exception {
+        stubMailingAddress();
+
         ValidationException principalException = assertThrows(ValidationException.class, () ->
                 loan.addLoan("C123", 0, 5.0, 12,
                         "Fixed", "Monthly", "Monthly",
@@ -144,7 +177,8 @@ class LoanTest {
     }
 
     @Test
-    void addLoanRejectsPastOrInvalidDates() {
+    void addLoanRejectsPastOrInvalidDates() throws Exception {
+        stubMailingAddress();
         String pastDate = LocalDate.now().minusDays(1).toString();
 
         ValidationException renewalDateException = assertThrows(ValidationException.class, () ->
@@ -176,6 +210,7 @@ class LoanTest {
 
     @Test
     void addLoanPropagatesConnectionFailure() throws Exception {
+        stubMailingAddress();
         when(adapter.send(any(Create.class))).thenThrow(new IOException("connection unavailable"));
 
         IOException exception = assertThrows(IOException.class, () ->
@@ -189,6 +224,7 @@ class LoanTest {
 
     @Test
     void addLoanThrowsLavsExceptionWhenMainframeRejectsRequest() throws Exception {
+        stubMailingAddress();
         when(adapter.send(any(Create.class))).thenReturn(new Status(500, "Loan rejected", 42L));
 
         LavsException exception = assertThrows(LavsException.class, () ->
@@ -201,7 +237,9 @@ class LoanTest {
     }
 
     @Test
-    void addLoanToCustomerCheckValidatesAndReturnsTrue() throws ValidationException {
+    void addLoanToCustomerCheckValidatesAndReturnsTrue() throws Exception {
+        stubMailingAddress();
+
         assertTrue(loan.addLoanToCustomerCheck(
                 "C123",
                 1000.0,
@@ -215,7 +253,9 @@ class LoanTest {
     }
 
     @Test
-    void validateLoanDetailsAcceptsValidValues() throws ValidationException {
+    void validateLoanDetailsAcceptsValidValues() throws Exception {
+        stubMailingAddress();
+
         loan.validateLoanDetails(
                 "C123",
                 1000.0,
