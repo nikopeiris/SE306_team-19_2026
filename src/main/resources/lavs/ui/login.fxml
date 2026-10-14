@@ -8,10 +8,12 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
@@ -22,16 +24,42 @@
       <StackPane fx:id="leftPane" prefHeight="800.0" prefWidth="600.0" style="-fx-background-color: #F8fff4;">
          <children>
 
-            <!-- Logo is now a clickable button (resets the form, see handleLogoButton) -->
-            <Button fx:id="logoButton" mnemonicParsing="false" onAction="#handleLogoButton" style="-fx-background-color: transparent; -fx-padding: 0;" text="Countrywide Bank" textFill="#001936" StackPane.alignment="TOP_LEFT">
-               <font>
-                  <Font name="Gill Sans Bold Italic" size="25.0" />
-               </font>
+            <!-- Logo: bank-building emblem + wordmark, still a clickable button (see handleLogoButton) -->
+            <Button fx:id="logoButton" mnemonicParsing="false" onAction="#handleLogoButton" style="-fx-background-color: transparent; -fx-padding: 0;" StackPane.alignment="TOP_LEFT">
+               <graphic>
+                  <HBox fx:id="logoContent" alignment="CENTER_LEFT" spacing="10.0">
+                     <children>
+                        <!-- Emblem: navy rounded square with an orange pediment and cream columns -->
+                        <Pane fx:id="logoIcon" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="44.0" prefWidth="44.0">
+                           <children>
+                              <Rectangle fx:id="logoBackground" arcHeight="14.0" arcWidth="14.0" fill="#001936" height="44.0" width="44.0" />
+                              <SVGPath fx:id="logoPediment" content="M22 9 L35 16 L9 16 Z" fill="#f18f01" />
+                              <SVGPath fx:id="logoColumns" content="M12 19 h4 v12 h-4 Z M20 19 h4 v12 h-4 Z M28 19 h4 v12 h-4 Z M9 33 h26 v3 h-26 Z" fill="#F8fff4" />
+                           </children>
+                        </Pane>
+                        <!-- Wordmark -->
+                        <VBox fx:id="logoWordmark" alignment="CENTER_LEFT" spacing="0.0">
+                           <children>
+                              <Text fx:id="logoTitle" fill="#001936" strokeType="OUTSIDE" strokeWidth="0.0" text="COUNTRYWIDE">
+                                 <font>
+                                    <Font name="Gill Sans Bold Italic" size="22.0" />
+                                 </font>
+                              </Text>
+                              <Text fx:id="logoSubtitle" fill="#f18f01" strokeType="OUTSIDE" strokeWidth="0.0" text="B  A  N  K">
+                                 <font>
+                                    <Font name="Gill Sans Bold" size="12.0" />
+                                 </font>
+                              </Text>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </graphic>
                <cursor>
                   <Cursor fx:constant="HAND" />
                </cursor>
                <StackPane.margin>
-                  <Insets left="14.0" top="10.0" />
+                  <Insets left="20.0" top="16.0" />
                </StackPane.margin>
             </Button>
 
@@ -98,9 +126,6 @@
                            <font>
                               <Font name="Roboto Black Italic" size="22.0" />
                            </font>
-                           <cursor>
-                              <Cursor fx:constant="HAND" />
-                           </cursor>
                         </Button>
                      </children>
                   </VBox>

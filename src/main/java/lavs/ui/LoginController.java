@@ -3,6 +3,7 @@ package lavs.ui;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,10 +18,12 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -38,6 +41,14 @@ public class LoginController {
 
     // ---- Left side controls ----
     @FXML private Button logoButton;
+    @FXML private HBox logoContent;
+    @FXML private Pane logoIcon;
+    @FXML private Rectangle logoBackground;
+    @FXML private SVGPath logoPediment;
+    @FXML private SVGPath logoColumns;
+    @FXML private VBox logoWordmark;
+    @FXML private Text logoTitle;
+    @FXML private Text logoSubtitle;
     @FXML private Text usernameLabel;
     @FXML private TextField usernameField;
     @FXML private Text passwordLabel;
@@ -78,6 +89,7 @@ public class LoginController {
         setupPasswordVisibility();
         setupErrorClearing();
         setupKeyboardShortcuts();
+        setupLogoHover();
     }
 
     // ------------------------------------------------------------------
@@ -140,6 +152,19 @@ public class LoginController {
     private void setupKeyboardShortcuts() {
         passwordField.setOnAction(e -> loginButton.fire());
         passwordTextField.setOnAction(e -> loginButton.fire());
+    }
+
+    // logo grows slightly when the mouse is over it
+    private void setupLogoHover() {
+        logoButton.setOnMouseEntered(e -> scaleLogo(1.05));
+        logoButton.setOnMouseExited(e -> scaleLogo(1.0));
+    }
+
+    private void scaleLogo(double target) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(150), logoContent);
+        st.setToX(target);
+        st.setToY(target);
+        st.play();
     }
 
     // ------------------------------------------------------------------
