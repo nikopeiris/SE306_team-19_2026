@@ -8,8 +8,10 @@ import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
+import mainframe.client.messages.customer.DeleteAddress;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customer.UpdateAddress;
 import mainframe.client.messages.customerAddress.List;
 
 import java.io.IOException;
@@ -98,6 +100,77 @@ public class Customer {
   }
 
   /**
+   * Updates an existing address of a customer after validating the address fields.
+   *
+   * @return the mainframe message containing the updated address
+   * @throws ValidationException if the address id, a required field or the address type is invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
+  public UpdateAddress updateAddress(
+          String city,
+          String country,
+          String customer,
+          Long id,
+          boolean isMailing,
+          boolean isPrimary,
+          String line1,
+          String line2,
+          String otherType,
+          String postCode,
+          String suburb,
+          String type) throws IOException, LavsException {
+      ValidationResult result = buildAddressValidation(
+              city, country, customer, line1, otherType, postCode, suburb, type);
+      addAddressIdValidation(result, id);
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+
+      UpdateAddress updateMessage = new UpdateAddress(
+              city.trim(),
+              country.trim(),
+              customer.trim(),
+              id,
+              isMailing,
+              isPrimary,
+              line1.trim(),
+              line2 == null ? null : line2.trim(),
+              otherType == null ? null : otherType.trim(),
+              postCode.trim(),
+              suburb.trim(),
+              type.trim());
+      Status status = customerAdapter.send(updateMessage);
+      Main.isValidStatus(status);
+      return updateMessage;
+  }
+
+  /**
+   * Deletes an address belonging to a customer.
+   *
+   * @param customerNumber the customer's unique number
+   * @param addressId the address identifier
+   * @return the mainframe message for the deleted address
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
+  public DeleteAddress deleteAddress(String customerNumber, Long addressId)
+          throws IOException, LavsException {
+      ValidationResult result = new ValidationResult();
+      addCustomerNumberValidation(result, customerNumber);
+      addAddressIdValidation(result, addressId);
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+
+      DeleteAddress deleteMessage = new DeleteAddress(customerNumber.trim(), addressId);
+      Status status = customerAdapter.send(deleteMessage);
+      Main.isValidStatus(status);
+      return deleteMessage;
+  }
+
+  /**
    * Searches for customers using the mainframe's paginated customer search.
    * An empty search string returns customers without filtering by name.
    *
@@ -170,11 +243,7 @@ public class Customer {
           String customerNumber, Long addressId) throws IOException, LavsException {
       ValidationResult result = new ValidationResult();
       addCustomerNumberValidation(result, customerNumber);
-      if (addressId == null) {
-          result.addError("addressId", "Address id cannot be empty");
-      } else if (addressId < 1) {
-          result.addError("addressId", "Address id must be a positive integer");
-      }
+      addAddressIdValidation(result, addressId);
       if (!result.isValid()) {
           throw new ValidationException(result);
       }
@@ -290,6 +359,14 @@ public class Customer {
       }
   }
 
+  private void addAddressIdValidation(ValidationResult result, Long addressId) {
+      if (addressId == null) {
+          result.addError("addressId", "Address id cannot be empty");
+      } else if (addressId < 1) {
+          result.addError("addressId", "Address id must be a positive integer");
+      }
+  }
+
   private void validateCustomerSearchDetails(Long page, String search, Long size)
           throws ValidationException {
       ValidationResult result = new ValidationResult();
@@ -338,6 +415,22 @@ public class Customer {
           String postCode,
           String suburb,
           String type) throws ValidationException {
+      ValidationResult result = buildAddressValidation(
+              city, country, customer, line1, otherType, postCode, suburb, type);
+      if (!result.isValid()) {
+          throw new ValidationException(result);
+      }
+  }
+
+  private ValidationResult buildAddressValidation(
+          String city,
+          String country,
+          String customer,
+          String line1,
+          String otherType,
+          String postCode,
+          String suburb,
+          String type) {
       ValidationResult result = new ValidationResult()
               .requireNotBlank("city", city, "City cannot be empty")
               .requireNotBlank("country", country, "Country cannot be empty")
@@ -359,10 +452,7 @@ public class Customer {
               && (otherType == null || otherType.isBlank())) {
           result.addError("otherType", "Other address type cannot be empty");
       }
-
-      if (!result.isValid()) {
-          throw new ValidationException(result);
-      }
+      return result;
   }
 
   public void validateCustomerDetails(

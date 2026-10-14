@@ -7,8 +7,10 @@ import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.Create;
+import mainframe.client.messages.customer.DeleteAddress;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customer.UpdateAddress;
 import mainframe.client.messages.customerAddress.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,8 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -80,6 +84,157 @@ class CustomerTest {
         assertEquals("Ponsonby", result.getSuburb());
         assertEquals(AddAddress.TYPE_POSTAL, result.getType());
         assertTrue(result.getIsMailing());
+    }
+
+    @Test
+    void updateAddressSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(UpdateAddress.class)))
+                .thenReturn(new Status(3));
+
+        UpdateAddress result = customer.updateAddress(
+                " Wellington ", " New Zealand ", " C123 ", 17L,
+                false, true, " 5 Queen Street ", " Unit 9 ",
+                " Holiday home ", " 6011 ", " Te Aro ", UpdateAddress.TYPE_OTHER);
+
+        ArgumentCaptor<UpdateAddress> captor = ArgumentCaptor.forClass(UpdateAddress.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+        assertEquals("Wellington", result.getCity());
+        assertEquals("New Zealand", result.getCountry());
+        assertEquals("C123", result.getCustomer());
+        assertEquals(17L, result.getId());
+        assertEquals("5 Queen Street", result.getLine1());
+        assertEquals("Unit 9", result.getLine2());
+        assertEquals("Holiday home", result.getOtherType());
+        assertEquals("6011", result.getPostCode());
+        assertEquals("Te Aro", result.getSuburb());
+        assertEquals(UpdateAddress.TYPE_OTHER, result.getType());
+        assertTrue(result.getIsPrimary());
+        assertFalse(result.getIsMailing());
+    }
+
+    @Test
+    void updateAddressAllowsMissingOptionalFields() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(UpdateAddress.class)))
+                .thenReturn(new Status(3));
+
+        UpdateAddress result = customer.updateAddress(
+                "Auckland", "New Zealand", "C123", 17L,
+                true, false, "1 Main Street", null,
+                null, "1010", "Ponsonby", UpdateAddress.TYPE_RESIDENTIAL);
+
+        assertNull(result.getLine2());
+        assertNull(result.getOtherType());
+    }
+
+    @Test
+    void updateAddressRejectsMissingOrInvalidId() {
+        ValidationException missingIdException = assertThrows(ValidationException.class,
+                () -> customer.updateAddress("Auckland", "New Zealand", "C123", null,
+                        true, false, "1 Main Street", null, null, "1010", "Ponsonby",
+                        UpdateAddress.TYPE_POSTAL));
+        ValidationException invalidIdException = assertThrows(ValidationException.class,
+                () -> customer.updateAddress("Auckland", "New Zealand", "C123", 0L,
+                        true, false, "1 Main Street", null, null, "1010", "Ponsonby",
+                        UpdateAddress.TYPE_POSTAL));
+
+        assertEquals("Address id cannot be empty",
+                missingIdException.getResult().getError("addressId"));
+        assertEquals("Address id must be a positive integer",
+                invalidIdException.getResult().getError("addressId"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateAddressReportsAllInvalidFieldsTogether() {
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> customer.updateAddress(" ", null, "", -1L,
+                        true, false, null, null, null, " ", null, "Holiday"));
+
+        assertEquals("City cannot be empty", exception.getResult().getError("city"));
+        assertEquals("Country cannot be empty", exception.getResult().getError("country"));
+        assertEquals("Customer cannot be empty", exception.getResult().getError("customer"));
+        assertEquals("Address line 1 cannot be empty", exception.getResult().getError("line1"));
+        assertEquals("Post code cannot be empty", exception.getResult().getError("postCode"));
+        assertEquals("Suburb cannot be empty", exception.getResult().getError("suburb"));
+        assertEquals("Address type is invalid", exception.getResult().getError("type"));
+        assertEquals("Address id must be a positive integer",
+                exception.getResult().getError("addressId"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateAddressRequiresOtherTypeWhenTypeIsOther() {
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> customer.updateAddress("Auckland", "New Zealand", "C123", 17L,
+                        true, false, "1 Main Street", null, " ", "1010", "Ponsonby",
+                        UpdateAddress.TYPE_OTHER));
+
+        assertEquals("Other address type cannot be empty",
+                exception.getResult().getError("otherType"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateAddressThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(UpdateAddress.class)))
+                .thenReturn(new Status(404, "Address not found", 3));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.updateAddress("Auckland", "New Zealand", "C123", 17L,
+                        true, false, "1 Main Street", null, null, "1010", "Ponsonby",
+                        UpdateAddress.TYPE_POSTAL));
+
+        assertEquals("Address not found", exception.getMessage());
+        assertEquals(404, exception.getErrorCode());
+    }
+
+    @Test
+    void deleteAddressSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(DeleteAddress.class)))
+                .thenReturn(new Status(4));
+
+        DeleteAddress result = customer.deleteAddress(" C123 ", 17L);
+
+        ArgumentCaptor<DeleteAddress> captor = ArgumentCaptor.forClass(DeleteAddress.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+        assertEquals("C123", result.getCustomer());
+        assertEquals(17L, result.getId());
+    }
+
+    @Test
+    void deleteAddressRejectsMissingOrInvalidIdentifiers() {
+        ValidationException missingCustomerException = assertThrows(ValidationException.class,
+                () -> customer.deleteAddress(null, 17L));
+        ValidationException blankCustomerException = assertThrows(ValidationException.class,
+                () -> customer.deleteAddress(" ", 17L));
+        ValidationException missingIdException = assertThrows(ValidationException.class,
+                () -> customer.deleteAddress("C123", null));
+        ValidationException invalidIdException = assertThrows(ValidationException.class,
+                () -> customer.deleteAddress("C123", 0L));
+
+        assertEquals("Customer number cannot be null or empty",
+                missingCustomerException.getResult().getError("customerNumber"));
+        assertEquals("Customer number cannot be null or empty",
+                blankCustomerException.getResult().getError("customerNumber"));
+        assertEquals("Address id cannot be empty",
+                missingIdException.getResult().getError("addressId"));
+        assertEquals("Address id must be a positive integer",
+                invalidIdException.getResult().getError("addressId"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void deleteAddressThrowsLavsExceptionWhenMainframeRejectsRequest() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(DeleteAddress.class)))
+                .thenReturn(new Status(404, "Address not found", 4));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.deleteAddress("C123", 17L));
+
+        assertEquals("Address not found", exception.getMessage());
+        assertEquals(404, exception.getErrorCode());
     }
 
     @Test
