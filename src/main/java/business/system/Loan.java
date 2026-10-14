@@ -117,7 +117,7 @@ public class Loan {
             String compoundType,
             String renewalDate,
             String startDate)
-            throws ValidationException {
+            throws LavsException, IOException {
         validateLoanDetails(
                 customerNumber,
                 principal,
@@ -141,7 +141,7 @@ public class Loan {
             String compoundType,
             String renewalDate,
             String startDate)
-            throws ValidationException {
+            throws LavsException, IOException {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("customerNumber", customerNumber,
                         "Customer number cannot be null or empty")
@@ -200,6 +200,10 @@ public class Loan {
             }
         }
 
+        Customer customerService = new Customer(loanAdapter);
+        if(customerService.findMailingAddress(customerNumber) == null) {
+            result.addError("addressId", "Does not have a mailing address. Please add a mailing address before adding a loan.");
+        }
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
