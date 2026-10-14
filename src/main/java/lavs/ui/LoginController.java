@@ -1,6 +1,7 @@
 package lavs.ui;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import business.system.LoginService;
 import javafx.animation.Interpolator;
@@ -261,7 +262,20 @@ public class LoginController {
         Task<Boolean> loginTask = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                return loginService.attemptLogin(username, password);
+                try {
+                    return (Boolean) loginService.getClass()
+                            .getMethod("attemptLogin", String.class, String.class)
+                            .invoke(loginService, username, password);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof Exception) {
+                        throw (Exception) cause;
+                    }
+                    if (cause instanceof Error) {
+                        throw (Error) cause;
+                    }
+                    throw new RuntimeException(cause);
+                }
             }
         };
 
