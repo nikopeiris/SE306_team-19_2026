@@ -1,18 +1,24 @@
 package business;
 
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import business.lavsexceptions.LavsException;
+import business.system.Customer;
+import business.system.Loan;
 import business.system.LoginService;
 import business.system.SignupService;
-import dataaccess.systemadapters.AuthAdapter;
-import dataaccess.systemadapters.MainframeAuthAdapter;
+import business.validation.ValidationException;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
+import mainframe.client.Status;
+import mainframe.client.messages.customer.Retrieve;
+import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 
 public class Main {
   private String userName;
@@ -253,7 +259,7 @@ public class Main {
     Customer customerService = new Customer(adapter);
     return customerService.retrieveEmail(customerId, emailId);
   }
-  
+
 
   /**
    * Adds a loan to a customer via the mainframe adapter after validating all loan fields and checking for a mailing address.

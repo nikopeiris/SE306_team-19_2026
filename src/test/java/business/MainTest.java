@@ -1,29 +1,28 @@
 package business;
 
-import business.lavsexceptions.LavsException;
-import business.system.SignupService;
-import dataaccess.systemadapters.MainframeAdapter;
-import mainframe.client.Message;
-import mainframe.client.Status;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.MockedStatic;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Answers.CALLS_REAL_METHODS;
+
+import business.lavsexceptions.LavsException;
+import dataaccess.systemadapters.MainframeAdapter;
+import mainframe.client.Message;
+import mainframe.client.Status;
 
 class MainTest {
     private Main main;

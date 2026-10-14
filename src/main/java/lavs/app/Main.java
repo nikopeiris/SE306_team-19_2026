@@ -3,8 +3,7 @@ package lavs.app;
 import java.net.URL;
 
 import business.system.LoginService;
-import dataaccess.systemadapters.AuthAdapter;
-import dataaccess.systemadapters.MainframeAuthAdapter;
+import dataaccess.systemadapters.MainframeAdapter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -18,8 +17,8 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
 
         // set log in serve 
-        AuthAdapter authAdapter = new MainframeAuthAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
-        LoginService loginService = new LoginService(authAdapter);
+        MainframeAdapter mainframeAdapter = new MainframeAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
+        LoginService loginService = new LoginService(mainframeAdapter);
 
 
         // ui layer
