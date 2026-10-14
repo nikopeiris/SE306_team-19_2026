@@ -16,6 +16,7 @@ import business.system.SignupService;
 import business.validation.ValidationException;
 import business.system.Customer;
 import mainframe.client.Status;
+import business.system.Loan;
 
 public class Main {
   private String userName;
@@ -161,6 +162,27 @@ public class Main {
   public Search.Item[] listCustomers(String name, int page, int size) throws IOException, LavsException {
     Customer customerService = new Customer(adapter);
     return customerService.listCustomers((long) page, name, (long) size);
+  }
+
+  /**
+   * Adds a loan to a customer via the mainframe adapter after validating all loan fields and checking for a mailing address.
+   * @param customerNumber cutomer number to which the loan belongs
+   * @param principal amount borrowed; must be greater than zero
+   * @param annualRate annual rate as a percentage; must not be negative
+   * @param term loan term in months/periods; must be greater than zero
+   * @param loanType valid loan category code
+   * @param paymentFrequency valid payment frequency code
+   * @param compoundType valid compounding frequency code
+   * @param renewalDate renewal date of the loan
+   * @param startDate start date of the loan
+   * @return true if the loan was added successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request or validation fails
+   */
+  public boolean addLoan(String customerNumber, double principal, double annualRate, int term, String loanType, String paymentFrequency, String compoundType, String renewalDate, String startDate) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    loanService.addLoan(customerNumber, principal, annualRate, term, loanType, paymentFrequency, compoundType, renewalDate, startDate);
+    return true;
   }
   /**
      * Loads key-value pairs from the .env file in the project root.
