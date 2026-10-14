@@ -1,24 +1,18 @@
 package business;
 
-import business.lavsexceptions.LavsException;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import dataaccess.systemadapters.MainframeAdapter;
-import mainframe.client.Connection;
-import mainframe.client.HttpConnection;
-import mainframe.client.messages.customer.Retrieve;
-import mainframe.client.messages.customer.Search;
-import mainframe.client.messages.customerAddress.List;
 import business.system.LoginService;
 import business.system.SignupService;
-import business.validation.ValidationException;
-import business.system.Customer;
-import mainframe.client.Status;
-import business.system.Loan;
+import dataaccess.systemadapters.AuthAdapter;
+import dataaccess.systemadapters.MainframeAuthAdapter;
+import mainframe.client.Connection;
+import mainframe.client.HttpConnection;
 
 public class Main {
   private String userName;
