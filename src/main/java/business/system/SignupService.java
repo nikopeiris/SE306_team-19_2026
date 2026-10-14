@@ -1,6 +1,9 @@
 package business.system;
 
-import dataaccess.systemadapters.AuthAdapter;
+import business.lavsexceptions.LavsException;
+import business.validation.ValidationException;
+import business.validation.ValidationResult;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.user.Create;
 import business.Main;
@@ -13,9 +16,9 @@ import java.util.Map;
  * on the mainframe
  */
 public class SignupService {
-    private final AuthAdapter authAdapter;
+    private final MainframeAdapter authAdapter;
 
-    public SignupService(AuthAdapter authAdapter) {
+    public SignupService(MainframeAdapter authAdapter) {
         this.authAdapter = authAdapter;
     }
 
@@ -27,11 +30,12 @@ public class SignupService {
      * @param organisation the organisation id for the new user
      * @param permissions  the permissions level for the new user
      * @return true if the user was created successfully
-     * @throws IllegalArgumentException if validation fails
+     * @throws ValidationException if validation fails
      * @throws IOException if network or mainframe connection fails
-     * @throws RuntimeException if admin login or user creation fails
+     * @throws LavsException if admin login or user creation fails
      */
-    public boolean signup(String login, String name, String password, long organisation, long permissions) throws IOException {
+    public boolean signup(String login, String name, String password, long organisation, long permissions)
+            throws IOException, LavsException {
         // Validate input
         validateSignupDetails(login, name, password, organisation, permissions);
 
@@ -41,21 +45,17 @@ public class SignupService {
         String adminPassword = env.get("ADMIN_PASSWORD");
 
         if (adminUsername == null || adminPassword == null) {
-            throw new RuntimeException("Admin credentials not found in .env file");
+            throw new LavsException("Admin credentials not found in .env file");
         }
 
         // Login as admin
         Status loginStatus = authAdapter.login(adminUsername, adminPassword);
-        if (!loginStatus.getWasSuccessful()) {
-            throw new RuntimeException("Admin login failed: " + loginStatus.getErrorMessage());
-        }
+        Main.isValidStatus(loginStatus);
 
         // Create the new user 
         Create createMessage = new Create(login, name, organisation, password, permissions);
-        Status createStatus = authAdapter.signUp(createMessage);
-        if (!createStatus.getWasSuccessful()) {
-            throw new RuntimeException("User creation failed: " + createStatus.getErrorMessage());
-        }
+        Status createStatus = authAdapter.send(createMessage);
+        Main.isValidStatus(createStatus);
 
         return true;
     }
@@ -66,26 +66,27 @@ public class SignupService {
      * @param login    the login/username for the new user
      * @param name     the display name for the new user
      * @param password the password for the new user
-     * @throws IllegalArgumentException if any validation fails
+     * @throws ValidationException if any validation fails
      */
-    public void validateSignupDetails(String login, String name, String password, long organisation, long permissions) {
-        if (login == null || login.trim().isEmpty()) {
-            throw new IllegalArgumentException("Login cannot be null or empty");
-        }
-        if (login.trim().length() < 3) {
-            throw new IllegalArgumentException("Login must be at least 3 characters long");
-        }
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
-        }
-        if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("Password cannot be null or empty");
+    public void validateSignupDetails(
+            String login, String name, String password, long organisation, long permissions)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("login", login, "Login cannot be null or empty")
+                .requireNotBlank("name", name, "Name cannot be null or empty")
+                .requireNotBlank("password", password, "Password cannot be null or empty");
+
+        if (login != null && !login.trim().isEmpty() && login.trim().length() < 3) {
+            result.addError("login", "Login must be at least 3 characters long");
         }
         if (permissions < 1) {
-            throw new IllegalArgumentException("Permissions must be a positive integer");
+            result.addError("permissions", "Permissions must be a positive integer");
         }
         if (organisation < 1) {
-            throw new IllegalArgumentException("Organisation must be a positive integer");
+            result.addError("organisation", "Organisation must be a positive integer");
+        }
+        if (!result.isValid()) {
+            throw new ValidationException(result);
         }
     }
 

@@ -1,7 +1,11 @@
 package business.system;
 
-import dataaccess.systemadapters.AuthAdapter;
+import business.lavsexceptions.LavsException;
+import business.validation.ValidationException;
+import business.validation.ValidationResult;
+import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import business.Main;
 
 import java.io.IOException;
 
@@ -9,9 +13,9 @@ import java.io.IOException;
  * Business service responsible for user login
  */
 public class LoginService {
-    private final AuthAdapter authAdapter;
+    private final MainframeAdapter authAdapter;
 
-    public LoginService(AuthAdapter authAdapter) {
+    public LoginService(MainframeAdapter authAdapter) {
         this.authAdapter = authAdapter;
     }
 
@@ -21,30 +25,35 @@ public class LoginService {
      * @param username user input username
      * @param password user input password
      * @return true if login was successful
-     * @throws IllegalArgumentException if validation fails (empty/null inputs)
+     * @throws ValidationException if validation fails (empty/null inputs)
+     * @throws LavsException if the mainframe rejects the login
      * @throws IOException if network or mainframe connection fails
      */
-    public boolean attemptLogin(String username, String password) throws IOException {
+    public boolean attemptLogin(String username, String password)
+            throws IOException, LavsException {
         validateCredentials(username, password);
         Status status = authAdapter.login(username.trim(), password);
-        if (!status.getWasSuccessful()) {
-            throw new RuntimeException("Login failed: " + status.getErrorMessage());
-        }
+        Main.isValidStatus(status);
         return true;
     }
 
     /**
      * Business validation logic for user credentials.
      */
-    public void validateCredentials(String username, String password) {
-        if (username == null || username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
+    public void validateCredentials(String username, String password)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("username", username,
+                        "Username cannot be null or empty")
+                .requireNotBlank("password", password,
+                        "Password cannot be null or empty");
+
+        if (username != null && !username.trim().isEmpty()
+                && username.trim().length() < 3) {
+            result.addError("username", "Username must be at least 3 characters long");
         }
-        if (password == null || password.isEmpty()) {
-            throw new IllegalArgumentException("Password cannot be empty");
-        }
-        if (username.trim().length() < 3) {
-            throw new IllegalArgumentException("Username must be at least 3 characters long");
+        if (!result.isValid()) {
+            throw new ValidationException(result);
         }
     }
 }

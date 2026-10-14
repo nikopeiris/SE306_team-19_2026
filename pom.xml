@@ -46,6 +46,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
@@ -108,7 +114,7 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>lavs/**</include>
+                                <include>business/**</include>
                             </includes>
                         </configuration>
                     </execution>
@@ -122,10 +128,10 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>lavs/service/**</include>
-                                <include>lavs/validation/**</include>
-                                <include>lavs/data/**</include>
-                                <include>lavs/model/**</include>
+                                <include>business/Main.java</include>
+                                <include>business/system/**</include>
+                                <include>business/validation/**</include>
+                                <include>business/lavsexceptions/**</include>
                             </includes>
                             <rules>
                                 <rule>
