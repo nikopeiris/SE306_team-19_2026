@@ -1,5 +1,7 @@
 package business.system;
 
+import java.io.IOException;
+
 import business.Main;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
@@ -11,8 +13,6 @@ import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
 import mainframe.client.messages.customerAddress.List;
-
-import java.io.IOException;
 
 /**
  * Business service for adding customers through the mainframe adapter.
