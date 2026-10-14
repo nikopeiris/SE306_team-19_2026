@@ -187,6 +187,16 @@ public class Customer {
       return retrieveMessage;
   }
 
+  public List.Item findMailingAddress(String customerNumber) throws IOException, LavsException {
+      List.Item[] addresses = listAddresses(customerNumber, 1L, 100L);
+      for (List.Item address : addresses) {
+          if (address.getIsMailing().equals("y")) {
+              return address;
+          }
+      }
+      return null;
+  }
+
   /**
    * Lists a customer's phone numbers using the mainframe's paginated operation.
    */

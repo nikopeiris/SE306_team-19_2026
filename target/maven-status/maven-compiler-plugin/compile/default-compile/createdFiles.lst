@@ -82,6 +82,7 @@ mainframe\client\messages\constantCategory\AddItem.class
 business\validation\ValidationResult.class
 mainframe\client\messages\constantItem\List.class
 mainframe\client\messages\customer\Search.class
+business\system\Loan.class
 mainframe\client\messages\customerRelationship\List$Item.class
 mainframe\client\messages\loan\UpdateStatus.class
 mainframe\client\messages\loan\AddDocument.class
