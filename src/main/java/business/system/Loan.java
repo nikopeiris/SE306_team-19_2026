@@ -9,6 +9,8 @@ import mainframe.client.Status;
 import mainframe.client.messages.loan.Create;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Set;
 
 /**
@@ -68,7 +70,7 @@ public class Loan {
             int term,
             String loanType,
             String paymentFrequency,
-            String compoundType)
+            String compoundType, String renewalDate, String startDate)
             throws IOException, LavsException {
         validateLoanDetails(
                 customerNumber,
@@ -77,12 +79,14 @@ public class Loan {
                 term,
                 loanType,
                 paymentFrequency,
-                compoundType);
+                compoundType, renewalDate, startDate);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
         String normalizedPaymentFrequency = paymentFrequency.trim();
         String normalizedCompoundType = compoundType.trim();
+        String normalizedRenewalDate = renewalDate.trim();
+        String normalizedStartDate = startDate.trim();
 
         Create createMessage = new Create(
                 normalizedCustomerNumber,
@@ -92,8 +96,8 @@ public class Loan {
                 annualRate,
                 normalizedCompoundType,
                 normalizedLoanType,
-                "",
-                "");
+                normalizedRenewalDate,
+                normalizedStartDate);
 
         Status status = loanAdapter.send(createMessage);
         Main.isValidStatus(status);
@@ -110,7 +114,9 @@ public class Loan {
             int term,
             String loanType,
             String paymentFrequency,
-            String compoundType)
+            String compoundType,
+            String renewalDate,
+            String startDate)
             throws ValidationException {
         validateLoanDetails(
                 customerNumber,
@@ -119,7 +125,9 @@ public class Loan {
                 term,
                 loanType,
                 paymentFrequency,
-                compoundType);
+                compoundType,
+                renewalDate,
+                startDate);
         return true;
     }
 
@@ -130,7 +138,9 @@ public class Loan {
             int term,
             String loanType,
             String paymentFrequency,
-            String compoundType)
+            String compoundType,
+            String renewalDate,
+            String startDate)
             throws ValidationException {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("customerNumber", customerNumber,
@@ -140,7 +150,11 @@ public class Loan {
                 .requireNotBlank("paymentFrequency", paymentFrequency,
                         "Payment frequency cannot be null or empty")
                 .requireNotBlank("compoundType", compoundType,
-                        "Compound type cannot be null or empty");
+                        "Compound type cannot be null or empty")
+                .requireNotBlank("renewalDate", renewalDate,
+                        "Renewal date cannot be null or empty")
+                .requireNotBlank("startDate", startDate,
+                        "Start date cannot be null or empty");
 
         if (principal <= 0) {
             result.addError("principal", "Loan principal must be greater than zero");
@@ -162,6 +176,28 @@ public class Loan {
         if (compoundType != null && !compoundType.isBlank()
                 && !VALID_COMPOUND_TYPES.contains(compoundType.trim())) {
             result.addError("compoundType", "Compound type must be a valid category code");
+        }
+
+        if (renewalDate != null && !renewalDate.isBlank()) {
+            try {
+                LocalDate renewalLocalDate = LocalDate.parse(renewalDate.trim());
+                if (renewalLocalDate.isBefore(LocalDate.now())) {
+                    result.addError("renewalDate", "Renewal date must be today or later");
+                }
+            } catch (DateTimeParseException e) {
+                result.addError("renewalDate", "Renewal date must be in yyyy-MM-dd format");
+            }
+        }
+
+        if (startDate != null && !startDate.isBlank()) {
+            try {
+                LocalDate startLocalDate = LocalDate.parse(startDate.trim());
+                if (startLocalDate.isBefore(LocalDate.now())) {
+                    result.addError("startDate", "Start date must be today or later");
+                }
+            } catch (DateTimeParseException e) {
+                result.addError("startDate", "Start date must be in yyyy-MM-dd format");
+            }
         }
 
         if (!result.isValid()) {
