@@ -74,6 +74,7 @@ mainframe/client/messages/customer/UpdateRelationship.class
 mainframe/client/Message.class
 mainframe/client/messages/loan/Update.class
 mainframe/client/messages/customerEmail/List$Item.class
+lavs/ui/LoginController$1.class
 mainframe/client/messages/customerEmployer/List$Item.class
 mainframe/client/HttpConnection.class
 lavs/ui/LoginController.class

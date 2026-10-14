@@ -2,22 +2,36 @@ package lavs.app;
 
 import java.net.URL;
 
+import business.system.LoginService;
+import dataaccess.systemadapters.AuthAdapter;
+import dataaccess.systemadapters.MainframeAuthAdapter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import lavs.ui.LoginController;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
+        // set log in serve 
+        AuthAdapter authAdapter = new MainframeAuthAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
+        LoginService loginService = new LoginService(authAdapter);
+
+
+        // ui layer
         try {
             URL fxmlUrl = getClass().getResource("/lavs/ui/login.fxml");
             if (fxmlUrl == null) {
                 throw new RuntimeException("Could not find /lavs/ui/login.fxml in resources!");
             }
-            Parent root = FXMLLoader.load(fxmlUrl);
+            FXMLLoader loader = new FXMLLoader(fxmlUrl);
+            Parent root = loader.load();
+            LoginController logIncontroller = loader.getController();
+            logIncontroller.setLoginService(loginService);
 
             // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
             Scene scene = new Scene(root, 1200, 800);
@@ -27,6 +41,8 @@ public class Main extends Application {
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
+;
+
 
             primaryStage.setTitle("Mainframe Interface - Login");
             primaryStage.setScene(scene);
@@ -36,7 +52,6 @@ public class Main extends Application {
             primaryStage.show();
             
         } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

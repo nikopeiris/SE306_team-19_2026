@@ -1,10 +1,14 @@
 package lavs.ui;
 
+import java.io.IOException;
+
+import business.system.LoginService;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -75,9 +79,8 @@ public class LoginController {
     private static final String PASSWORD_ERROR_STYLE =
             "-fx-background-color: #F8fff4; -fx-border-color: #cc0000; -fx-border-width: 2; -fx-padding: 0 60 0 8;";
 
-    // TODO: replace with your real authentication (database / service call)
-    private static final String VALID_USERNAME = "admin";
-    private static final String VALID_PASSWORD = "password123";
+    // Business layer: ALL validation and authentication happens in here, not in the UI
+    private LoginService loginService;
 
     private Timeline animation;
     private boolean expanded = false;
@@ -90,6 +93,11 @@ public class LoginController {
         setupErrorClearing();
         setupKeyboardShortcuts();
         setupLogoHover();
+    }
+
+    /** Called by whoever loads this screen to give it the business-layer service. */
+    public void setLoginService(LoginService loginService) {
+        this.loginService = loginService;
     }
 
     // ------------------------------------------------------------------
@@ -243,33 +251,60 @@ public class LoginController {
 
     @FXML
     private void handleLoginButton(ActionEvent event) {
-        String username = usernameField.getText().trim();
+        // The UI only passes the raw input on; the business layer validates and authenticates.
+        String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // 1. Nothing typed in the password box
-        if (password.isEmpty()) {
-            showError("Please enter your password.", false, true);
-            return;
-        }
+        setLoggingIn(true);
 
-        // 2. Wrong credentials
-        if (!authenticate(username, password)) {
-            passwordField.clear();   // clear first: typing/clearing removes any error shown
-            showError("Incorrect username or password.", true, true);
-            return;
-        }
+        // Run on a background thread so a slow network call doesn't freeze the window
+        Task<Boolean> loginTask = new Task<>() {
+            @Override
+            protected Boolean call() throws Exception {
+                return loginService.attemptLogin(username, password);
+            }
+        };
 
-        // 3. Correct credentials -> go to the dashboard
-        goToDashboard(event);
+        loginTask.setOnSucceeded(e -> {
+            setLoggingIn(false);
+            goToDashboard(event);
+        });
+
+        loginTask.setOnFailed(e -> {
+            setLoggingIn(false);
+            handleLoginFailure(loginTask.getException());
+        });
+
+        Thread thread = new Thread(loginTask, "login-task");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     // ------------------------------------------------------------------
-    // Login logic
+    // Login result handling (no checking here, just showing what the business layer reported)
     // ------------------------------------------------------------------
 
-    // TODO: swap this out for your real check
-    private boolean authenticate(String username, String password) {
-        return VALID_USERNAME.equals(username) && VALID_PASSWORD.equals(password);
+    private void handleLoginFailure(Throwable error) {
+        if (error instanceof IllegalArgumentException) {
+            // Input was rejected by the business layer's validation (empty, too short, ...)
+            showError(error.getMessage(), true, true);
+        } else if (error instanceof IOException) {
+            // Network / mainframe connection problem
+            showError("Could not connect to the server. Please try again.", false, false);
+        } else if (error instanceof RuntimeException) {
+            // Credentials were rejected ("Login failed: ...")
+            passwordField.clear();   // clear first: clearing removes any error shown
+            showError(error.getMessage(), true, true);
+        } else {
+            error.printStackTrace();
+            showError("Something went wrong. Please try again.", false, false);
+        }
+    }
+
+    // disables the button while waiting for the business layer
+    private void setLoggingIn(boolean loggingIn) {
+        loginButton.setDisable(loggingIn);
+        loginButton.setText(loggingIn ? "Logging in..." : "Log In");
     }
 
     private void goToDashboard(ActionEvent event) {
