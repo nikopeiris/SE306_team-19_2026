@@ -10,7 +10,9 @@ import java.util.Map;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
 import mainframe.client.HttpConnection;
+import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 import business.system.LoginService;
 import business.system.SignupService;
 import business.validation.ValidationException;
@@ -34,6 +36,7 @@ public class Main {
         }
         return true;
   } 
+
   /**
    * Attempts to log in a user with the provided username and password.
    * @param userName the username of the user to log in
@@ -163,6 +166,100 @@ public class Main {
     Customer customerService = new Customer(adapter);
     return customerService.listCustomers((long) page, name, (long) size);
   }
+
+  /**
+   * Retrieves a customer via the mainframe adapter.
+   * @param customerId id of the customer to retrieve
+   * @return a Retrieve object containing the customer details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public Retrieve getCustomer(String customerId) throws IOException, LavsException{
+    Customer customerService = new Customer(adapter);
+    return customerService.retrieveCustomer(customerId);
+  }
+
+  /**
+   * Lists customer addresses via the mainframe adapter.
+   * @param customerId the customer number to retrieve addresses for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer address items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public List.Item[] listCustomerAddresses(String customerId, int page, int size) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.listAddresses(customerId, (long) page, (long) size);
+  }
+
+  /**
+   * Retrieves a customer address via the mainframe adapter.
+   * @param customerId the customer number to retrieve the address for
+   * @param addressId the ID of the address to retrieve
+   * @return a Retrieve object containing the address details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerAddress.Retrieve getAddress(String customerId, long addressId) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.retrieveAddress(customerId, addressId);
+  }
+
+  /**
+   * Lists customer phone numbers via the mainframe adapter.
+   * @param customerId the customer number to retrieve phone numbers for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer phone number items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerPhoneNumber.List.Item[] listPhoneNumbers(String customerId, int page, int size) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.listPhoneNumbers(customerId, (long) page, (long) size);
+  }
+
+  /**
+   * Retrieves a customer phone number via the mainframe adapter.
+   * @param customerId the customer number to retrieve the phone number for
+   * @param phoneNumberId the ID of the phone number to retrieve
+   * @return a Retrieve object containing the phone number details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerPhoneNumber.Retrieve getPhoneNumber(String customerId, long phoneNumberId) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.retrievePhoneNumber(customerId, phoneNumberId);
+  }
+
+  /**
+   * Lists customer emails via the mainframe adapter.
+   * @param customerId the customer number to retrieve emails for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer email items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmail.List.Item[] listEmails(String customerId, int page, int size) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.listEmails(customerId, (long) page, (long) size);
+  }
+
+  /**
+   * Retrieves a customer email via the mainframe adapter.
+   * @param customerId the customer number to retrieve the email for
+   * @param emailId the ID of the email to retrieve
+   * @return a Retrieve object containing the email details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmail.Retrieve getEmail(String customerId, long emailId) throws IOException, LavsException {
+    Customer customerService = new Customer(adapter);
+    return customerService.retrieveEmail(customerId, emailId);
+  }
+  
 
   /**
    * Adds a loan to a customer via the mainframe adapter after validating all loan fields and checking for a mailing address.
