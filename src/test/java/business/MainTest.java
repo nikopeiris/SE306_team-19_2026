@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -23,6 +24,9 @@ import business.lavsexceptions.LavsException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
 import mainframe.client.Status;
+import mainframe.client.messages.customer.Retrieve;
+import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 
 class MainTest {
     private Main main;
@@ -124,6 +128,185 @@ class MainTest {
                 "Residential"));
 
         verify(adapter).send(any(Message.class));
+    }
+
+    @Test
+    void setLoanIdSetsCurrentLoanId() throws Exception {
+        main.setLoanId("L123");
+
+        Field field = Main.class.getDeclaredField("currentLoanId");
+        field.setAccessible(true);
+        assertEquals("L123", field.get(main));
+    }
+
+    @Test
+    void listLoansDelegatesToLoanService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.List.Item[] items = main.listLoans("C123", 1, 20);
+
+        verify(adapter).send(any(mainframe.client.messages.loan.List.class));
+        assertEquals(0, items.length);
+    }
+
+    @Test
+    void getLoanDelegatesToLoanServiceUsingCurrentLoanId() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+        main.setLoanId("L123");
+
+        mainframe.client.messages.loan.Retrieve result = main.getLoan();
+
+        ArgumentCaptor<mainframe.client.messages.loan.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void getLoanRepaymentScheduleDelegatesToLoanServiceUsingCurrentLoanId() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+        main.setLoanId("L123");
+
+        mainframe.client.messages.loanRepaymentSchedule.List.Item[] result =
+                main.getLoanRepaymentSchedule(1, 25);
+
+        verify(adapter).send(any(mainframe.client.messages.loanRepaymentSchedule.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getLoanSummaryDelegatesToLoanServiceUsingCurrentLoanId() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+        main.setLoanId("L123");
+
+        mainframe.client.messages.loanSummary.Retrieve result = main.getLoanSummary();
+
+        ArgumentCaptor<mainframe.client.messages.loanSummary.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanSummary.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void listCustomersDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        Search.Item[] result = main.listCustomers("Smith", 1, 10);
+
+        verify(adapter).send(any(Search.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getCustomerDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        Retrieve result = main.getCustomer("C123");
+
+        ArgumentCaptor<Retrieve> captor = ArgumentCaptor.forClass(Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void listCustomerAddressesDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        List.Item[] result = main.listCustomerAddresses("C123", 1, 10);
+
+        verify(adapter).send(any(List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getAddressDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerAddress.Retrieve result = main.getAddress("C123", 1L);
+
+        ArgumentCaptor<mainframe.client.messages.customerAddress.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.customerAddress.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void listPhoneNumbersDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerPhoneNumber.List.Item[] result =
+                main.listPhoneNumbers("C123", 1, 10);
+
+        verify(adapter).send(any(mainframe.client.messages.customerPhoneNumber.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getPhoneNumberDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerPhoneNumber.Retrieve result =
+                main.getPhoneNumber("C123", 1L);
+
+        ArgumentCaptor<mainframe.client.messages.customerPhoneNumber.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.customerPhoneNumber.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void listEmailsDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmail.List.Item[] result =
+                main.listEmails("C123", 1, 10);
+
+        verify(adapter).send(any(mainframe.client.messages.customerEmail.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getEmailDelegatesToCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmail.Retrieve result =
+                main.getEmail("C123", 1L);
+
+        ArgumentCaptor<mainframe.client.messages.customerEmail.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.customerEmail.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void addLoanDelegatesToLoanService() throws Exception {
+        when(adapter.send(any(List.class))).thenAnswer(invocation -> {
+            List listMessage = invocation.getArgument(0);
+            Field dataField = List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.ArrayList<List.Item> items =
+                    (java.util.ArrayList<List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item("Auckland", "NZ", 1L, "y", "n", "Home"));
+            return new Status(0, null, 1L);
+        });
+        when(adapter.send(any(mainframe.client.messages.loan.Create.class)))
+                .thenReturn(new Status(1));
+
+        java.time.LocalDate now = java.time.LocalDate.now();
+        boolean result = main.addLoan(
+                "C123",
+                1000.0,
+                5.0,
+                12,
+                "Fixed",
+                "Monthly",
+                "Monthly",
+                now.plusDays(30).toString(),
+                now.plusDays(5).toString());
+
+        assertTrue(result);
+        verify(adapter).send(any(mainframe.client.messages.loan.Create.class));
     }
 
     private static void injectField(Object target, String fieldName, Object value)
