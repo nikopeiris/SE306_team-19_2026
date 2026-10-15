@@ -125,6 +125,42 @@ public class Loan {
     }
 
     /**
+     * Retrieves the repayment schedule for a loan.
+     *
+     * @param loanNumber loan identifier to retrieve the repayment schedule for
+     * @param page page number of the schedule to retrieve
+     * @param size number of schedule items to retrieve per page
+     * @return an array of repayment schedule items
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public mainframe.client.messages.loanRepaymentSchedule.List.Item[] retrieveRepaymentSchedule(
+            String loanNumber, long page, long size) throws IOException, LavsException {
+        mainframe.client.messages.loanRepaymentSchedule.List listMessage =
+                new mainframe.client.messages.loanRepaymentSchedule.List(loanNumber, page, size);
+        Status status = loanAdapter.send(listMessage);
+        Main.isValidStatus(status);
+        return listMessage.getItems();
+    }
+
+    /**
+     * Retrieves the summary of a loan.
+     *
+     * @param loanNumber loan identifier to retrieve the summary for
+     * @return the loan summary details
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public mainframe.client.messages.loanSummary.Retrieve retrieveLoanSummary(String loanNumber)
+            throws IOException, LavsException {
+        mainframe.client.messages.loanSummary.Retrieve retrieveMessage =
+                new mainframe.client.messages.loanSummary.Retrieve(loanNumber);
+        Status status = loanAdapter.send(retrieveMessage);
+        Main.isValidStatus(status);
+        return retrieveMessage;
+    }
+
+    /**
      * Convenience wrapper used when the business validation is the only requirement.
      */
     public boolean addLoanToCustomerCheck(

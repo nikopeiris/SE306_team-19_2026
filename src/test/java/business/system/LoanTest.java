@@ -267,4 +267,46 @@ class LoanTest {
                 LocalDate.now().plusDays(30).toString(),
                 LocalDate.now().plusDays(5).toString());
     }
+
+    @Test
+    void retrieveLoansSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.List.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.List.Item[] result = loan.retrieveLoans("C123", 1L, 25L);
+
+        ArgumentCaptor<mainframe.client.messages.loan.List> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.List.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(1L, captor.getValue().getPage());
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void retrieveRepaymentScheduleSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanRepaymentSchedule.List.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loanRepaymentSchedule.List.Item[] result =
+                loan.retrieveRepaymentSchedule("L123", 1L, 25L);
+
+        ArgumentCaptor<mainframe.client.messages.loanRepaymentSchedule.List> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanRepaymentSchedule.List.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(1L, captor.getValue().getPage());
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void retrieveLoanSummarySendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanSummary.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loanSummary.Retrieve result = loan.retrieveLoanSummary("L123");
+
+        ArgumentCaptor<mainframe.client.messages.loanSummary.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanSummary.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
 }
