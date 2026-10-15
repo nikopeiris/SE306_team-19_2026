@@ -9,7 +9,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import lavs.ui.LoginController;
 
 public class Main extends Application {
 
@@ -23,14 +22,14 @@ public class Main extends Application {
 
         // ui layer
         try {
-            URL fxmlUrl = getClass().getResource("/lavs/ui/login.fxml");
+            URL fxmlUrl = getClass().getResource("/lavs/ui/dashboard.fxml");
             if (fxmlUrl == null) {
                 throw new RuntimeException("Could not find /lavs/ui/login.fxml in resources!");
             }
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
-            LoginController logIncontroller = loader.getController();
-            logIncontroller.setLoginService(loginService);
+            // LoginController logIncontroller = loader.getController();
+            // logIncontroller.setLoginService(loginService);
 
             // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
             Scene scene = new Scene(root, 1200, 800);
