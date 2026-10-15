@@ -309,4 +309,17 @@ class LoanTest {
         verify(adapter).send(captor.capture());
         assertEquals(result, captor.getValue());
     }
+
+    @Test
+    void retrieveLoanSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.Retrieve result = loan.retrieveLoan("L123");
+
+        ArgumentCaptor<mainframe.client.messages.loan.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
 }

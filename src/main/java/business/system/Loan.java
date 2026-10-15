@@ -13,6 +13,7 @@ import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.List;
+import mainframe.client.messages.loan.Retrieve;
 
 /**
  * Business service for creating customer loans.
@@ -122,6 +123,21 @@ public class Loan {
         Status status = loanAdapter.send(listMessage);
         Main.isValidStatus(status);
         return listMessage.getItems();
+    }
+
+    /**
+     * Retrieves a loan by its unique loan number.
+     *
+     * @param loanNumber loan identifier to retrieve
+     * @return the retrieved loan details
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public Retrieve retrieveLoan(String loanNumber) throws IOException, LavsException {
+        Retrieve retrieveMessage = new Retrieve(loanNumber);
+        Status status = loanAdapter.send(retrieveMessage);
+        Main.isValidStatus(status);
+        return retrieveMessage;
     }
 
     /**
