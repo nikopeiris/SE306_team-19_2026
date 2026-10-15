@@ -2,6 +2,7 @@ package lavs.app;
 
 import java.net.URL;
 
+import business.system.Customer;
 import business.system.LoginService;
 import dataaccess.systemadapters.MainframeAdapter;
 import javafx.application.Application;
@@ -9,6 +10,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import lavs.ui.LoginController;
 
 public class Main extends Application {
 
@@ -18,18 +20,20 @@ public class Main extends Application {
         // set log in serve 
         MainframeAdapter mainframeAdapter = new MainframeAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
         LoginService loginService = new LoginService(mainframeAdapter);
+        Customer customerService = new Customer(mainframeAdapter);
 
 
         // ui layer
         try {
-            URL fxmlUrl = getClass().getResource("/lavs/ui/dashboard.fxml");
+            URL fxmlUrl = getClass().getResource("/lavs/ui/login.fxml");
             if (fxmlUrl == null) {
                 throw new RuntimeException("Could not find /lavs/ui/login.fxml in resources!");
             }
             FXMLLoader loader = new FXMLLoader(fxmlUrl);
             Parent root = loader.load();
-            // LoginController logIncontroller = loader.getController();
-            // logIncontroller.setLoginService(loginService);
+            LoginController logIncontroller = loader.getController();
+            logIncontroller.setLoginService(loginService);
+            logIncontroller.setCustomerService(customerService);
 
             // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
             Scene scene = new Scene(root, 1200, 800);
@@ -39,7 +43,6 @@ public class Main extends Application {
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
-;
 
 
             primaryStage.setTitle("Mainframe Interface - Login");
@@ -50,6 +53,7 @@ public class Main extends Application {
             primaryStage.show();
             
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

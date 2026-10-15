@@ -1,9 +1,14 @@
 package business.system;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
+import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -13,12 +18,24 @@ import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
 import mainframe.client.messages.customerAddress.List;
+ 
 
 /**
  * Business service for adding customers through the mainframe adapter.
  */
 public class Customer {
-  private final MainframeAdapter customerAdapter;
+    private final MainframeAdapter customerAdapter;
+    /** How many customers to ask the mainframe for per request. */
+    private static final long LIST_PAGE_SIZE = 100L;
+    
+    /** Safety stop so a misbehaving server can never keep us paging forever. */
+  private static final int MAX_LIST_PAGES = 500;
+
+  /**
+   * Fallback search terms, used when an empty search returns nothing
+   * (the mainframe seems to need some search text to return customers).
+   */
+  private static final String FALLBACK_SEARCH_TERMS = "abcdefghijklmnopqrstuvwxyz0123456789";
 
   public Customer(MainframeAdapter customerAdapter) {
       if (customerAdapter == null) {
@@ -403,5 +420,83 @@ public class Customer {
       if (!result.isValid()) {
           throw new ValidationException(result);
       }
+  }
+
+
+
+  /**
+   * Returns every customer (all pages), sorted alphabetically by first name
+   * (then family name), ignoring upper/lower case.
+   *
+   * It first tries an empty search. If that returns nothing, it searches each
+   * letter and digit in turn and merges the results, removing duplicates by
+   * customer number.
+   *
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
+  public java.util.List<CustomerSummary> listAllCustomers()
+          throws IOException, LavsException {
+      Map<String, CustomerSummary> byNumber = new LinkedHashMap<>();
+
+      collectCustomers("", byNumber);
+      if (byNumber.isEmpty()) {
+          for (char term : FALLBACK_SEARCH_TERMS.toCharArray()) {
+              collectCustomers(String.valueOf(term), byNumber);
+          }
+      }
+
+      java.util.List<CustomerSummary> all = new ArrayList<>(byNumber.values());
+      all.sort(Comparator
+              .comparing((CustomerSummary c) -> c.getFirstName().toLowerCase())
+              .thenComparing(c -> c.getFamilyName().toLowerCase()));
+      return all;
+  }
+
+  /** Pages through every result of one search and adds the customers to the map. */
+  private void collectCustomers(String search, Map<String, CustomerSummary> into)
+          throws IOException, LavsException {
+      long page = 1;
+      while (page <= MAX_LIST_PAGES) {
+          Search.Item[] items = listCustomers(page, search, LIST_PAGE_SIZE);
+          if (items == null || items.length == 0) {
+              break;
+          }
+          for (Search.Item item : items) {
+              CustomerSummary summary = toSummary(item);
+              into.putIfAbsent(summary.getNumber(), summary);
+          }
+          if (items.length < LIST_PAGE_SIZE) {
+              break;   // last page
+          }
+          page++;
+      }
+  }
+
+  /**
+   * Returns the customer's primary email address, or an empty string if
+   * they have no email marked as primary.
+   */
+  public String findPrimaryEmail(String customerNumber)
+          throws IOException, LavsException {
+      mainframe.client.messages.customerEmail.List.Item[] emails =
+              listEmails(customerNumber, 1L, LIST_PAGE_SIZE);
+      if (emails == null) {
+          return "";
+      }
+      for (mainframe.client.messages.customerEmail.List.Item email : emails) {
+          if ("y".equals(email.getIsPrimary())) {
+              return email.getAddress() == null ? "" : email.getAddress();
+          }
+      }
+      return "";
+  }
+ 
+  /** Copies the fields we need out of a mainframe search result. */
+  private CustomerSummary toSummary(Search.Item item) {
+      return new CustomerSummary(
+              item.getNumber(),
+              item.getFirstName(),
+              item.getFamilyName());
   }
 }

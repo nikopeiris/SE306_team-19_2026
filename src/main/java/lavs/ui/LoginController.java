@@ -1,8 +1,10 @@
 package lavs.ui;
 
 import java.io.IOException;
+import java.net.URL;
 
 import business.lavsexceptions.LavsException;
+import business.system.Customer;
 import business.system.LoginService;
 import business.validation.ValidationException;
 import javafx.animation.Interpolator;
@@ -85,6 +87,7 @@ public class LoginController {
 
     // Business layer: ALL validation and authentication happens in here, not in the UI
     private LoginService loginService;
+    private Customer customerService;
 
     private Timeline animation;
     private boolean expanded = false;
@@ -102,6 +105,11 @@ public class LoginController {
     /** Called by whoever loads this screen to give it the business-layer service. */
     public void setLoginService(LoginService loginService) {
         this.loginService = loginService;
+    }
+
+    /** Called by whoever loads this screen; passed on to the dashboard after login. */
+    public void setCustomerService(Customer customerService) {
+        this.customerService = customerService;
     }
 
     // ------------------------------------------------------------------
@@ -316,8 +324,19 @@ public class LoginController {
             // Load the separate dashboard FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/lavs/ui/dashboard.fxml"));
             Parent root = loader.load();
+
+            // hand the dashboard the business-layer services (sign out + customer list)
+            DashboardController dashboardController = loader.getController();
+            dashboardController.setServices(loginService, customerService);
+
+            Scene scene = new Scene(root);
+            URL cssUrl = getClass().getResource("/lavs/ui/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+            }
+
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.setScene(scene);
             stage.setTitle("Mainframe Interface - Dashboard");
             stage.show();
         } catch (Exception e) {
