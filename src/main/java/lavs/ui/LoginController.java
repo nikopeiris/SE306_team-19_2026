@@ -1,9 +1,10 @@
 package lavs.ui;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
+import business.lavsexceptions.LavsException;
 import business.system.LoginService;
+import business.validation.ValidationException;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -27,6 +28,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
@@ -46,14 +48,15 @@ public class LoginController {
 
     // ---- Left side controls ----
     @FXML private Button logoButton;
-    @FXML private HBox logoContent;
-    @FXML private Pane logoIcon;
+    @FXML private Pane logoContent;
     @FXML private Rectangle logoBackground;
-    @FXML private SVGPath logoPediment;
-    @FXML private SVGPath logoColumns;
-    @FXML private VBox logoWordmark;
-    @FXML private Text logoTitle;
-    @FXML private Text logoSubtitle;
+    @FXML private SVGPath logoSwoosh;
+    @FXML private HBox logoWordmark;
+    @FXML private Text logoTitleStart;
+    @FXML private StackPane logoI;
+    @FXML private Text logoIStem;
+    @FXML private Circle logoDot;
+    @FXML private Text logoTitleEnd;
     @FXML private Text usernameLabel;
     @FXML private TextField usernameField;
     @FXML private Text passwordLabel;
@@ -262,20 +265,7 @@ public class LoginController {
         Task<Boolean> loginTask = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                try {
-                    return (Boolean) loginService.getClass()
-                            .getMethod("attemptLogin", String.class, String.class)
-                            .invoke(loginService, username, password);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof Exception) {
-                        throw (Exception) cause;
-                    }
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                    throw new RuntimeException(cause);
-                }
+                return loginService.attemptLogin(username, password);
             }
         };
 
@@ -299,16 +289,16 @@ public class LoginController {
     // ------------------------------------------------------------------
 
     private void handleLoginFailure(Throwable error) {
-        if (error instanceof IllegalArgumentException) {
+        if (error instanceof ValidationException) {
             // Input was rejected by the business layer's validation (empty, too short, ...)
+            showError(error.getMessage(), true, true);
+        } else if (error instanceof LavsException) {
+            // The mainframe rejected the login (wrong username or password, etc.)
+            passwordField.clear();   // clear first: clearing removes any error shown
             showError(error.getMessage(), true, true);
         } else if (error instanceof IOException) {
             // Network / mainframe connection problem
             showError("Could not connect to the server. Please try again.", false, false);
-        } else if (error instanceof RuntimeException) {
-            // Credentials were rejected ("Login failed: ...")
-            passwordField.clear();   // clear first: clearing removes any error shown
-            showError(error.getMessage(), true, true);
         } else {
             error.printStackTrace();
             showError("Something went wrong. Please try again.", false, false);

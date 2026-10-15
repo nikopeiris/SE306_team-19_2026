@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.shape.SVGPath?>
 <?import javafx.scene.text.Font?>
@@ -24,36 +25,52 @@
       <StackPane fx:id="leftPane" prefHeight="800.0" prefWidth="600.0" style="-fx-background-color: #F8fff4;">
          <children>
 
-            <!-- Logo: bank-building emblem + wordmark, still a clickable button (see handleLogoButton) -->
+            <!-- Logo: navy banner, white italic wordmark with a yellow dot on the "i", orange swoosh. Still a clickable button (see handleLogoButton) -->
             <Button fx:id="logoButton" mnemonicParsing="false" onAction="#handleLogoButton" style="-fx-background-color: transparent; -fx-padding: 0;" StackPane.alignment="TOP_LEFT">
                <graphic>
-                  <HBox fx:id="logoContent" alignment="CENTER_LEFT" spacing="10.0">
+                  <Pane fx:id="logoContent" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="62.0" prefWidth="300.0">
                      <children>
-                        <!-- Emblem: navy rounded square with an orange pediment and cream columns -->
-                        <Pane fx:id="logoIcon" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="44.0" prefWidth="44.0">
+                        <Rectangle fx:id="logoBackground" fill="#3B3A7D" height="62.0" width="300.0" />
+
+                        <!-- Orange swoosh along the bottom left, curving down at its right end -->
+                        <SVGPath fx:id="logoSwoosh" content="M0 51.5 H184 C193 51.5 198 55.5 201 62 H0 Z" fill="#D2522F" />
+
+                        <!-- Wordmark, split so the "i" can carry its own yellow dot -->
+                        <HBox fx:id="logoWordmark" layoutX="15.0" layoutY="12.0" spacing="0.0">
                            <children>
-                              <Rectangle fx:id="logoBackground" arcHeight="14.0" arcWidth="14.0" fill="#001936" height="44.0" width="44.0" />
-                              <SVGPath fx:id="logoPediment" content="M22 9 L35 16 L9 16 Z" fill="#f18f01" />
-                              <SVGPath fx:id="logoColumns" content="M12 19 h4 v12 h-4 Z M20 19 h4 v12 h-4 Z M28 19 h4 v12 h-4 Z M9 33 h26 v3 h-26 Z" fill="#F8fff4" />
-                           </children>
-                        </Pane>
-                        <!-- Wordmark -->
-                        <VBox fx:id="logoWordmark" alignment="CENTER_LEFT" spacing="0.0">
-                           <children>
-                              <Text fx:id="logoTitle" fill="#001936" strokeType="OUTSIDE" strokeWidth="0.0" text="COUNTRYWIDE">
+                              <Text fx:id="logoTitleStart" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Countryw">
                                  <font>
-                                    <Font name="Gill Sans Bold Italic" size="22.0" />
+                                    <Font name="Roboto Black Italic" size="28.0" />
                                  </font>
                               </Text>
-                              <Text fx:id="logoSubtitle" fill="#f18f01" strokeType="OUTSIDE" strokeWidth="0.0" text="B  A  N  K">
+                              <StackPane fx:id="logoI">
+                                 <children>
+                                    <!-- dotless i (U+0131) so the yellow dot replaces the normal one -->
+                                    <Text fx:id="logoIStem" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&#305;">
+                                       <font>
+                                          <Font name="Roboto Black Italic" size="28.0" />
+                                       </font>
+                                    </Text>
+                                    <Circle fx:id="logoDot" fill="#FFE600" radius="3.3" translateX="3.0" StackPane.alignment="TOP_CENTER">
+                                       <StackPane.margin>
+                                          <Insets top="3.0" />
+                                       </StackPane.margin>
+                                    </Circle>
+                                 </children>
+                              </StackPane>
+                              <Text fx:id="logoTitleEnd" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="de Bank">
                                  <font>
-                                    <Font name="Gill Sans Bold" size="12.0" />
+                                    <Font name="Roboto Black Italic" size="28.0" />
                                  </font>
                               </Text>
                            </children>
-                        </VBox>
+                        </HBox>
                      </children>
-                  </HBox>
+                     <!-- rounds the banner's corners (and trims the swoosh to match) -->
+                     <clip>
+                        <Rectangle arcHeight="12.0" arcWidth="12.0" height="62.0" width="300.0" />
+                     </clip>
+                  </Pane>
                </graphic>
                <cursor>
                   <Cursor fx:constant="HAND" />
