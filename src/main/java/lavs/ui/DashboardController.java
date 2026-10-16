@@ -27,6 +27,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -43,7 +44,9 @@ public class DashboardController {
 
     @FXML private Button signOutButton;
     @FXML private TextField customerSearchField;
-    @FXML private ListView<CustomerSummary> customerListView;
+    @FXML
+    private ListView<CustomerSummary> customerListView;
+    @FXML private Button addCustomerButton;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -100,6 +103,21 @@ public class DashboardController {
             applyFilter();
             customerListView.refresh();
         });
+    }
+
+    // add custoemr button
+    @FXML
+    private void handleAddCustomer(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+        }
+
     }
 
     /** Called by LoginController when it opens the dashboard. */
@@ -374,4 +392,6 @@ public class DashboardController {
             return thread;
         };
     }
+
+
 }

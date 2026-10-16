@@ -40,7 +40,7 @@
 <StackPane fx:id="logoI">
 <children>
 <!-- dotless i (U+0131) so the yellow dot replaces the normal one -->
-<Text fx:id="logoIStem" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&#305;">
+<Text fx:id="logoIStem" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="ı">
 <font>
 <Font name="Roboto Black Italic" size="28.0" />
 </font>
@@ -83,12 +83,12 @@
 <Insets left="12.0" right="12.0" />
 </padding>
 <children>
-<Label minWidth="290.0" prefWidth="290.0" maxWidth="290.0" text="NAME" textFill="#726e97">
+<Label maxWidth="290.0" minWidth="290.0" prefWidth="290.0" text="NAME" textFill="#726e97">
 <font>
 <Font name="Roboto Bold" size="11.0" />
 </font>
 </Label>
-<Label minWidth="170.0" prefWidth="170.0" maxWidth="170.0" text="CUSTOMER ID" textFill="#726e97">
+<Label maxWidth="170.0" minWidth="170.0" prefWidth="170.0" text="CUSTOMER ID" textFill="#726e97">
 <font>
 <Font name="Roboto Bold" size="11.0" />
 </font>
@@ -103,7 +103,7 @@
 
 <!-- Scrollable customer list (all customers by default, filtered as you type) -->
 <ListView fx:id="customerListView" layoutX="215.0" layoutY="222.0" prefHeight="120.0" prefWidth="787.0" style="-fx-background-color: white; -fx-border-color: #d9d9d9; -fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0;" />
-<Button fx:id="addCustomerButton" defaultButton="true" layoutX="870.0" layoutY="122.0" mnemonicParsing="false" prefHeight="28.0" prefWidth="134.0" style="-fx-background-color: #726e97;" text="Add New Customer" textFill="WHITE">
+<Button fx:id="addCustomerButton" defaultButton="true" layoutX="870.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleAddCustomer" prefHeight="28.0" prefWidth="134.0" style="-fx-background-color: #726e97;" text="Add New Customer" textFill="WHITE">
 <cursor>
 <Cursor fx:constant="HAND" />
 </cursor>
