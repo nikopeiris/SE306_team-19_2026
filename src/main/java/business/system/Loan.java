@@ -11,9 +11,12 @@ import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.Create;
+import mainframe.client.messages.loan.DeleteCoborrower;
 import mainframe.client.messages.loan.List;
 import mainframe.client.messages.loan.Retrieve;
+import mainframe.client.messages.loan.Update;
 
 /**
  * Business service for creating customer loans.
@@ -23,6 +26,11 @@ public class Loan {
             Create.RATETYPE_FIXED,
             Create.RATETYPE_FLOATING,
             Create.RATETYPE_INTERESTONLY
+    );
+
+    private static final Set<String> VALID_COBORROWER_TYPES = Set.of(
+            AddCoborrower.TYPE_COBORROWER,
+            AddCoborrower.TYPE_GUARANTOR
     );
 
     private static final Set<String> VALID_PAYMENT_FREQUENCIES = Set.of(
@@ -177,6 +185,109 @@ public class Loan {
     }
 
     /**
+     * Adds a co-borrower or guarantor to a loan after validating the input details.
+     *
+     * @param coborrowerNumber customer identifier for the co-borrower
+     * @param loanNumber loan identifier to attach the co-borrower to
+     * @param type co-borrower type ("Coborrower" or "Guarantor")
+     * @return the created AddCoborrower mainframe message
+     * @throws ValidationException if business validation fails
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public AddCoborrower addCoborrower(String coborrowerNumber, String loanNumber, String type)
+            throws IOException, LavsException {
+        validateCoborrowerDetails(coborrowerNumber, loanNumber, type);
+
+        AddCoborrower addCoborrowerMessage = new AddCoborrower(
+                coborrowerNumber.trim(),
+                loanNumber.trim(),
+                type.trim());
+
+        Status status = loanAdapter.send(addCoborrowerMessage);
+        Main.isValidStatus(status);
+        return addCoborrowerMessage;
+    }
+
+    /**
+     * Deletes a co-borrower from a loan after validating the input details.
+     *
+     * @param id the unique id of the co-borrower relationship
+     * @param loanNumber loan identifier
+     * @return the DeleteCoborrower mainframe message
+     * @throws ValidationException if business validation fails
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public DeleteCoborrower deleteCoborrower(Long id, String loanNumber)
+            throws IOException, LavsException {
+        validateDeleteCoborrowerDetails(id, loanNumber);
+
+        DeleteCoborrower deleteCoborrowerMessage = new DeleteCoborrower(id, loanNumber.trim());
+        Status status = loanAdapter.send(deleteCoborrowerMessage);
+        Main.isValidStatus(status);
+        return deleteCoborrowerMessage;
+    }
+
+    /**
+     * Updates loan details in the mainframe after validating the input values.
+     *
+     * @param customerNumber customer identifier
+     * @param loanNumber loan identifier
+     * @param paymentAmount repayment amount per period
+     * @param paymentFrequency payment frequency category code
+     * @param principal total loan principal amount
+     * @param rateAmount interest rate amount
+     * @param rateFrequency compounding rate frequency code
+     * @param rateType loan rate type code
+     * @param renewalDate renewal date in yyyy-MM-dd format
+     * @param startDate start date in yyyy-MM-dd format
+     * @return the updated Update mainframe message
+     * @throws ValidationException if business validation fails
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public Update updateLoan(
+            String customerNumber,
+            String loanNumber,
+            double paymentAmount,
+            String paymentFrequency,
+            double principal,
+            double rateAmount,
+            String rateFrequency,
+            String rateType,
+            String renewalDate,
+            String startDate) throws IOException, LavsException {
+        validateUpdateLoanDetails(
+                customerNumber,
+                loanNumber,
+                paymentAmount,
+                paymentFrequency,
+                principal,
+                rateAmount,
+                rateFrequency,
+                rateType,
+                renewalDate,
+                startDate);
+
+        Update updateMessage = new Update(
+                customerNumber.trim(),
+                loanNumber.trim(),
+                paymentAmount,
+                paymentFrequency.trim(),
+                principal,
+                rateAmount,
+                rateFrequency.trim(),
+                rateType.trim(),
+                renewalDate.trim(),
+                startDate.trim());
+
+        Status status = loanAdapter.send(updateMessage);
+        Main.isValidStatus(status);
+        return updateMessage;
+    }
+
+    /**
      * Convenience wrapper used when the business validation is the only requirement.
      */
     public boolean addLoanToCustomerCheck(
@@ -250,6 +361,115 @@ public class Loan {
             result.addError("compoundType", "Compound type must be a valid category code");
         }
 
+        validateDate(result, startDate, renewalDate);
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
+      if (customerNumber != null && !customerNumber.isBlank()) {
+        Customer customerService = new Customer(loanAdapter);
+        if (customerService.findMailingAddress(customerNumber.trim()) == null) {
+            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
+        }
+      }
+    }
+
+    public void validateCoborrowerDetails(String coborrowerNumber, String loanNumber, String type)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("coborrowerNumber", coborrowerNumber,
+                        "Coborrower number cannot be null or empty")
+                .requireNotBlank("loanNumber", loanNumber,
+                        "Loan number cannot be null or empty")
+                .requireNotBlank("type", type,
+                        "Coborrower type cannot be null or empty");
+
+        if (type != null && !type.isBlank() && !VALID_COBORROWER_TYPES.contains(type.trim())) {
+            result.addError("type", "Coborrower type is invalid");
+        }
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    public void validateDeleteCoborrowerDetails(Long id, String loanNumber)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("loanNumber", loanNumber,
+                        "Loan number cannot be null or empty");
+
+        if (id == null) {
+            result.addError("id", "Coborrower id cannot be empty");
+        } else if (id < 1) {
+            result.addError("id", "Coborrower id must be a positive integer");
+        }
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    public void validateUpdateLoanDetails(
+            String customerNumber,
+            String loanNumber,
+            double paymentAmount,
+            String paymentFrequency,
+            double principal,
+            double rateAmount,
+            String rateFrequency,
+            String rateType,
+            String renewalDate,
+            String startDate) throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("customerNumber", customerNumber,
+                        "Customer number cannot be null or empty")
+                .requireNotBlank("loanNumber", loanNumber,
+                        "Loan number cannot be null or empty")
+                .requireNotBlank("paymentFrequency", paymentFrequency,
+                        "Payment frequency cannot be null or empty")
+                .requireNotBlank("rateFrequency", rateFrequency,
+                        "Rate frequency cannot be null or empty")
+                .requireNotBlank("rateType", rateType,
+                        "Rate type cannot be null or empty")
+                .requireNotBlank("renewalDate", renewalDate,
+                        "Renewal date cannot be null or empty")
+                .requireNotBlank("startDate", startDate,
+                        "Start date cannot be null or empty");
+
+        if (paymentAmount <= 0) {
+            result.addError("paymentAmount", "Payment amount must be greater than zero");
+        }
+        if (principal <= 0) {
+            result.addError("principal", "Loan principal must be greater than zero");
+        }
+        if (rateAmount < 0) {
+            result.addError("rateAmount", "Rate amount cannot be negative");
+        }
+
+        if (rateType != null && !rateType.isBlank() && !VALID_LOAN_TYPES.contains(rateType.trim())) {
+            result.addError("rateType", "Rate type must be a valid category code");
+        }
+        if (paymentFrequency != null && !paymentFrequency.isBlank()
+                && !VALID_PAYMENT_FREQUENCIES.contains(paymentFrequency.trim())) {
+            result.addError("paymentFrequency", "Payment frequency must be a valid category code");
+        }
+        if (rateFrequency != null && !rateFrequency.isBlank()
+                && !VALID_COMPOUND_TYPES.contains(rateFrequency.trim())) {
+            result.addError("rateFrequency", "Rate frequency must be a valid category code");
+        }
+
+        validateDate(result, startDate, renewalDate);
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    public void validateDate(ValidationResult result, String startDate, String renewalDate) {
         if (renewalDate != null && !renewalDate.isBlank()) {
             try {
                 LocalDate renewalLocalDate = LocalDate.parse(renewalDate.trim());
@@ -271,17 +491,5 @@ public class Loan {
                 result.addError("startDate", "Start date must be in yyyy-MM-dd format");
             }
         }
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
-    }
-
-    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
-      if (customerNumber != null && !customerNumber.isBlank()) {
-        Customer customerService = new Customer(loanAdapter);
-        if (customerService.findMailingAddress(customerNumber.trim()) == null) {
-            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
-        }
-      }
     }
 }

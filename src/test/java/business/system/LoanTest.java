@@ -322,4 +322,234 @@ class LoanTest {
         verify(adapter).send(captor.capture());
         assertEquals(result, captor.getValue());
     }
+
+    @Test
+    void addCoborrowerSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.AddCoborrower.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.AddCoborrower result = loan.addCoborrower(
+                "  C123  ",
+                "  L456  ",
+                "  Coborrower  ");
+
+        ArgumentCaptor<mainframe.client.messages.loan.AddCoborrower> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.AddCoborrower.class);
+        verify(adapter).send(captor.capture());
+        assertEquals("C123", captor.getValue().getCoborrowerNumber());
+        assertEquals("L456", captor.getValue().getLoanNumber());
+        assertEquals("Coborrower", captor.getValue().getType());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void addCoborrowerAcceptsGuarantorType() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.AddCoborrower.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.AddCoborrower result = loan.addCoborrower(
+                "C123", "L456", mainframe.client.messages.loan.AddCoborrower.TYPE_GUARANTOR);
+
+        assertEquals(mainframe.client.messages.loan.AddCoborrower.TYPE_GUARANTOR, result.getType());
+    }
+
+    @Test
+    void addCoborrowerRejectsBlankOrInvalidDetails() {
+        ValidationException emptyFieldsException = assertThrows(ValidationException.class, () ->
+                loan.addCoborrower("", "  ", ""));
+        assertEquals("Coborrower number cannot be null or empty",
+                emptyFieldsException.getResult().getError("coborrowerNumber"));
+        assertEquals("Loan number cannot be null or empty",
+                emptyFieldsException.getResult().getError("loanNumber"));
+        assertEquals("Coborrower type cannot be null or empty",
+                emptyFieldsException.getResult().getError("type"));
+
+        ValidationException invalidTypeException = assertThrows(ValidationException.class, () ->
+                loan.addCoborrower("C123", "L456", "InvalidType"));
+        assertEquals("Coborrower type is invalid",
+                invalidTypeException.getResult().getError("type"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void addCoborrowerThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.AddCoborrower.class)))
+                .thenReturn(new Status(500, "Rejected", 99L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                loan.addCoborrower("C123", "L456", "Coborrower"));
+
+        assertEquals("Rejected", exception.getMessage());
+    }
+
+    @Test
+    void deleteCoborrowerSendsValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.DeleteCoborrower.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.DeleteCoborrower result = loan.deleteCoborrower(42L, "  L456  ");
+
+        ArgumentCaptor<mainframe.client.messages.loan.DeleteCoborrower> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.DeleteCoborrower.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(42L, captor.getValue().getId());
+        assertEquals("L456", captor.getValue().getLoanNumber());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void deleteCoborrowerRejectsInvalidIdOrLoanNumber() {
+        ValidationException nullIdException = assertThrows(ValidationException.class, () ->
+                loan.deleteCoborrower(null, "L456"));
+        assertEquals("Coborrower id cannot be empty",
+                nullIdException.getResult().getError("id"));
+
+        ValidationException negativeIdException = assertThrows(ValidationException.class, () ->
+                loan.deleteCoborrower(-1L, "L456"));
+        assertEquals("Coborrower id must be a positive integer",
+                negativeIdException.getResult().getError("id"));
+
+        ValidationException blankLoanException = assertThrows(ValidationException.class, () ->
+                loan.deleteCoborrower(1L, "   "));
+        assertEquals("Loan number cannot be null or empty",
+                blankLoanException.getResult().getError("loanNumber"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void deleteCoborrowerThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.DeleteCoborrower.class)))
+                .thenReturn(new Status(500, "Deletion failed", 99L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                loan.deleteCoborrower(1L, "L456"));
+
+        assertEquals("Deletion failed", exception.getMessage());
+    }
+
+    @Test
+    void updateLoanSendsTrimmedMessageAndReturnsIt() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.Update.class)))
+                .thenReturn(new Status(1));
+
+        String renewalDate = LocalDate.now().plusDays(30).toString();
+        String startDate = LocalDate.now().plusDays(5).toString();
+
+        mainframe.client.messages.loan.Update result = loan.updateLoan(
+                "  C123  ",
+                "  L456  ",
+                150.0,
+                " Monthly ",
+                5000.0,
+                4.5,
+                " Monthly ",
+                " Fixed ",
+                renewalDate,
+                startDate);
+
+        ArgumentCaptor<mainframe.client.messages.loan.Update> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.Update.class);
+        verify(adapter).send(captor.capture());
+        assertEquals("C123", captor.getValue().getCustomerNumber());
+        assertEquals("L456", captor.getValue().getLoanNumber());
+        assertEquals(150.0, captor.getValue().getPaymentAmount());
+        assertEquals("Monthly", captor.getValue().getPaymentFrequency());
+        assertEquals(5000.0, captor.getValue().getPrincipal());
+        assertEquals(4.5, captor.getValue().getRateAmount());
+        assertEquals("Monthly", captor.getValue().getRateFrequency());
+        assertEquals("Fixed", captor.getValue().getRateType());
+        assertEquals(renewalDate, captor.getValue().getRenewalDate());
+        assertEquals(startDate, captor.getValue().getStartDate());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void updateLoanRejectsBlankRequiredFields() {
+        String renewalDate = LocalDate.now().plusDays(30).toString();
+        String startDate = LocalDate.now().plusDays(5).toString();
+
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                loan.updateLoan(
+                        "", " ", 100.0, "", 1000.0, 5.0, "", "", "", ""));
+
+        assertEquals("Customer number cannot be null or empty",
+                exception.getResult().getError("customerNumber"));
+        assertEquals("Loan number cannot be null or empty",
+                exception.getResult().getError("loanNumber"));
+        assertEquals("Payment frequency cannot be null or empty",
+                exception.getResult().getError("paymentFrequency"));
+        assertEquals("Rate frequency cannot be null or empty",
+                exception.getResult().getError("rateFrequency"));
+        assertEquals("Rate type cannot be null or empty",
+                exception.getResult().getError("rateType"));
+        assertEquals("Renewal date cannot be null or empty",
+                exception.getResult().getError("renewalDate"));
+        assertEquals("Start date cannot be null or empty",
+                exception.getResult().getError("startDate"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateLoanRejectsInvalidAmountsCodesAndDates() {
+        String pastDate = LocalDate.now().minusDays(1).toString();
+
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                loan.updateLoan(
+                        "C123",
+                        "L456",
+                        0.0,
+                        "BadFreq",
+                        -10.0,
+                        -1.0,
+                        "BadRateFreq",
+                        "BadRateType",
+                        pastDate,
+                        "invalid-date"));
+
+        assertEquals("Payment amount must be greater than zero",
+                exception.getResult().getError("paymentAmount"));
+        assertEquals("Loan principal must be greater than zero",
+                exception.getResult().getError("principal"));
+        assertEquals("Rate amount cannot be negative",
+                exception.getResult().getError("rateAmount"));
+        assertEquals("Payment frequency must be a valid category code",
+                exception.getResult().getError("paymentFrequency"));
+        assertEquals("Rate frequency must be a valid category code",
+                exception.getResult().getError("rateFrequency"));
+        assertEquals("Rate type must be a valid category code",
+                exception.getResult().getError("rateType"));
+        assertEquals("Renewal date must be today or later",
+                exception.getResult().getError("renewalDate"));
+        assertEquals("Start date must be in yyyy-MM-dd format",
+                exception.getResult().getError("startDate"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateLoanThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.Update.class)))
+                .thenReturn(new Status(500, "Update rejected", 99L));
+
+        String renewalDate = LocalDate.now().plusDays(30).toString();
+        String startDate = LocalDate.now().plusDays(5).toString();
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                loan.updateLoan(
+                        "C123",
+                        "L456",
+                        150.0,
+                        "Monthly",
+                        5000.0,
+                        4.5,
+                        "Monthly",
+                        "Fixed",
+                        renewalDate,
+                        startDate));
+
+        assertEquals("Update rejected", exception.getMessage());
+    }
 }
