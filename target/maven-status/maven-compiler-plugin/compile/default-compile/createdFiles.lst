@@ -18,6 +18,7 @@ mainframe/client/messages/customer/AddDocument.class
 mainframe/client/messages/customer/UpdatePhoneNumber.class
 mainframe/client/messages/organisation/List.class
 mainframe/client/messages/customerDocument/Retrieve.class
+lavs/ui/CustomerController.class
 mainframe/client/StatusMessage.class
 mainframe/client/messages/loan/AddDocument.class
 mainframe/client/messages/customer/DeleteAddress.class
