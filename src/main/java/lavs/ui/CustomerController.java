@@ -56,7 +56,7 @@ public class CustomerController {
     @FXML private Text dateOfBirthLabel;
     @FXML private DatePicker dateOfBirthField;
     @FXML private Text employerLabel;
-    @FXML private TextField employerField;
+    @FXML private ComboBox<String> employerField;
     @FXML private Text nationalityLabel;
     @FXML private ComboBox<String> nationalityField;
     @FXML private Text statusLabel;
@@ -182,8 +182,30 @@ public class CustomerController {
         }
 
         if (statusField != null) {
-            statusField.getItems().addAll("Active", "Reactive");
+          statusField.getItems().addAll("Active", "Reactive");
         }
+        if (employerField != null) {
+            employerField.getItems().addAll("Employed", "None");
+            
+            // Listen for changes to toggle job details requirements
+            employerField.valueProperty().addListener((obs, oldValue, newValue) -> {
+                boolean isEmployed = "Employed".equals(newValue);
+                
+                // Enable or disable employment detail fields
+                if (jobTitleField != null) jobTitleField.setDisable(!isEmployed);
+                if (startDateField != null) startDateField.setDisable(!isEmployed);
+                if (salaryField != null) salaryField.setDisable(!isEmployed);
+                
+                // Clear fields if "None" is selected
+                if (!isEmployed) {
+                    if (jobTitleField != null) jobTitleField.clear();
+                    if (startDateField != null) startDateField.setValue(null);
+                    if (salaryField != null) salaryField.clear();
+                }
+            });
+        }
+
+
         
         if (salaryField != null) {
             salaryField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -289,11 +311,18 @@ public class CustomerController {
                 : "";
             
             Long organisation = 1L;
-            if (employerField != null && !employerField.getText().isBlank()) {
-                try {
-                    organisation = Long.parseLong(employerField.getText().trim());
-                } catch (NumberFormatException e) {
-                    organisation = 0L; 
+            // Check employment selection
+            String employmentStatus = (employerField != null && employerField.getValue() != null) 
+                ? employerField.getValue().toString() 
+                : "";
+
+            if ("Employed".equals(employmentStatus)) {
+                String jobTitle = jobTitleField != null ? jobTitleField.getText() : "";
+                String salary = salaryField != null ? salaryField.getText() : "";
+                var startDate = startDateField != null ? startDateField.getValue() : null;
+
+                if (jobTitle.isBlank() || salary.isBlank() || startDate == null) {
+                    throw new IllegalArgumentException("Job title, start date, and salary are required when employed.");
                 }
             }
 
