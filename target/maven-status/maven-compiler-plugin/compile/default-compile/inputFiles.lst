@@ -1,98 +1,104 @@
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\lavsexceptions\LavsException.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\Main.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\system\Customer.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\system\Loan.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\system\LoginService.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\system\SignupService.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\validation\ValidationException.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\business\validation\ValidationResult.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\dataaccess\systemadapters\MainframeAdapter.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\lavs\app\Main.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\lavs\ui\DashboardController.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\lavs\ui\LoginController.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\Connection.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\DataParser.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\HttpConnection.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\Message.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\MessageRequest.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\MessageResponse.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantCategory\AddItem.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantCategory\Create.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantCategory\DeleteItem.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantCategory\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantCategory\Update.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\constantItem\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddAddress.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddDocument.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddEmail.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddEmployer.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddPhoneNumber.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\AddRelationship.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\Create.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteAddress.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteDocument.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteEmail.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteEmployer.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeletePhoneNumber.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\DeleteRelationship.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\Search.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\Update.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateAddress.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateEmail.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateEmployer.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdatePhoneNumber.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateRelationship.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customer\UpdateStatus.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerAddress\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerAddress\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerDocument\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerDocument\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerEmail\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerEmail\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerEmployer\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerEmployer\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerNote\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerNote\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerPhoneNumber\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerPhoneNumber\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerRelationship\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\customerRelationship\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\AddCoborrower.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\AddDocument.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\AddNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\AddPayment.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\Create.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\DeleteCoborrower.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\DeleteDocument.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\DeleteNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\DeletePayment.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\Update.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\UpdateNote.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loan\UpdateStatus.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanCoborrower\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanCoborrower\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanDocument\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanDocument\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanNote\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanNote\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanPayment\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanPayment\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanRepaymentSchedule\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\loanSummary\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\Login.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\organisation\Create.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\organisation\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\organisation\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\organisation\Update.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\user\Create.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\user\List.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\user\Retrieve.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\messages\user\Update.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\Status.java
-C:\Part III\SOFTENG306\SE306_team-19_2026\src\main\java\mainframe\client\StatusMessage.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/Main.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/lavsexceptions/LavsException.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Customer.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Loan.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoginService.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/SignupService.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerSummary.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/ValidationException.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/ValidationResult.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/dataaccess/systemadapters/MainframeAdapter.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/app/Main.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/ContactInfoController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerContext.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/DashboardController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanTabController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoginController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/PersonalInfoController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/Connection.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/DataParser.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/HttpConnection.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/Message.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/MessageRequest.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/MessageResponse.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/Status.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/StatusMessage.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/Login.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantCategory/AddItem.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantCategory/Create.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantCategory/DeleteItem.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantCategory/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantCategory/Update.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/constantItem/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddAddress.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddDocument.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddEmail.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddEmployer.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddPhoneNumber.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/AddRelationship.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/Create.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteAddress.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteDocument.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteEmail.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteEmployer.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeletePhoneNumber.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/DeleteRelationship.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/Search.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/Update.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateAddress.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateEmail.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateEmployer.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdatePhoneNumber.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateRelationship.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customer/UpdateStatus.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerAddress/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerAddress/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerDocument/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerDocument/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerEmail/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerEmail/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerEmployer/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerEmployer/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerNote/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerNote/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerPhoneNumber/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerPhoneNumber/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerRelationship/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/customerRelationship/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/AddCoborrower.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/AddDocument.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/AddNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/AddPayment.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/Create.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/DeleteCoborrower.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/DeleteDocument.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/DeleteNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/DeletePayment.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/Update.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/UpdateNote.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loan/UpdateStatus.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanCoborrower/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanCoborrower/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanDocument/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanDocument/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanNote/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanNote/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanPayment/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanPayment/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanRepaymentSchedule/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/loanSummary/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/organisation/Create.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/organisation/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/organisation/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/organisation/Update.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/user/Create.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/user/List.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/user/Retrieve.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/mainframe/client/messages/user/Update.java
