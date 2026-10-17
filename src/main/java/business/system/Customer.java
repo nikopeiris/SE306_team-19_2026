@@ -8,13 +8,11 @@ import java.util.Map;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
-import business.system.customer.CustomerAddressService;
 import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
-import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.AddEmail;
 import mainframe.client.messages.customer.AddPhoneNumber;
 import mainframe.client.messages.customer.Create;
@@ -472,18 +470,5 @@ public class Customer {
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
-    }
-
-    public void validateAddressDetails(
-            String city,
-            String country,
-            String customer,
-            String line1,
-            String otherType,
-            String postCode,
-            String suburb,
-            String type) throws ValidationException {
-        new CustomerAddressService(customerAdapter).validateAddressDetails(
-                city, country, customer, line1, otherType, postCode, suburb, type);
     }
 }
