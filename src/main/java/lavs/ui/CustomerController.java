@@ -195,6 +195,17 @@ public class CustomerController {
     private LoginService loginService;
     private Customer customerService;
 
+
+    // Data structures for backing lists
+    public record AddressDto(String type, String line1, String line2, String suburb, String city, String country, String postCode, boolean isPrimary, boolean isMailing) {}
+    public record PhoneDto(String type, String countryCode, String number, boolean isPrimary) {}
+    public record EmailDto(String type, String email, boolean isPrimary) {}
+
+    // Backing collections
+    private final java.util.List<AddressDto> savedAddresses = new java.util.ArrayList<>();
+    private final java.util.List<PhoneDto> savedPhones = new java.util.ArrayList<>();
+    private final java.util.List<EmailDto> savedEmails = new java.util.ArrayList<>();
+
     @FXML
     private void initialize() {
         showPersonalInfoTab();
@@ -513,11 +524,14 @@ public class CustomerController {
                     }
                 }
 
-                // Lock in primary/mailing flags if selected
+                // Create DTO object
+                AddressDto newAddress = new AddressDto(type, l1, l2, suburb, city, country, postCode, isPrimary, isMailing);
+                savedAddresses.add(newAddress);
+
                 if (isPrimary) hasPrimaryAddress = true;
                 if (isMailing) hasMailingAddress = true;
 
-                // Create display row
+                // Create UI display row
                 if (addressListContainer != null) {
                     javafx.scene.layout.HBox addressRow = new javafx.scene.layout.HBox(12);
                     addressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -534,8 +548,9 @@ public class CustomerController {
                     removeAddressBtn.setTextFill(javafx.scene.paint.Color.RED);
                     
                     removeAddressBtn.setOnAction(remEvent -> {
-                        if (isPrimary) hasPrimaryAddress = false;
-                        if (isMailing) hasMailingAddress = false;
+                        if (newAddress.isPrimary()) hasPrimaryAddress = false;
+                        if (newAddress.isMailing()) hasMailingAddress = false;
+                        savedAddresses.remove(newAddress);
                         addressListContainer.getChildren().remove(addressRow);
                     });
 
@@ -614,34 +629,33 @@ public class CustomerController {
                     throw new IllegalArgumentException("Only one phone number can be set as Primary.");
                 }
 
-                if (isPrimary) {
-                    hasPrimaryPhone = true;
-                }
+              PhoneDto newPhone = new PhoneDto(type, countryCode, number, isPrimary);
+              savedPhones.add(newPhone);
 
-                // Create display row in the phone number list container
-                if (phoneNumberListContainer != null) {
-                    javafx.scene.layout.HBox phoneRow = new javafx.scene.layout.HBox(12);
-                    phoneRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+              if (isPrimary) hasPrimaryPhone = true;
 
-                    String tag = isPrimary ? " [PRIMARY]" : "";
-                    String phoneSummary = String.format("[%s]%s %s %s", type, tag, countryCode, number);
+              if (phoneNumberListContainer != null) {
+                  javafx.scene.layout.HBox phoneRow = new javafx.scene.layout.HBox(12);
+                  phoneRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-                    Text phoneText = new Text(phoneSummary);
-                    Button removePhoneBtn = new Button("Remove");
-                    removePhoneBtn.setTextFill(javafx.scene.paint.Color.RED);
+                  String tag = isPrimary ? " [PRIMARY]" : "";
+                  String phoneSummary = String.format("[%s]%s %s %s", type, tag, countryCode, number);
 
-                    removePhoneBtn.setOnAction(remEvent -> {
-                        if (isPrimary) {
-                            hasPrimaryPhone = false;
-                        }
-                        phoneNumberListContainer.getChildren().remove(phoneRow);
-                    });
+                  Text phoneText = new Text(phoneSummary);
+                  Button removePhoneBtn = new Button("Remove");
+                  removePhoneBtn.setTextFill(javafx.scene.paint.Color.RED);
 
-                    phoneRow.getChildren().addAll(phoneText, removePhoneBtn);
-                    phoneNumberListContainer.getChildren().add(phoneRow);
-                }
+                  removePhoneBtn.setOnAction(remEvent -> {
+                      if (newPhone.isPrimary()) hasPrimaryPhone = false;
+                      savedPhones.remove(newPhone);
+                      phoneNumberListContainer.getChildren().remove(phoneRow);
+                  });
 
-                popup.close();
+                  phoneRow.getChildren().addAll(phoneText, removePhoneBtn);
+                  phoneNumberListContainer.getChildren().add(phoneRow);
+              }
+
+              popup.close();
             } catch (Exception ex) {
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
                 alert.setTitle("Phone Number Error");
@@ -698,11 +712,11 @@ public class CustomerController {
                     throw new IllegalArgumentException("Only one email address can be set as Primary.");
                 }
 
-                if (isPrimary) {
-                    hasPrimaryEmail = true;
-                }
+                EmailDto newEmail = new EmailDto(type, email, isPrimary);
+                savedEmails.add(newEmail);
 
-                // Create display row in the email list container
+                if (isPrimary) hasPrimaryEmail = true;
+
                 if (emailListContainer != null) {
                     javafx.scene.layout.HBox emailRow = new javafx.scene.layout.HBox(12);
                     emailRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
@@ -715,15 +729,14 @@ public class CustomerController {
                     removeEmailBtn.setTextFill(javafx.scene.paint.Color.RED);
 
                     removeEmailBtn.setOnAction(remEvent -> {
-                        if (isPrimary) {
-                            hasPrimaryEmail = false;
-                        }
+                        if (newEmail.isPrimary()) hasPrimaryEmail = false;
+                        savedEmails.remove(newEmail);
                         emailListContainer.getChildren().remove(emailRow);
                     });
 
                     emailRow.getChildren().addAll(emailText, removeEmailBtn);
                     emailListContainer.getChildren().add(emailRow);
-                }
+                } 
 
                 popup.close();
             } catch (Exception ex) {
@@ -803,7 +816,6 @@ public class CustomerController {
 
     @FXML
     private void handleSave(ActionEvent event) {
-        // TODO: save customer & loan details
     }
 
     @FXML

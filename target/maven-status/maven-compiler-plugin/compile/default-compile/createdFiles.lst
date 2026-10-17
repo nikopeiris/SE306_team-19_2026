@@ -30,6 +30,7 @@ mainframe/client/messages/loanDocument/Retrieve.class
 mainframe/client/messages/customerRelationship/List$Item.class
 mainframe/client/messages/user/Retrieve.class
 lavs/ui/DashboardController$2.class
+lavs/ui/CustomerController$EmailDto.class
 mainframe/client/messages/loan/UpdateStatus.class
 mainframe/client/messages/user/List.class
 mainframe/client/messages/loanDocument/List$Item.class
@@ -43,6 +44,7 @@ mainframe/client/messages/loan/DeletePayment.class
 mainframe/client/messages/loan/Retrieve.class
 mainframe/client/messages/organisation/List$Item.class
 mainframe/client/messages/customerPhoneNumber/List$Item.class
+lavs/ui/CustomerController$AddressDto.class
 mainframe/client/messages/loan/List$Item.class
 mainframe/client/messages/user/Create.class
 mainframe/client/messages/constantCategory/Create.class
@@ -60,6 +62,7 @@ mainframe/client/messages/customer/Search$Item.class
 mainframe/client/messages/customer/UpdateEmail.class
 business/system/LoginService.class
 mainframe/client/messages/customer/Create.class
+lavs/ui/CustomerController$PhoneDto.class
 mainframe/client/messages/loanCoborrower/List.class
 mainframe/client/messages/customer/AddEmployer.class
 mainframe/client/messages/customer/UpdateNote.class

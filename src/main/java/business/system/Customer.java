@@ -14,6 +14,8 @@ import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.customer.AddAddress;
+import mainframe.client.messages.customer.AddEmail;
+import mainframe.client.messages.customer.AddPhoneNumber;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
@@ -499,4 +501,118 @@ public class Customer {
               item.getFirstName(),
               item.getFamilyName());
   }
+
+
+  /**
+     * Adds an email address to an existing customer after validating the email fields.
+     *
+     * @return the mainframe message containing the created email details
+     * @throws ValidationException if a required field or email type is invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public AddEmail addEmail(
+            String address,
+            String customer,
+            boolean isPrimary,
+            String otherType,
+            String type) throws IOException, LavsException {
+        validateEmailDetails(address, customer, otherType, type);
+
+        AddEmail addMessage = new AddEmail(
+                address.trim(),
+                customer.trim(),
+                isPrimary,
+                otherType == null ? null : otherType.trim(),
+                type.trim());
+        Status status = customerAdapter.send(addMessage);
+        Main.isValidStatus(status);
+        return addMessage;
+    }
+
+    /**
+     * Adds a phone number to an existing customer after validating the phone fields.
+     *
+     * @return the mainframe message containing the created phone number details
+     * @throws ValidationException if a required field or phone type is invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public AddPhoneNumber addPhoneNumber(
+            boolean canTxt,
+            String countryCode,
+            String customer,
+            boolean isPrimary,
+            String number,
+            String otherType,
+            String type) throws IOException, LavsException {
+        validatePhoneNumberDetails(countryCode, customer, number, otherType, type);
+
+        AddPhoneNumber addMessage = new AddPhoneNumber(
+                canTxt,
+                countryCode.trim(),
+                customer.trim(),
+                isPrimary,
+                number.trim(),
+                otherType == null ? null : otherType.trim(),
+                type.trim());
+        Status status = customerAdapter.send(addMessage);
+        Main.isValidStatus(status);
+        return addMessage;
+    }
+
+    public void validateEmailDetails(
+            String address,
+            String customer,
+            String otherType,
+            String type) throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("address", address, "Email address cannot be empty")
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("type", type, "Email type cannot be empty");
+
+        if (type != null && !type.isBlank()
+                && !type.equals(AddEmail.TYPE_PERSONAL)
+                && !type.equals(AddEmail.TYPE_WORK)
+                && !type.equals(AddEmail.TYPE_OTHER)) {
+            result.addError("type", "Email type is invalid");
+        }
+        if (AddEmail.TYPE_OTHER.equals(type)
+                && (otherType == null || otherType.isBlank())) {
+            result.addError("otherType", "Other email type cannot be empty");
+        }
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    public void validatePhoneNumberDetails(
+            String countryCode,
+            String customer,
+            String number,
+            String otherType,
+            String type) throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("countryCode", countryCode, "Country code cannot be empty")
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("number", number, "Phone number cannot be empty")
+                .requireNotBlank("type", type, "Phone type cannot be empty");
+
+        if (type != null && !type.isBlank()
+                && !type.equals(AddPhoneNumber.TYPE_HOME)
+                && !type.equals(AddPhoneNumber.TYPE_MOBILE)
+                && !type.equals(AddPhoneNumber.TYPE_WORK)
+                && !type.equals(AddPhoneNumber.TYPE_OTHER)) {
+            result.addError("type", "Phone type is invalid");
+        }
+        if (AddPhoneNumber.TYPE_OTHER.equals(type)
+                && (otherType == null || otherType.isBlank())) {
+            result.addError("otherType", "Other phone type cannot be empty");
+        }
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
 }
