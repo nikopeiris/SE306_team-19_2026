@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<Pane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: #011936;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.CustomerController">
+   <children>
+      <Text fx:id="logoText" fill="WHITE" layoutX="24.0" layoutY="36.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Logo" />
+      <Button fx:id="signOutButton" layoutX="1096.0" layoutY="20.0" mnemonicParsing="false" onAction="#handleSignOut" style="-fx-background-color: transparent;" text="Sign out" textFill="WHITE">
+         <font>
+            <Font name="Roboto Bold" size="16.0" />
+         </font>
+         <cursor>
+            <Cursor fx:constant="HAND" />
+         </cursor>
+      </Button>
+      <Rectangle fx:id="card" arcHeight="50.0" arcWidth="50.0" fill="#f8fff4" height="654.0" layoutX="75.0" layoutY="87.0" stroke="BLACK" strokeType="INSIDE" width="1057.0" />
+      <ButtonBar fx:id="topButtonBar" prefHeight="40.0" prefWidth="200.0" />
+
+      <!-- Section tab buttons -->
+      <Button fx:id="personalInfoTabButton" layoutX="75.0" layoutY="87.0" mnemonicParsing="false" onAction="#handlePersonalInfoTab" prefHeight="59.0" prefWidth="352.0" text="Personal Info" />
+      <Button fx:id="contactInfoTabButton" layoutX="427.0" layoutY="87.0" mnemonicParsing="false" onAction="#handleContactInfoTab" prefHeight="59.0" prefWidth="352.0" text="Contact Info" />
+      <Button fx:id="loanTabButton" layoutX="779.0" layoutY="87.0" mnemonicParsing="false" onAction="#handleLoanTab" prefHeight="59.0" prefWidth="353.0" text="Loan" />
+
+      <!-- TAB 1: Personal Info Wrapper -->
+      <Pane fx:id="personalInfoPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0">
+         <children>
+            <fx:include fx:id="personalInfoTab" source="customer_personal_tab.fxml" />
+         </children>
+      </Pane>
+
+      <!-- TAB 2: Contact Info Wrapper -->
+      <Pane fx:id="contactInfoPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false" managed="false">
+         <children>
+            <fx:include fx:id="contactInfoTab" source="customer_contact_tab.fxml" />
+         </children>
+      </Pane>
+
+      <!-- TAB 3: Loan Wrapper -->
+      <Pane fx:id="loanPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false" managed="false">
+         <children>
+            <fx:include fx:id="loanTab" source="customer_loan_tab.fxml" />
+         </children>
+      </Pane>
+   </children>
+</Pane>

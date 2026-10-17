@@ -2,6 +2,7 @@ package lavs.app;
 
 import java.net.URL;
 
+import business.system.Customer;
 import business.system.LoginService;
 import dataaccess.systemadapters.MainframeAdapter;
 import javafx.application.Application;
@@ -19,6 +20,7 @@ public class Main extends Application {
         // set log in serve 
         MainframeAdapter mainframeAdapter = new MainframeAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
         LoginService loginService = new LoginService(mainframeAdapter);
+        Customer customerService = new Customer(mainframeAdapter);
 
 
         // ui layer
@@ -31,6 +33,7 @@ public class Main extends Application {
             Parent root = loader.load();
             LoginController logIncontroller = loader.getController();
             logIncontroller.setLoginService(loginService);
+            logIncontroller.setCustomerService(customerService);
 
             // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
             Scene scene = new Scene(root, 1200, 800);
@@ -40,7 +43,6 @@ public class Main extends Application {
             if (cssUrl != null) {
                 scene.getStylesheets().add(cssUrl.toExternalForm());
             }
-;
 
 
             primaryStage.setTitle("Mainframe Interface - Login");
@@ -51,6 +53,7 @@ public class Main extends Application {
             primaryStage.show();
             
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -443,7 +443,7 @@ class CustomerAddressServiceTest {
 
     @Test
     void validateAddressDetailsAcceptsOtherTypeWithValue() {
-        assertDoesNotThrow(() -> addressService.validateAddressDetails(
+        assertDoesNotThrow(() -> CustomerAddressService.validateAddressDetails(
                 "Auckland", "New Zealand", "C123",
                 "1 Main Street", "Apartment", "1010",
                 "Ponsonby", AddAddress.TYPE_OTHER));
@@ -451,7 +451,7 @@ class CustomerAddressServiceTest {
 
     @Test
     void validateAddressDetailsAcceptsNonOtherTypeWithoutOtherType() {
-        assertDoesNotThrow(() -> addressService.validateAddressDetails(
+        assertDoesNotThrow(() -> CustomerAddressService.validateAddressDetails(
                 "Auckland", "New Zealand", "C123",
                 "1 Main Street", null, "1010",
                 "Ponsonby", AddAddress.TYPE_POSTAL));
@@ -460,7 +460,7 @@ class CustomerAddressServiceTest {
     @Test
     void validateAddressDetailsRejectsOtherTypeWhenOtherTypeIsBlank() {
         ValidationException exception = assertThrows(ValidationException.class, () ->
-                addressService.validateAddressDetails(
+                CustomerAddressService.validateAddressDetails(
                         "Auckland", "New Zealand", "C123",
                         "1 Main Street", " ", "1010",
                         "Ponsonby", AddAddress.TYPE_OTHER));

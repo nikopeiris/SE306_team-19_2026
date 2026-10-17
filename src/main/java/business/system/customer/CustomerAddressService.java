@@ -195,10 +195,11 @@ public class CustomerAddressService {
 
     /**
      * Validates the fields of an address without sending it to the mainframe.
+     * Static so the UI can check a form before a customer (and their number) exists.
      *
      * @throws ValidationException if a required field or the address type is invalid
      */
-    public void validateAddressDetails(
+    public static void validateAddressDetails(
             String city,
             String country,
             String customer,
@@ -211,7 +212,7 @@ public class CustomerAddressService {
                 .throwIfInvalid();
     }
 
-    private ValidationResult buildAddressValidation(
+    private static ValidationResult buildAddressValidation(
             String city,
             String country,
             String customer,
