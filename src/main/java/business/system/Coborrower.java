@@ -83,7 +83,7 @@ public class Coborrower extends Customer {
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
-    public List.Item[] retrieveCoborrowers(String loanNumber, Long page, Long size)
+    public List.Item[] retrieveCoborrowers(String loanNumber, long page, long size)
             throws IOException, LavsException {
         validateListCoborrowersDetails(loanNumber, page, size);
 

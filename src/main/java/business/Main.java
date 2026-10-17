@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import business.lavsexceptions.LavsException;
+import business.system.Coborrower;
 import business.system.Customer;
 import business.system.Loan;
 import business.system.LoginService;
@@ -339,6 +340,70 @@ public class Main {
     Loan loanService = new Loan(adapter);
     return loanService.retrieveLoanSummary(currentLoanId);
   }
+
+  /**
+   * Updates a loan via the mainframe adapter after validating all loan fields and checking for a mailing address.
+   * @param customerNumber customer number to which the loan belongs
+   * @param loanNumber loan number to update
+   * @param paymentAmount payment amount of the loan; must be greater than zero
+   * @param paymentFrequency payment frequency of the loan; must not be negative
+   * @param principal principal of the loan; must be greater than zero
+   * @param rateAmount rate amount of the loan; must not be negative
+   * @param rateFrequency rate frequency of the loan; must not be negative
+   * @param rateType rate type of the loan; must not be negative
+   * @param renewalDate renewal date of the loan; must not be negative
+   * @param startDate start date of the loan; must not be negative
+   * @return true if the loan was updated successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateLoan(String customerNumber, String loanNumber, double paymentAmount, String paymentFrequency, double principal, double rateAmount, String rateFrequency, String rateType, String renewalDate, String startDate) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    loanService.updateLoan(customerNumber, loanNumber, paymentAmount, paymentFrequency, principal, rateAmount, rateFrequency, rateType, renewalDate, startDate);
+    return true;
+  }
+
+  /**
+   * Adds a coborrower to a loan via the mainframe adapter after validating all coborrower fields and checking for a mailing address.
+   * @param customerNumber customer number to which the coborrower belongs
+   * @param type coborrower type
+   * @return true if the coborrower was added successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addCoborrower(String customerNumber, String type) throws IOException, LavsException {
+    Coborrower coborrowerService = new Coborrower(adapter);
+    coborrowerService.addCoborrower(customerNumber, currentLoanId, type);
+    return true;
+  }
+
+  /**
+   * Retrieves a paginated list of coborrowers for a loan via the mainframe adapter.
+   * @param loanNumber loan number to retrieve coborrowers for
+   * @param page page number of coborrowers to retrieve
+   * @param size number of coborrowers to retrieve per page
+   * @return an array of coborrower items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.loanCoborrower.List.Item[] listCoborrowers(int page, int size) throws IOException, LavsException {
+    Coborrower coborrowerService = new Coborrower(adapter);
+    return coborrowerService.retrieveCoborrowers(currentLoanId, page, size);
+  }
+
+  /**
+   * Removes a coborrower from a loan via the mainframe adapter after validating all coborrower fields and checking for a mailing address.
+   * @param coborrowerId coborrower identifier to remove (get this from list of coborrowers)
+   * @return true if the coborrower was removed successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean removeCoborrower(long coborrowerId) throws IOException, LavsException {
+    Coborrower coborrowerService = new Coborrower(adapter);
+    coborrowerService.deleteCoborrower(coborrowerId, currentLoanId);
+    return true;
+  }
+
   /**
      * Loads key-value pairs from the .env file in the project root.
      *
