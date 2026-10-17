@@ -12,6 +12,7 @@ import business.system.Loan;
 import business.system.LoginService;
 import business.system.SignupService;
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerEmailService;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
@@ -294,6 +295,58 @@ public class Main {
   }
 
   /**
+   * Adds an email address to an existing customer via the mainframe adapter after validating the email fields.
+   * @param address the email address
+   * @param customer customer number to which the email belongs
+   * @param isPrimary true if the email is the primary email
+   * @param otherType other type of the email
+   * @param type type of the email
+   * @return true if the email was added successfully
+   * @throws ValidationException if a required field, the address format or email type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addEmail(String address, String customer, boolean isPrimary, String otherType, String type) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.addEmail(address, customer, isPrimary, otherType, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing email address of a customer via the mainframe adapter after validating the email fields.
+   * @param address the email address
+   * @param customer customer number to which the email belongs
+   * @param emailId ID of the email to update
+   * @param isPrimary true if the email is the primary email
+   * @param otherType other type of the email
+   * @param type type of the email
+   * @return true if the email was updated successfully
+   * @throws ValidationException if the email id, a required field, the address format or email type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateEmail(String address, String customer, long emailId, boolean isPrimary, String otherType, String type) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.updateEmail(address, customer, emailId, isPrimary, otherType, type);
+    return true;
+  }
+
+  /**
+   * Deletes an email address of a customer via the mainframe adapter.
+   * @param customerId the customer number the email belongs to
+   * @param emailId the ID of the email to delete
+   * @return true if the email was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deleteEmail(String customerId, long emailId) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.deleteEmail(customerId, emailId);
+    return true;
+  }
+
+  /**
    * Lists customer emails via the mainframe adapter.
    * @param customerId the customer number to retrieve emails for
    * @param page the page number to retrieve
@@ -303,8 +356,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerEmail.List.Item[] listEmails(String customerId, int page, int size) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.listEmails(customerId, (long) page, (long) size);
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    return emailService.listEmails(customerId, (long) page, (long) size);
   }
 
   /**
@@ -316,8 +369,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerEmail.Retrieve getEmail(String customerId, long emailId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.retrieveEmail(customerId, emailId);
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    return emailService.retrieveEmail(customerId, emailId);
   }
 
 

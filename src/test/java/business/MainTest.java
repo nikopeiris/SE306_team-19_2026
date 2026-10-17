@@ -285,6 +285,33 @@ class MainTest {
     }
 
     @Test
+    void addEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addEmail("jane@example.com", "C123", true, null, "Personal"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddEmail.class));
+    }
+
+    @Test
+    void updateEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateEmail("jane@example.com", "C123", 7L, false, null, "Work"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdateEmail.class));
+    }
+
+    @Test
+    void deleteEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteEmail("C123", 7L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeleteEmail.class));
+    }
+
+    @Test
     void listEmailsDelegatesToCustomerService() throws Exception {
         when(adapter.send(any(Message.class))).thenReturn(new Status(1));
 

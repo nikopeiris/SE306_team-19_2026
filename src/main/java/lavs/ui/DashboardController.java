@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadFactory;
 import business.lavsexceptions.LavsException;
 import business.system.Customer;
 import business.system.LoginService;
+import business.system.customer.CustomerEmailService;
 import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import javafx.animation.PauseTransition;
@@ -51,6 +52,7 @@ public class DashboardController {
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
     private Customer customerService;
+    private CustomerEmailService emailService;
 
     // ---- Customer list layout (the header labels in dashboard.fxml use the same widths) ----
     private static final double ROW_HEIGHT = 34.0;
@@ -121,9 +123,11 @@ public class DashboardController {
     }
 
     /** Called by LoginController when it opens the dashboard. */
-    public void setServices(LoginService loginService, Customer customerService) {
+    public void setServices(LoginService loginService, Customer customerService,
+            CustomerEmailService emailService) {
         this.loginService = loginService;
         this.customerService = customerService;
+        this.emailService = emailService;
         loadCustomers();
     }
 
@@ -226,7 +230,7 @@ public class DashboardController {
             return;
         }
         try {
-            String email = customerService.findPrimaryEmail(number);
+            String email = emailService.findPrimaryEmail(number);
             emailCache.put(number, email == null ? "" : email);
         } catch (Exception ex) {
             emailFailed.add(number);
@@ -361,6 +365,7 @@ public class DashboardController {
             LoginController loginController = loader.getController();
             loginController.setLoginService(loginService);
             loginController.setCustomerService(customerService);
+            loginController.setEmailService(emailService);
 
             Scene scene = new Scene(root, 1200, 800);
             URL cssUrl = getClass().getResource("/lavs/ui/styles.css");

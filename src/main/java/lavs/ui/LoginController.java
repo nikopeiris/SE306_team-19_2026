@@ -6,6 +6,7 @@ import java.net.URL;
 import business.lavsexceptions.LavsException;
 import business.system.Customer;
 import business.system.LoginService;
+import business.system.customer.CustomerEmailService;
 import business.validation.ValidationException;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -88,6 +89,7 @@ public class LoginController {
     // Business layer: ALL validation and authentication happens in here, not in the UI
     private LoginService loginService;
     private Customer customerService;
+    private CustomerEmailService emailService;
 
     private Timeline animation;
     private boolean expanded = false;
@@ -110,6 +112,11 @@ public class LoginController {
     /** Called by whoever loads this screen; passed on to the dashboard after login. */
     public void setCustomerService(Customer customerService) {
         this.customerService = customerService;
+    }
+
+    /** Called by whoever loads this screen; passed on to the dashboard after login. */
+    public void setEmailService(CustomerEmailService emailService) {
+        this.emailService = emailService;
     }
 
     // ------------------------------------------------------------------
@@ -327,7 +334,7 @@ public class LoginController {
 
             // hand the dashboard the business-layer services (sign out + customer list)
             DashboardController dashboardController = loader.getController();
-            dashboardController.setServices(loginService, customerService);
+            dashboardController.setServices(loginService, customerService, emailService);
 
             Scene scene = new Scene(root);
             URL cssUrl = getClass().getResource("/lavs/ui/styles.css");

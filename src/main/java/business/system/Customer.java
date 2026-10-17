@@ -13,7 +13,6 @@ import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
-import mainframe.client.messages.customer.AddEmail;
 import mainframe.client.messages.customer.AddPhoneNumber;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
@@ -145,48 +144,11 @@ public class Customer {
       return retrieveMessage;
   }
 
-  /**
-   * Lists a customer's email addresses using the mainframe's paginated operation.
-   */
-  public mainframe.client.messages.customerEmail.List.Item[] listEmails(
-          String customerNumber, Long page, Long size)
-          throws IOException, LavsException {
-      validateCustomerNumber(customerNumber);
-      validatePageDetails(page, size);
-
-      mainframe.client.messages.customerEmail.List listMessage =
-              new mainframe.client.messages.customerEmail.List(
-                      customerNumber.trim(), page, size);
-      Status status = customerAdapter.send(listMessage);
-      Main.isValidStatus(status);
-      return listMessage.getItems();
-  }
-
-  /**
-   * Retrieves one email address belonging to a customer.
-   */
-  public mainframe.client.messages.customerEmail.Retrieve retrieveEmail(
-          String customerNumber, Long emailId)
-          throws IOException, LavsException {
-      ValidationResult result = validateContactIdentifier(
-              customerNumber, emailId, "Email id");
-      if (!result.isValid()) {
-          throw new ValidationException(result);
-      }
-
-      mainframe.client.messages.customerEmail.Retrieve retrieveMessage =
-              new mainframe.client.messages.customerEmail.Retrieve(
-                      emailId, customerNumber.trim());
-      Status status = customerAdapter.send(retrieveMessage);
-      Main.isValidStatus(status);
-      return retrieveMessage;
-  }
-
   private ValidationResult validateContactIdentifier(
           String customerNumber, Long identifier, String identifierLabel) {
       ValidationResult result = new ValidationResult();
       addCustomerNumberValidation(result, customerNumber);
-      String fieldName = identifierLabel.startsWith("Phone") ? "phoneNumberId" : "emailId";
+      String fieldName = "phoneNumberId";
       if (identifier == null) {
           result.addError(fieldName, identifierLabel + " cannot be empty");
       } else if (identifier < 1) {
@@ -331,25 +293,6 @@ public class Customer {
       }
   }
 
-  /**
-   * Returns the customer's primary email address, or an empty string if
-   * they have no email marked as primary.
-   */
-  public String findPrimaryEmail(String customerNumber)
-          throws IOException, LavsException {
-      mainframe.client.messages.customerEmail.List.Item[] emails =
-              listEmails(customerNumber, 1L, LIST_PAGE_SIZE);
-      if (emails == null) {
-          return "";
-      }
-      for (mainframe.client.messages.customerEmail.List.Item email : emails) {
-          if ("y".equals(email.getIsPrimary())) {
-              return email.getAddress() == null ? "" : email.getAddress();
-          }
-      }
-      return "";
-  }
- 
   /** Copies the fields we need out of a mainframe search result. */
   private CustomerSummary toSummary(Search.Item item) {
       return new CustomerSummary(
@@ -360,33 +303,6 @@ public class Customer {
 
 
   /**
-     * Adds an email address to an existing customer after validating the email fields.
-     *
-     * @return the mainframe message containing the created email details
-     * @throws ValidationException if a required field or email type is invalid
-     * @throws LavsException if the mainframe rejects the request
-     * @throws IOException if the mainframe cannot be reached
-     */
-    public AddEmail addEmail(
-            String address,
-            String customer,
-            boolean isPrimary,
-            String otherType,
-            String type) throws IOException, LavsException {
-        validateEmailDetails(address, customer, otherType, type);
-
-        AddEmail addMessage = new AddEmail(
-                address.trim(),
-                customer.trim(),
-                isPrimary,
-                otherType == null ? null : otherType.trim(),
-                type.trim());
-        Status status = customerAdapter.send(addMessage);
-        Main.isValidStatus(status);
-        return addMessage;
-    }
-
-    /**
      * Adds a phone number to an existing customer after validating the phone fields.
      *
      * @return the mainframe message containing the created phone number details
@@ -415,32 +331,6 @@ public class Customer {
         Status status = customerAdapter.send(addMessage);
         Main.isValidStatus(status);
         return addMessage;
-    }
-
-    public void validateEmailDetails(
-            String address,
-            String customer,
-            String otherType,
-            String type) throws ValidationException {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("address", address, "Email address cannot be empty")
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
-                .requireNotBlank("type", type, "Email type cannot be empty");
-
-        if (type != null && !type.isBlank()
-                && !type.equals(AddEmail.TYPE_PERSONAL)
-                && !type.equals(AddEmail.TYPE_WORK)
-                && !type.equals(AddEmail.TYPE_OTHER)) {
-            result.addError("type", "Email type is invalid");
-        }
-        if (AddEmail.TYPE_OTHER.equals(type)
-                && (otherType == null || otherType.isBlank())) {
-            result.addError("otherType", "Other email type cannot be empty");
-        }
-
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
     }
 
     public void validatePhoneNumberDetails(
