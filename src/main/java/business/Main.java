@@ -13,6 +13,7 @@ import business.system.LoginService;
 import business.system.SignupService;
 import business.system.customer.CustomerAddressService;
 import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerPhoneNumberService;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
@@ -277,8 +278,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerPhoneNumber.List.Item[] listPhoneNumbers(String customerId, int page, int size) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.listPhoneNumbers(customerId, (long) page, (long) size);
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    return phoneService.listPhoneNumbers(customerId, (long) page, (long) size);
   }
 
   /**
@@ -290,8 +291,64 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerPhoneNumber.Retrieve getPhoneNumber(String customerId, long phoneNumberId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.retrievePhoneNumber(customerId, phoneNumberId);
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    return phoneService.retrievePhoneNumber(customerId, phoneNumberId);
+  }
+
+  /**
+   * Adds a phone number to an existing customer via the mainframe adapter after validating the phone fields.
+   * @param canTxt true if the number can receive text messages
+   * @param countryCode country calling code of the number
+   * @param customer customer number to which the phone number belongs
+   * @param isPrimary true if the number is the primary phone number
+   * @param number the phone number
+   * @param otherType other type of the phone number
+   * @param type type of the phone number
+   * @return true if the phone number was added successfully
+   * @throws ValidationException if a required field or phone type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addPhoneNumber(boolean canTxt, String countryCode, String customer, boolean isPrimary, String number, String otherType, String type) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.addPhoneNumber(canTxt, countryCode, customer, isPrimary, number, otherType, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing phone number of a customer via the mainframe adapter after validating the phone fields.
+   * @param canTxt true if the number can receive text messages
+   * @param countryCode country calling code of the number
+   * @param customer customer number to which the phone number belongs
+   * @param phoneNumberId ID of the phone number to update
+   * @param isPrimary true if the number is the primary phone number
+   * @param number the phone number
+   * @param otherType other type of the phone number
+   * @param type type of the phone number
+   * @return true if the phone number was updated successfully
+   * @throws ValidationException if the phone number id, a required field or phone type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updatePhoneNumber(boolean canTxt, String countryCode, String customer, long phoneNumberId, boolean isPrimary, String number, String otherType, String type) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.updatePhoneNumber(canTxt, countryCode, customer, phoneNumberId, isPrimary, number, otherType, type);
+    return true;
+  }
+
+  /**
+   * Deletes a phone number of a customer via the mainframe adapter.
+   * @param customerId the customer number the phone number belongs to
+   * @param phoneNumberId the ID of the phone number to delete
+   * @return true if the phone number was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deletePhoneNumber(String customerId, long phoneNumberId) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.deletePhoneNumber(customerId, phoneNumberId);
+    return true;
   }
 
   /**

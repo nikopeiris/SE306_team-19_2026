@@ -1,6 +1,7 @@
 package business.system;
 
 import business.lavsexceptions.LavsException;
+import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
@@ -16,10 +17,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.function.BiFunction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -94,67 +100,100 @@ class CustomerTest {
         assertEquals("Customer not found", exception.getMessage());
     }
 
+    // answers every customer search with the {number, firstName, familyName} rows
+    // that the given function returns for that search text and page
+    private void stubSearchResults(BiFunction<String, Long, String[][]> results) throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class))).thenAnswer(invocation -> {
+            Search search = invocation.getArgument(0);
+            String text = (String) readField(search, "_search");
+            long page = (Long) readField(search, "_page");
+            @SuppressWarnings("unchecked")
+            ArrayList<Search.Item> items = (ArrayList<Search.Item>) readField(search, "_data");
+            for (String[] row : results.apply(text, page)) {
+                items.add(search.new Item("1990-01-01", row[2], row[1], row[0], "Active", "Ms"));
+            }
+            return new Status(1);
+        });
+    }
+
+    private static Object readField(Object target, String name) throws ReflectiveOperationException {
+        Field field = target.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(target);
+    }
+
+    private static java.util.List<String> numbersOf(java.util.List<CustomerSummary> customers) {
+        return customers.stream().map(CustomerSummary::getNumber).toList();
+    }
+
     @Test
-    void listPhoneNumbersSendsListMessageAndReturnsItems() throws Exception {
-        when(adapter.send(org.mockito.ArgumentMatchers.any(
-                mainframe.client.messages.customerPhoneNumber.List.class)))
+    void listAllCustomersSortsByFirstNameThenFamilyNameIgnoringCase() throws Exception {
+        stubSearchResults((text, page) -> new String[][] {
+                {"C1", "bob", "Smith"},
+                {"C2", "Alice", "Zed"},
+                {"C3", "alice", "adams"}});
+
+        java.util.List<CustomerSummary> result = customer.listAllCustomers();
+
+        assertEquals(java.util.List.of("C3", "C2", "C1"), numbersOf(result));
+        verify(adapter, times(1)).send(org.mockito.ArgumentMatchers.any(Search.class));
+    }
+
+    @Test
+    void listAllCustomersFollowsFullPagesAndDropsDuplicateNumbers() throws Exception {
+        stubSearchResults((text, page) -> {
+            if (page == 1) {
+                String[][] fullPage = new String[100][];
+                for (int i = 0; i < 100; i++) {
+                    fullPage[i] = new String[] {"C" + i, String.format("Name%03d", i), "Last"};
+                }
+                return fullPage;
+            }
+            return new String[][] {{"C5", "Duplicate", "Ignored"}, {"C100", "Aaron", "Last"}};
+        });
+
+        java.util.List<CustomerSummary> result = customer.listAllCustomers();
+
+        assertEquals(101, result.size());
+        assertEquals("C100", result.get(0).getNumber());
+        assertEquals("Name005", result.stream()
+                .filter(c -> c.getNumber().equals("C5")).findFirst().orElseThrow().getFirstName());
+        verify(adapter, times(2)).send(org.mockito.ArgumentMatchers.any(Search.class));
+    }
+
+    @Test
+    void listAllCustomersFallsBackToSingleCharacterSearchesWhenEmptySearchFindsNothing()
+            throws Exception {
+        stubSearchResults((text, page) -> switch (text) {
+            case "a" -> new String[][] {{"C1", "Anna", "Lee"}};
+            case "n" -> new String[][] {{"C1", "Anna", "Lee"}, {"C2", "Ben", "Ng"}};
+            default -> new String[0][];
+        });
+
+        java.util.List<CustomerSummary> result = customer.listAllCustomers();
+
+        assertEquals(java.util.List.of("C1", "C2"), numbersOf(result));
+        // one empty search plus one search per letter and digit
+        verify(adapter, times(37)).send(org.mockito.ArgumentMatchers.any(Search.class));
+    }
+
+    @Test
+    void listAllCustomersReturnsEmptyListWhenNoSearchFindsCustomers() throws Exception {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
                 .thenReturn(new Status(1));
 
-        mainframe.client.messages.customerPhoneNumber.List.Item[] result =
-                customer.listPhoneNumbers(" C123 ", 1L, 25L);
-
-        verify(adapter).send(org.mockito.ArgumentMatchers.any(
-                mainframe.client.messages.customerPhoneNumber.List.class));
-        assertEquals(0, result.length);
+        assertTrue(customer.listAllCustomers().isEmpty());
     }
 
     @Test
-    void retrievePhoneNumberSendsRetrieveMessageAndReturnsIt() throws Exception {
-        when(adapter.send(org.mockito.ArgumentMatchers.any(
-                mainframe.client.messages.customerPhoneNumber.Retrieve.class)))
-                .thenReturn(new Status(1));
+    void listAllCustomersThrowsLavsExceptionWhenMainframeRejectsSearch() throws IOException {
+        when(adapter.send(org.mockito.ArgumentMatchers.any(Search.class)))
+                .thenReturn(new Status(500, "Search rejected", 1));
 
-        mainframe.client.messages.customerPhoneNumber.Retrieve result =
-                customer.retrievePhoneNumber("C123", 17L);
+        LavsException exception = assertThrows(LavsException.class,
+                () -> customer.listAllCustomers());
 
-        assertEquals(17L, result.getId());
-        verify(adapter).send(org.mockito.ArgumentMatchers.same(result));
-    }
-
-    @Test
-    void phoneMethodsRejectInvalidParametersWithValidationException() {
-        ValidationException phoneException = assertThrows(ValidationException.class,
-                () -> customer.retrievePhoneNumber(null, 0L));
-        ValidationException missingIdException = assertThrows(ValidationException.class,
-                () -> customer.retrievePhoneNumber("C123", null));
-        ValidationException phoneListException = assertThrows(ValidationException.class,
-                () -> customer.listPhoneNumbers("C123", 0L, 0L));
-
-        assertEquals("Customer number cannot be null or empty",
-                phoneException.getResult().getError("customerNumber"));
-        assertEquals("Phone number id must be a positive integer",
-                phoneException.getResult().getError("phoneNumberId"));
-        assertEquals("Phone number id cannot be empty",
-                missingIdException.getResult().getError("phoneNumberId"));
-        assertEquals("Page must be a positive integer",
-                phoneListException.getResult().getError("page"));
-        assertEquals("Size must be a positive integer",
-                phoneListException.getResult().getError("size"));
-        verifyNoInteractions(adapter);
-    }
-
-    @Test
-    void phoneListRejectsMissingCustomerNumberPageAndSize() {
-        ValidationException customerException = assertThrows(ValidationException.class,
-                () -> customer.listPhoneNumbers(" ", 1L, 25L));
-        ValidationException pagingException = assertThrows(ValidationException.class,
-                () -> customer.listPhoneNumbers("C123", null, null));
-
-        assertEquals("Customer number cannot be null or empty",
-                customerException.getResult().getError("customerNumber"));
-        assertEquals("Page cannot be empty", pagingException.getResult().getError("page"));
-        assertEquals("Size cannot be empty", pagingException.getResult().getError("size"));
-        verifyNoInteractions(adapter);
+        assertEquals("Search rejected", exception.getMessage());
     }
 
     @Test

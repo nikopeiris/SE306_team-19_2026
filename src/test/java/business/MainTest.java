@@ -285,6 +285,33 @@ class MainTest {
     }
 
     @Test
+    void addPhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addPhoneNumber(true, "+64", "C123", true, "021 555 0101", null, "Mobile"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddPhoneNumber.class));
+    }
+
+    @Test
+    void updatePhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updatePhoneNumber(false, "+64", "C123", 9L, false, "09 555 0101", null, "Home"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdatePhoneNumber.class));
+    }
+
+    @Test
+    void deletePhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deletePhoneNumber("C123", 9L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeletePhoneNumber.class));
+    }
+
+    @Test
     void addEmailDelegatesToTheEmailService() throws Exception {
         when(adapter.send(any(Message.class))).thenReturn(new Status(1));
 

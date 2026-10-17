@@ -13,7 +13,6 @@ import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
-import mainframe.client.messages.customer.AddPhoneNumber;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
@@ -107,72 +106,6 @@ public class Customer {
       return retrieveMessage;
   }
 
-  /**
-   * Lists a customer's phone numbers using the mainframe's paginated operation.
-   */
-  public mainframe.client.messages.customerPhoneNumber.List.Item[] listPhoneNumbers(
-          String customerNumber, Long page, Long size)
-          throws IOException, LavsException {
-      validateCustomerNumber(customerNumber);
-      validatePageDetails(page, size);
-
-      mainframe.client.messages.customerPhoneNumber.List listMessage =
-              new mainframe.client.messages.customerPhoneNumber.List(
-                      customerNumber.trim(), page, size);
-      Status status = customerAdapter.send(listMessage);
-      Main.isValidStatus(status);
-      return listMessage.getItems();
-  }
-
-  /**
-   * Retrieves one phone number belonging to a customer.
-   */
-  public mainframe.client.messages.customerPhoneNumber.Retrieve retrievePhoneNumber(
-          String customerNumber, Long phoneNumberId)
-          throws IOException, LavsException {
-      ValidationResult result = validateContactIdentifier(
-              customerNumber, phoneNumberId, "Phone number id");
-      if (!result.isValid()) {
-          throw new ValidationException(result);
-      }
-
-      mainframe.client.messages.customerPhoneNumber.Retrieve retrieveMessage =
-              new mainframe.client.messages.customerPhoneNumber.Retrieve(
-                      phoneNumberId, customerNumber.trim());
-      Status status = customerAdapter.send(retrieveMessage);
-      Main.isValidStatus(status);
-      return retrieveMessage;
-  }
-
-  private ValidationResult validateContactIdentifier(
-          String customerNumber, Long identifier, String identifierLabel) {
-      ValidationResult result = new ValidationResult();
-      addCustomerNumberValidation(result, customerNumber);
-      String fieldName = "phoneNumberId";
-      if (identifier == null) {
-          result.addError(fieldName, identifierLabel + " cannot be empty");
-      } else if (identifier < 1) {
-          result.addError(fieldName, identifierLabel + " must be a positive integer");
-      }
-      return result;
-  }
-
-  private void validateCustomerNumber(String customerNumber)
-          throws ValidationException {
-      ValidationResult result = new ValidationResult();
-      addCustomerNumberValidation(result, customerNumber);
-      if (!result.isValid()) {
-          throw new ValidationException(result);
-      }
-  }
-
-  private void addCustomerNumberValidation(
-          ValidationResult result, String customerNumber) {
-      if (customerNumber == null || customerNumber.isBlank()) {
-          result.addError("customerNumber", "Customer number cannot be null or empty");
-      }
-  }
-
   private void validateCustomerSearchDetails(Long page, String search, Long size)
           throws ValidationException {
       ValidationResult result = new ValidationResult();
@@ -183,24 +116,6 @@ public class Customer {
       }
       if (search == null) {
           result.addError("search", "Search cannot be null");
-      }
-      if (size == null) {
-          result.addError("size", "Size cannot be empty");
-      } else if (size < 1) {
-          result.addError("size", "Size must be a positive integer");
-      }
-      if (!result.isValid()) {
-          throw new ValidationException(result);
-      }
-  }
-
-  private void validatePageDetails(Long page, Long size)
-          throws ValidationException {
-      ValidationResult result = new ValidationResult();
-      if (page == null) {
-          result.addError("page", "Page cannot be empty");
-      } else if (page < 1) {
-          result.addError("page", "Page must be a positive integer");
       }
       if (size == null) {
           result.addError("size", "Size cannot be empty");
@@ -300,65 +215,4 @@ public class Customer {
               item.getFirstName(),
               item.getFamilyName());
   }
-
-
-  /**
-     * Adds a phone number to an existing customer after validating the phone fields.
-     *
-     * @return the mainframe message containing the created phone number details
-     * @throws ValidationException if a required field or phone type is invalid
-     * @throws LavsException if the mainframe rejects the request
-     * @throws IOException if the mainframe cannot be reached
-     */
-    public AddPhoneNumber addPhoneNumber(
-            boolean canTxt,
-            String countryCode,
-            String customer,
-            boolean isPrimary,
-            String number,
-            String otherType,
-            String type) throws IOException, LavsException {
-        validatePhoneNumberDetails(countryCode, customer, number, otherType, type);
-
-        AddPhoneNumber addMessage = new AddPhoneNumber(
-                canTxt,
-                countryCode.trim(),
-                customer.trim(),
-                isPrimary,
-                number.trim(),
-                otherType == null ? null : otherType.trim(),
-                type.trim());
-        Status status = customerAdapter.send(addMessage);
-        Main.isValidStatus(status);
-        return addMessage;
-    }
-
-    public void validatePhoneNumberDetails(
-            String countryCode,
-            String customer,
-            String number,
-            String otherType,
-            String type) throws ValidationException {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("countryCode", countryCode, "Country code cannot be empty")
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
-                .requireNotBlank("number", number, "Phone number cannot be empty")
-                .requireNotBlank("type", type, "Phone type cannot be empty");
-
-        if (type != null && !type.isBlank()
-                && !type.equals(AddPhoneNumber.TYPE_HOME)
-                && !type.equals(AddPhoneNumber.TYPE_MOBILE)
-                && !type.equals(AddPhoneNumber.TYPE_WORK)
-                && !type.equals(AddPhoneNumber.TYPE_OTHER)) {
-            result.addError("type", "Phone type is invalid");
-        }
-        if (AddPhoneNumber.TYPE_OTHER.equals(type)
-                && (otherType == null || otherType.isBlank())) {
-            result.addError("otherType", "Other phone type cannot be empty");
-        }
-
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
-    }
 }
