@@ -64,6 +64,7 @@ public class Loan {
                 compoundType, renewalDate, startDate);
         LoanValidation.preReqCheck(customerNumber, loanAdapter);
         LoanValidation.validateCustomerJobAndGuarantor(customerNumber, guarantorId, loanAdapter);
+        LoanValidation.preReqCheck(guarantorId, loanAdapter);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
