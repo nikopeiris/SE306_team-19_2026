@@ -2,10 +2,12 @@ mainframe\client\messages\customer\UpdateEmail.class
 mainframe\client\messages\loan\DeletePayment.class
 mainframe\client\messages\loan\Retrieve.class
 mainframe\client\messages\customer\AddEmployer.class
+lavs\ui\PersonalInfoController.class
 mainframe\client\messages\customerRelationship\List.class
 mainframe\client\messages\customer\AddAddress.class
 mainframe\client\messages\loan\DeleteNote.class
 mainframe\client\messages\organisation\Update.class
+business\system\customer\CustomerAddressService.class
 mainframe\client\messages\loanPayment\List.class
 mainframe\client\messages\customer\DeleteDocument.class
 mainframe\client\messages\customer\DeleteNote.class
@@ -15,6 +17,7 @@ mainframe\client\messages\customerAddress\Retrieve.class
 mainframe\client\messages\loanDocument\List.class
 mainframe\client\messages\organisation\List.class
 mainframe\client\messages\loanRepaymentSchedule\List.class
+lavs\ui\CustomerContext$AddressDto.class
 mainframe\client\messages\constantCategory\Create.class
 mainframe\client\messages\user\List$Item.class
 mainframe\client\messages\constantCategory\List$Item.class
@@ -29,6 +32,7 @@ mainframe\client\messages\user\List.class
 mainframe\client\messages\customer\UpdateRelationship.class
 mainframe\client\messages\loanNote\List.class
 mainframe\client\messages\loanCoborrower\List.class
+lavs\ui\LoanTabController.class
 mainframe\client\messages\loanDocument\Retrieve.class
 mainframe\client\messages\loan\AddNote.class
 mainframe\client\messages\customer\AddRelationship.class
@@ -45,6 +49,7 @@ mainframe\client\Message.class
 mainframe\client\messages\organisation\Retrieve.class
 mainframe\client\messages\customerNote\Retrieve.class
 mainframe\client\messages\customer\UpdatePhoneNumber.class
+lavs\ui\CustomerContext$PhoneDto.class
 mainframe\client\StatusMessage.class
 lavs\ui\DashboardController.class
 lavs\app\Main.class
@@ -62,9 +67,11 @@ mainframe\client\messages\customer\DeleteEmployer.class
 lavs\ui\LoginController.class
 mainframe\client\messages\loan\List$Item.class
 mainframe\client\messages\customer\Create.class
+lavs\ui\CustomerContext.class
 mainframe\client\messages\loan\AddCoborrower.class
 mainframe\client\MessageRequest.class
 mainframe\client\messages\loan\UpdateNote.class
+lavs\ui\CustomerController.class
 mainframe\client\Status.class
 mainframe\client\messages\customer\UpdateNote.class
 mainframe\client\messages\customer\UpdateAddress.class
@@ -86,10 +93,12 @@ mainframe\client\messages\constantCategory\AddItem.class
 business\validation\ValidationResult.class
 mainframe\client\messages\constantItem\List.class
 mainframe\client\messages\customer\Search.class
+business\system\dto\CustomerSummary.class
 business\system\Loan.class
 mainframe\client\messages\customerRelationship\List$Item.class
 mainframe\client\messages\loan\UpdateStatus.class
 mainframe\client\messages\loan\AddDocument.class
+lavs\ui\DashboardController$CustomerCell.class
 mainframe\client\messages\loanPayment\List$Item.class
 mainframe\client\messages\customer\AddEmail.class
 mainframe\client\messages\customerEmployer\Retrieve.class
@@ -99,7 +108,9 @@ business\system\LoginService.class
 mainframe\client\messages\customerPhoneNumber\Retrieve.class
 mainframe\client\messages\customerEmail\Retrieve.class
 dataaccess\systemadapters\MainframeAdapter.class
+lavs\ui\DashboardController$2.class
 mainframe\client\messages\loan\DeleteCoborrower.class
+lavs\ui\CustomerContext$EmailDto.class
 mainframe\client\messages\customer\UpdateStatus.class
 mainframe\client\messages\customerEmail\List.class
 mainframe\client\messages\loan\DeleteDocument.class
@@ -108,10 +119,12 @@ mainframe\client\messages\customerEmployer\List.class
 mainframe\client\messages\customerNote\List$Item.class
 mainframe\client\messages\customer\AddNote.class
 mainframe\client\messages\customer\Update.class
+lavs\ui\ContactInfoController.class
 mainframe\client\messages\user\Update.class
 mainframe\client\messages\loanNote\Retrieve.class
 mainframe\client\messages\loanRepaymentSchedule\List$Item.class
 business\validation\ValidationException.class
+lavs\ui\DashboardController$1.class
 mainframe\client\messages\customerPhoneNumber\List$Item.class
 mainframe\client\messages\customer\Search$Item.class
 mainframe\client\messages\customer\DeletePhoneNumber.class

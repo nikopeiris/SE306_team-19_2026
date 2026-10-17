@@ -7,6 +7,7 @@ import java.util.Set;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
+import business.system.customer.CustomerAddressService;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -316,15 +317,6 @@ public class Loan {
         }
     }
 
-    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
-      if (customerNumber != null && !customerNumber.isBlank()) {
-        Customer customerService = new Customer(loanAdapter);
-        if (customerService.findMailingAddress(customerNumber.trim()) == null) {
-            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
-        }
-      }
-    }
-
     public void validateUpdateLoanDetails(
             String customerNumber,
             String loanNumber,
@@ -381,7 +373,7 @@ public class Loan {
         }
     }
 
-    public void validateDate(ValidationResult result, String startDate, String renewalDate) {
+    public void validateDate(ValidationResult result, String startDate, String renewalDate) throws ValidationException {
         if (renewalDate != null && !renewalDate.isBlank()) {
             try {
                 LocalDate renewalLocalDate = LocalDate.parse(renewalDate.trim());
@@ -403,5 +395,17 @@ public class Loan {
                 result.addError("startDate", "Start date must be in yyyy-MM-dd format");
             }
         }
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
+    }
+
+    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
+      if (customerNumber != null && !customerNumber.isBlank()) {
+        CustomerAddressService addressService = new CustomerAddressService(loanAdapter);
+        if (addressService.findMailingAddress(customerNumber.trim()) == null) {
+            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
+        }
+      }
     }
 }

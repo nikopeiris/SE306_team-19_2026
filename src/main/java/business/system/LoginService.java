@@ -1,13 +1,13 @@
 package business.system;
 
+import java.io.IOException;
+
+import business.Main;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
-import business.Main;
-
-import java.io.IOException;
 
 /**
  * Business service responsible for user login
@@ -55,5 +55,10 @@ public class LoginService {
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
+    }
+
+    // Log out feature
+    public void logout() {
+        authAdapter.logOut();
     }
 }

@@ -131,6 +131,36 @@ class MainTest {
     }
 
     @Test
+    void updateAddressDelegatesToTheCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateAddress(
+                "Auckland",
+                "New Zealand",
+                "C123",
+                17L,
+                true,
+                true,
+                "1 Main St",
+                "Unit 2",
+                null,
+                "1010",
+                "CBD",
+                "Residential"));
+
+        verify(adapter).send(any(Message.class));
+    }
+
+    @Test
+    void deleteAddressDelegatesToTheCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteAddress("C123", 17L));
+
+        verify(adapter).send(any(Message.class));
+    }
+
+    @Test
     void setLoanIdSetsCurrentLoanId() throws Exception {
         main.setLoanId("L123");
 
@@ -252,6 +282,110 @@ class MainTest {
                 ArgumentCaptor.forClass(mainframe.client.messages.customerPhoneNumber.Retrieve.class);
         verify(adapter).send(captor.capture());
         assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void addPhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addPhoneNumber(true, "+64", "C123", true, "021 555 0101", null, "Mobile"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddPhoneNumber.class));
+    }
+
+    @Test
+    void updatePhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updatePhoneNumber(false, "+64", "C123", 9L, false, "09 555 0101", null, "Home"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdatePhoneNumber.class));
+    }
+
+    @Test
+    void deletePhoneNumberDelegatesToThePhoneNumberService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deletePhoneNumber("C123", 9L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeletePhoneNumber.class));
+    }
+
+    @Test
+    void addEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addEmployer("C123", "Acme Ltd", "Engineer", 85000.0, "Primary"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddEmployer.class));
+    }
+
+    @Test
+    void updateEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateEmployer("C123", 4L, "Acme Ltd", "Manager", 95000.0, "Secondary"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdateEmployer.class));
+    }
+
+    @Test
+    void deleteEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteEmployer("C123", 4L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeleteEmployer.class));
+    }
+
+    @Test
+    void listEmployersDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmployer.List.Item[] result =
+                main.listEmployers("C123", 1, 10);
+
+        verify(adapter).send(any(mainframe.client.messages.customerEmployer.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmployer.Retrieve result = main.getEmployer("C123", 4L);
+
+        ArgumentCaptor<mainframe.client.messages.customerEmployer.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.customerEmployer.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void addEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addEmail("jane@example.com", "C123", true, null, "Personal"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddEmail.class));
+    }
+
+    @Test
+    void updateEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateEmail("jane@example.com", "C123", 7L, false, null, "Work"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdateEmail.class));
+    }
+
+    @Test
+    void deleteEmailDelegatesToTheEmailService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteEmail("C123", 7L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeleteEmail.class));
     }
 
     @Test

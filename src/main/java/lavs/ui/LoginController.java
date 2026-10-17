@@ -1,9 +1,13 @@
 package lavs.ui;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 
+import business.lavsexceptions.LavsException;
+import business.system.Customer;
 import business.system.LoginService;
+import business.system.customer.CustomerEmailService;
+import business.validation.ValidationException;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -27,6 +31,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
@@ -46,14 +51,15 @@ public class LoginController {
 
     // ---- Left side controls ----
     @FXML private Button logoButton;
-    @FXML private HBox logoContent;
-    @FXML private Pane logoIcon;
+    @FXML private Pane logoContent;
     @FXML private Rectangle logoBackground;
-    @FXML private SVGPath logoPediment;
-    @FXML private SVGPath logoColumns;
-    @FXML private VBox logoWordmark;
-    @FXML private Text logoTitle;
-    @FXML private Text logoSubtitle;
+    @FXML private SVGPath logoSwoosh;
+    @FXML private HBox logoWordmark;
+    @FXML private Text logoTitleStart;
+    @FXML private StackPane logoI;
+    @FXML private Text logoIStem;
+    @FXML private Circle logoDot;
+    @FXML private Text logoTitleEnd;
     @FXML private Text usernameLabel;
     @FXML private TextField usernameField;
     @FXML private Text passwordLabel;
@@ -82,6 +88,8 @@ public class LoginController {
 
     // Business layer: ALL validation and authentication happens in here, not in the UI
     private LoginService loginService;
+    private Customer customerService;
+    private CustomerEmailService emailService;
 
     private Timeline animation;
     private boolean expanded = false;
@@ -99,6 +107,16 @@ public class LoginController {
     /** Called by whoever loads this screen to give it the business-layer service. */
     public void setLoginService(LoginService loginService) {
         this.loginService = loginService;
+    }
+
+    /** Called by whoever loads this screen; passed on to the dashboard after login. */
+    public void setCustomerService(Customer customerService) {
+        this.customerService = customerService;
+    }
+
+    /** Called by whoever loads this screen; passed on to the dashboard after login. */
+    public void setEmailService(CustomerEmailService emailService) {
+        this.emailService = emailService;
     }
 
     // ------------------------------------------------------------------
@@ -262,20 +280,7 @@ public class LoginController {
         Task<Boolean> loginTask = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                try {
-                    return (Boolean) loginService.getClass()
-                            .getMethod("attemptLogin", String.class, String.class)
-                            .invoke(loginService, username, password);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof Exception) {
-                        throw (Exception) cause;
-                    }
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                    throw new RuntimeException(cause);
-                }
+                return loginService.attemptLogin(username, password);
             }
         };
 
@@ -299,16 +304,16 @@ public class LoginController {
     // ------------------------------------------------------------------
 
     private void handleLoginFailure(Throwable error) {
-        if (error instanceof IllegalArgumentException) {
+        if (error instanceof ValidationException) {
             // Input was rejected by the business layer's validation (empty, too short, ...)
+            showError(error.getMessage(), true, true);
+        } else if (error instanceof LavsException) {
+            // The mainframe rejected the login (wrong username or password, etc.)
+            passwordField.clear();   // clear first: clearing removes any error shown
             showError(error.getMessage(), true, true);
         } else if (error instanceof IOException) {
             // Network / mainframe connection problem
             showError("Could not connect to the server. Please try again.", false, false);
-        } else if (error instanceof RuntimeException) {
-            // Credentials were rejected ("Login failed: ...")
-            passwordField.clear();   // clear first: clearing removes any error shown
-            showError(error.getMessage(), true, true);
         } else {
             error.printStackTrace();
             showError("Something went wrong. Please try again.", false, false);
@@ -326,8 +331,19 @@ public class LoginController {
             // Load the separate dashboard FXML
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/lavs/ui/dashboard.fxml"));
             Parent root = loader.load();
+
+            // hand the dashboard the business-layer services (sign out + customer list)
+            DashboardController dashboardController = loader.getController();
+            dashboardController.setServices(loginService, customerService, emailService);
+
+            Scene scene = new Scene(root);
+            URL cssUrl = getClass().getResource("/lavs/ui/styles.css");
+            if (cssUrl != null) {
+                scene.getStylesheets().add(cssUrl.toExternalForm());
+            }
+
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
+            stage.setScene(scene);
             stage.setTitle("Mainframe Interface - Dashboard");
             stage.show();
         } catch (Exception e) {

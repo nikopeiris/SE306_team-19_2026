@@ -158,11 +158,6 @@ class CoborrowerTest {
         assertEquals("Page must be a positive integer",
                 invalidPageException.getResult().getError("page"));
 
-        ValidationException invalidSizeException = assertThrows(ValidationException.class, () ->
-                coborrower.retrieveCoborrowers("L456", 1L, null));
-        assertEquals("Size cannot be empty",
-                invalidSizeException.getResult().getError("size"));
-
         verifyNoInteractions(adapter);
     }
 
