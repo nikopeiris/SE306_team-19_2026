@@ -1,5 +1,7 @@
 package business.system;
 
+import java.io.IOException;
+
 import business.Main;
 import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
@@ -13,8 +15,6 @@ import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
 import mainframe.client.messages.customer.UpdateAddress;
 import mainframe.client.messages.customerAddress.List;
-
-import java.io.IOException;
 
 /**
  * Business service for adding customers through the mainframe adapter.
@@ -254,6 +254,16 @@ public class Customer {
       Status status = customerAdapter.send(retrieveMessage);
       Main.isValidStatus(status);
       return retrieveMessage;
+  }
+
+  public List.Item findMailingAddress(String customerNumber) throws IOException, LavsException {
+      List.Item[] addresses = listAddresses(customerNumber, 1L, 100L);
+      for (List.Item address : addresses) {
+          if (address.getIsMailing().equals("y")) {
+              return address;
+          }
+      }
+      return null;
   }
 
   /**

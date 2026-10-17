@@ -1,24 +1,24 @@
 package business.system;
 
-import business.lavsexceptions.LavsException;
-import business.validation.ValidationException;
-import dataaccess.systemadapters.MainframeAdapter;
-import mainframe.client.Status;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import business.lavsexceptions.LavsException;
+import business.validation.ValidationException;
+import dataaccess.systemadapters.MainframeAdapter;
+import mainframe.client.Status;
 
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {

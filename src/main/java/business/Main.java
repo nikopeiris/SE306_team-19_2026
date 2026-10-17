@@ -1,28 +1,30 @@
 package business;
 
-import business.lavsexceptions.LavsException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import dataaccess.systemadapters.MainframeAdapter;
-import mainframe.client.Connection;
-import mainframe.client.HttpConnection;
-import mainframe.client.messages.customer.Retrieve;
-import mainframe.client.messages.customer.Search;
-import mainframe.client.messages.customerAddress.List;
+import business.lavsexceptions.LavsException;
+import business.system.Customer;
+import business.system.Loan;
 import business.system.LoginService;
 import business.system.SignupService;
 import business.validation.ValidationException;
-import business.system.Customer;
+import dataaccess.systemadapters.MainframeAdapter;
+import mainframe.client.Connection;
+import mainframe.client.HttpConnection;
 import mainframe.client.Status;
+import mainframe.client.messages.customer.Retrieve;
+import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customerAddress.List;
 
 public class Main {
   private String userName;
   private Connection connection = new HttpConnection("https://animating-eraser-arrogance.ngrok-free.dev/");
   private MainframeAdapter adapter = new MainframeAdapter(connection);
+  private String currentLoanId;
 
   /**
    * Validates the status of a mainframe response.
@@ -53,6 +55,13 @@ public class Main {
     return false;
   }
 
+  /**
+   * Sets the current loan id.
+   * @param loanId the loan id to set
+   */
+  public void setLoanId(String loanId){
+    this.currentLoanId = loanId;
+  }
   /**
    * Signs up a new user via admin credentials, then logs in as that user.
    *
@@ -309,7 +318,78 @@ public class Main {
     Customer customerService = new Customer(adapter);
     return customerService.retrieveEmail(customerId, emailId);
   }
-  
+
+
+  /**
+   * Adds a loan to a customer via the mainframe adapter after validating all loan fields and checking for a mailing address.
+   * @param customerNumber cutomer number to which the loan belongs
+   * @param principal amount borrowed; must be greater than zero
+   * @param annualRate annual rate as a percentage; must not be negative
+   * @param term loan term in months/periods; must be greater than zero
+   * @param loanType valid loan category code
+   * @param paymentFrequency valid payment frequency code
+   * @param compoundType valid compounding frequency code
+   * @param renewalDate renewal date of the loan
+   * @param startDate start date of the loan
+   * @return true if the loan was added successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request or validation fails
+   */
+  public boolean addLoan(String customerNumber, double principal, double annualRate, int term, String loanType, String paymentFrequency, String compoundType, String renewalDate, String startDate) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    loanService.addLoan(customerNumber, principal, annualRate, term, loanType, paymentFrequency, compoundType, renewalDate, startDate);
+    return true;
+  }
+
+  /**
+   * Retrieves a list of loans for a customer via the mainframe adapter.
+   * @param customerNumber customer number to retrieve loans for
+   * @param page page number of loans to retrieve
+   * @param size number of loans to retrieve per page
+   * @return an array of loan items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.loan.List.Item[] listLoans(String customerNumber, int page, int size) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    return loanService.retrieveLoans(customerNumber, page, size);
+  }
+
+  /**
+   * Retrieves a loan via the mainframe adapter.
+   * @param loanNumber loan number to retrieve
+   * @return a Retrieve object containing the loan details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.loan.Retrieve getLoan() throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    return loanService.retrieveLoan(currentLoanId);
+  }
+
+  /**
+   * Retrieves a repayment schedule for a loan via the mainframe adapter.
+   * @param page page number of the schedule to retrieve
+   * @param size number of schedule items to retrieve per page
+   * @return an array of repayment schedule items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.loanRepaymentSchedule.List.Item[] getLoanRepaymentSchedule(int page, int size) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    return loanService.retrieveRepaymentSchedule(currentLoanId, page, size);
+  }
+
+  /**
+   * Retrieves a summary of the current loan via the mainframe adapter.
+   * @return a Retrieve object containing the loan summary details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.loanSummary.Retrieve getLoanSummary() throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    return loanService.retrieveLoanSummary(currentLoanId);
+  }
   /**
      * Loads key-value pairs from the .env file in the project root.
      *

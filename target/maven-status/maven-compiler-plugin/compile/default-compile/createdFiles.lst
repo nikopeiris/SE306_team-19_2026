@@ -24,6 +24,7 @@ mainframe\client\messages\customer\AddPhoneNumber.class
 mainframe\client\messages\customer\DeleteEmail.class
 mainframe\client\messages\loanNote\List$Item.class
 mainframe\client\MessageResponse.class
+lavs\ui\LoginController$1.class
 mainframe\client\messages\user\List.class
 mainframe\client\messages\customer\UpdateRelationship.class
 mainframe\client\messages\loanNote\List.class
@@ -45,6 +46,8 @@ mainframe\client\messages\organisation\Retrieve.class
 mainframe\client\messages\customerNote\Retrieve.class
 mainframe\client\messages\customer\UpdatePhoneNumber.class
 mainframe\client\StatusMessage.class
+lavs\ui\DashboardController.class
+lavs\app\Main.class
 mainframe\client\messages\loan\List.class
 mainframe\client\messages\Login.class
 mainframe\client\messages\user\Create.class
@@ -56,6 +59,7 @@ mainframe\client\messages\customer\DeleteRelationship.class
 mainframe\client\messages\customer\DeleteAddress.class
 business\lavsexceptions\LavsException.class
 mainframe\client\messages\customer\DeleteEmployer.class
+lavs\ui\LoginController.class
 mainframe\client\messages\loan\List$Item.class
 mainframe\client\messages\customer\Create.class
 mainframe\client\messages\loan\AddCoborrower.class
@@ -82,6 +86,7 @@ mainframe\client\messages\constantCategory\AddItem.class
 business\validation\ValidationResult.class
 mainframe\client\messages\constantItem\List.class
 mainframe\client\messages\customer\Search.class
+business\system\Loan.class
 mainframe\client\messages\customerRelationship\List$Item.class
 mainframe\client\messages\loan\UpdateStatus.class
 mainframe\client\messages\loan\AddDocument.class
