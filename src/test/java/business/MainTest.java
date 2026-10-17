@@ -312,6 +312,56 @@ class MainTest {
     }
 
     @Test
+    void addEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.addEmployer("C123", "Acme Ltd", "Engineer", 85000.0, "Primary"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.AddEmployer.class));
+    }
+
+    @Test
+    void updateEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateEmployer("C123", 4L, "Acme Ltd", "Manager", 95000.0, "Secondary"));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.UpdateEmployer.class));
+    }
+
+    @Test
+    void deleteEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteEmployer("C123", 4L));
+
+        verify(adapter).send(any(mainframe.client.messages.customer.DeleteEmployer.class));
+    }
+
+    @Test
+    void listEmployersDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmployer.List.Item[] result =
+                main.listEmployers("C123", 1, 10);
+
+        verify(adapter).send(any(mainframe.client.messages.customerEmployer.List.class));
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void getEmployerDelegatesToTheEmployerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        mainframe.client.messages.customerEmployer.Retrieve result = main.getEmployer("C123", 4L);
+
+        ArgumentCaptor<mainframe.client.messages.customerEmployer.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.customerEmployer.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
     void addEmailDelegatesToTheEmailService() throws Exception {
         when(adapter.send(any(Message.class))).thenReturn(new Status(1));
 

@@ -13,6 +13,7 @@ import business.system.LoginService;
 import business.system.SignupService;
 import business.system.customer.CustomerAddressService;
 import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -349,6 +350,85 @@ public class Main {
     CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
     phoneService.deletePhoneNumber(customerId, phoneNumberId);
     return true;
+  }
+
+  /**
+   * Adds an employer to an existing customer via the mainframe adapter after validating the employer fields.
+   * @param customer customer number to which the employer belongs
+   * @param name name of the employer
+   * @param position the customer's position at the employer
+   * @param salary the customer's salary from the employer
+   * @param type type of the employer (Primary or Secondary)
+   * @return true if the employer was added successfully
+   * @throws ValidationException if a required field, the salary or employer type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addEmployer(String customer, String name, String position, double salary, String type) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.addEmployer(customer, name, position, salary, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing employer of a customer via the mainframe adapter after validating the employer fields.
+   * @param customer customer number to which the employer belongs
+   * @param employerId ID of the employer to update
+   * @param name name of the employer
+   * @param position the customer's position at the employer
+   * @param salary the customer's salary from the employer
+   * @param type type of the employer (Primary or Secondary)
+   * @return true if the employer was updated successfully
+   * @throws ValidationException if the employer id, a required field, the salary or employer type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateEmployer(String customer, long employerId, String name, String position, double salary, String type) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.updateEmployer(customer, employerId, name, position, salary, type);
+    return true;
+  }
+
+  /**
+   * Deletes an employer of a customer via the mainframe adapter.
+   * @param customerId the customer number the employer belongs to
+   * @param employerId the ID of the employer to delete
+   * @return true if the employer was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deleteEmployer(String customerId, long employerId) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.deleteEmployer(customerId, employerId);
+    return true;
+  }
+
+  /**
+   * Lists customer employers via the mainframe adapter.
+   * @param customerId the customer number to retrieve employers for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer employer items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmployer.List.Item[] listEmployers(String customerId, int page, int size) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    return employerService.listEmployers(customerId, (long) page, (long) size);
+  }
+
+  /**
+   * Retrieves a customer employer via the mainframe adapter.
+   * @param customerId the customer number to retrieve the employer for
+   * @param employerId the ID of the employer to retrieve
+   * @return a Retrieve object containing the employer details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmployer.Retrieve getEmployer(String customerId, long employerId) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    return employerService.retrieveEmployer(customerId, employerId);
   }
 
   /**

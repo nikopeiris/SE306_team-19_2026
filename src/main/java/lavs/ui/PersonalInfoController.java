@@ -1,5 +1,6 @@
 package lavs.ui;
 
+import business.system.customer.CustomerEmployerService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -111,8 +112,10 @@ public class PersonalInfoController {
                 String salary = salaryField != null ? salaryField.getText() : "";
                 var startDate = startDateField != null ? startDateField.getValue() : null;
 
-                if (jobTitle.isBlank() || company.isBlank() || salary.isBlank() || startDate == null) {
-                    throw new IllegalArgumentException("Job title, company, start date, and salary are required when employed.");
+                CustomerEmployerService.validateEmployerDetails(
+                        "TEMP", company, jobTitle, parseSalary(salary), CustomerEmployerService.TYPE_PRIMARY);
+                if (startDate == null) {
+                    throw new IllegalArgumentException("Start date is required when employed.");
                 }
             }
 
@@ -122,8 +125,10 @@ public class PersonalInfoController {
                 String secSalary = secondarySalaryField != null ? secondarySalaryField.getText() : "";
                 var secStartDate = secondaryStartDateField != null ? secondaryStartDateField.getValue() : null;
 
-                if (secJobTitle.isBlank() || secCompany.isBlank() || secSalary.isBlank() || secStartDate == null) {
-                    throw new IllegalArgumentException("Job title, company, start date, and salary are required for secondary employment.");
+                CustomerEmployerService.validateEmployerDetails(
+                        "TEMP", secCompany, secJobTitle, parseSalary(secSalary), CustomerEmployerService.TYPE_SECONDARY);
+                if (secStartDate == null) {
+                    throw new IllegalArgumentException("Start date is required for secondary employment.");
                 }
             }
 
@@ -142,6 +147,15 @@ public class PersonalInfoController {
             alert.setContentText(e.getMessage() != null ? e.getMessage() : "Please fill out all required personal info fields.");
             alert.showAndWait();
             return false;
+        }
+    }
+
+    // the salary field only accepts digits and a dot, so anything unparsable (blank or ".") counts as missing
+    private static Double parseSalary(String text) {
+        try {
+            return text == null || text.isBlank() ? null : Double.valueOf(text.trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
