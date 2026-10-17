@@ -523,6 +523,7 @@ public class Main {
    * @param compoundType valid compounding frequency code
    * @param renewalDate renewal date of the loan
    * @param startDate start date of the loan
+   * @param guarantorId guarantor identifier (customer id of guarantor)
    * @return true if the loan was added successfully
    * @throws IOException if network or mainframe connection fails
    * @throws LavsException if the mainframe rejects the request or validation fails

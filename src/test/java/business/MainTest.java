@@ -424,6 +424,26 @@ class MainTest {
             items.add(listMessage.new Item("Auckland", "NZ", 1L, "y", "n", "Home"));
             return new Status(0, null, 1L);
         });
+        when(adapter.send(any(mainframe.client.messages.customerEmail.List.class))).thenAnswer(invocation -> {
+            mainframe.client.messages.customerEmail.List listMessage = invocation.getArgument(0);
+            Field dataField = mainframe.client.messages.customerEmail.List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.ArrayList<mainframe.client.messages.customerEmail.List.Item> items =
+                    (java.util.ArrayList<mainframe.client.messages.customerEmail.List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item("test@example.com", 1L, "y", "Work"));
+            return new Status(0, null, 1L);
+        });
+        when(adapter.send(any(mainframe.client.messages.customerEmployer.List.class))).thenAnswer(invocation -> {
+            mainframe.client.messages.customerEmployer.List listMessage = invocation.getArgument(0);
+            java.lang.reflect.Field dataField = mainframe.client.messages.customerEmployer.List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.ArrayList<mainframe.client.messages.customerEmployer.List.Item> items =
+                    (java.util.ArrayList<mainframe.client.messages.customerEmployer.List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item(1L, "Acme", "Primary"));
+            return new Status(0, null, 1L);
+        });
         when(adapter.send(any(mainframe.client.messages.loan.Create.class)))
                 .thenReturn(new Status(1));
 
@@ -437,7 +457,8 @@ class MainTest {
                 "Monthly",
                 "Monthly",
                 now.plusDays(30).toString(),
-                now.plusDays(5).toString());
+                now.plusDays(5).toString(),
+                null);
 
         assertTrue(result);
         verify(adapter).send(any(mainframe.client.messages.loan.Create.class));

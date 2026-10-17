@@ -5,6 +5,7 @@ import java.util.Set;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
+import business.validation.LoanValidation;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -41,7 +42,7 @@ public class Coborrower extends Customer {
     public AddCoborrower addCoborrower(String coborrowerNumber, String loanNumber, String type)
             throws IOException, LavsException {
         validateCoborrowerDetails(coborrowerNumber, loanNumber, type);
-        business.system.Loan.preReqCheck(coborrowerNumber, coborrowerAdapter);
+        LoanValidation.preReqCheck(coborrowerNumber, coborrowerAdapter);
 
         AddCoborrower addCoborrowerMessage = new AddCoborrower(
                 coborrowerNumber.trim(),

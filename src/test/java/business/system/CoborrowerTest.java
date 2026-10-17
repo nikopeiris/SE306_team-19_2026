@@ -1,5 +1,8 @@
 package business.system;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -17,6 +21,7 @@ import business.lavsexceptions.LavsException;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import mainframe.client.messages.customerAddress.List;
 import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.DeleteCoborrower;
 
@@ -32,8 +37,41 @@ class CoborrowerTest {
         coborrower = new Coborrower(adapter);
     }
 
+    /**
+     * Stubs the address service to return one mailing address item.
+     */
+    private void stubMailingAddress() throws Exception {
+        lenient().when(adapter.send(any(List.class))).thenAnswer(invocation -> {
+            List listMessage = invocation.getArgument(0);
+            Field dataField = List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            ArrayList<List.Item> items = (ArrayList<List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item("Auckland", "NZ", 5L, "y", "n", "Home"));
+            return new Status(0, null, 1L);
+        });
+    }
+
+    /**
+     * Stubs the email service to return a primary email so preReqCheck passes.
+     */
+    private void stubPrimaryEmail() throws Exception {
+        lenient().when(adapter.send(any(mainframe.client.messages.customerEmail.List.class))).thenAnswer(invocation -> {
+            mainframe.client.messages.customerEmail.List listMessage = invocation.getArgument(0);
+            Field dataField = mainframe.client.messages.customerEmail.List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            ArrayList<mainframe.client.messages.customerEmail.List.Item> items =
+                    (ArrayList<mainframe.client.messages.customerEmail.List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item("test@example.com", 1L, "y", "Work"));
+            return new Status(0, null, 1L);
+        });
+    }
+
     @Test
     void addCoborrowerSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        stubMailingAddress();
+        stubPrimaryEmail();
         when(adapter.send(any(AddCoborrower.class))).thenReturn(new Status(1));
 
         AddCoborrower result = coborrower.addCoborrower(
@@ -51,6 +89,8 @@ class CoborrowerTest {
 
     @Test
     void addCoborrowerAcceptsGuarantorType() throws Exception {
+        stubMailingAddress();
+        stubPrimaryEmail();
         when(adapter.send(any(AddCoborrower.class))).thenReturn(new Status(1));
 
         AddCoborrower result = coborrower.addCoborrower(
@@ -80,6 +120,8 @@ class CoborrowerTest {
 
     @Test
     void addCoborrowerThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        stubMailingAddress();
+        stubPrimaryEmail();
         when(adapter.send(any(AddCoborrower.class))).thenReturn(new Status(500, "Rejected", 99L));
 
         LavsException exception = assertThrows(LavsException.class, () ->

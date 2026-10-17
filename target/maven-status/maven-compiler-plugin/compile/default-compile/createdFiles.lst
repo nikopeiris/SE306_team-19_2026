@@ -28,6 +28,7 @@ business\system\customer\CustomerEmployerService.class
 mainframe\client\messages\customer\DeleteEmail.class
 mainframe\client\messages\loanNote\List$Item.class
 mainframe\client\MessageResponse.class
+business\validation\LoanValidation.class
 lavs\ui\LoginController$1.class
 mainframe\client\messages\user\List.class
 mainframe\client\messages\customer\UpdateRelationship.class
