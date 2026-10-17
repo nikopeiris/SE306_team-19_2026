@@ -8,6 +8,8 @@ import java.util.Set;
 import business.Main;
 import business.lavsexceptions.LavsException;
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerPhoneNumberService;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -84,7 +86,7 @@ public class Loan {
                 loanType,
                 paymentFrequency,
                 compoundType, renewalDate, startDate);
-        mailingAddressCheck(customerNumber);
+        preReqCheck(customerNumber, loanAdapter);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
@@ -400,11 +402,32 @@ public class Loan {
         }
     }
 
-    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
+    public static void preReqCheck(String customerNumber, MainframeAdapter adapter) throws IOException, LavsException {
       if (customerNumber != null && !customerNumber.isBlank()) {
-        CustomerAddressService addressService = new CustomerAddressService(loanAdapter);
+        ValidationResult result = new ValidationResult();
+        CustomerAddressService addressService = new CustomerAddressService(adapter);
+        CustomerEmailService emailService = new CustomerEmailService(adapter);
+        CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
         if (addressService.findMailingAddress(customerNumber.trim()) == null) {
-            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
+            result.addError("mailingAddress", "Does not have a mailing address.");
+        }
+        if ("".equals(emailService.findPrimaryEmail(customerNumber.trim()))) {
+            result.addError("email", "Does not have a primary email.");
+        }
+        else{
+          if (!result.isValid()) {
+            throw new ValidationException(result);
+          }
+          return;
+        }
+        if (phoneService.listPhoneNumbers(customerNumber.trim(), 1L, 100L).length == 0) {
+            result.addError("phone", "Does not have a primary phone number.");
+        }
+        else{
+          result.removeError("email");
+        }
+        if (!result.isValid()) {
+          throw new ValidationException(result);
         }
       }
     }
