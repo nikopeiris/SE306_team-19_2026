@@ -64,7 +64,7 @@
       </Pane>
 
       <!-- Form actions -->
-      <Button fx:id="personalCancelButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="110.0" text="Cancel">
+      <Button fx:id="personalCancelButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handlePersonalInfoCancel" prefHeight="36.0" prefWidth="110.0" text="Cancel">
          <cursor>
             <Cursor fx:constant="HAND" />
          </cursor>
