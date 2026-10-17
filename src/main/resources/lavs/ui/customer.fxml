@@ -128,13 +128,18 @@
                     <VBox fx:id="phoneNumberListContainer" spacing="6.0" />
 
                     <Button fx:id="addNumberButton" mnemonicParsing="false" onAction="#handleAddNumber" text="Add Phone Number" />
-                  <Text fx:id="emailsHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Email Addresses">
-                     <font>
-                        <Font name="System Bold" size="14.0" />
-                     </font>
-                  </Text>
+                    <Text fx:id="emailsHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Email Addresses">
+                    <font>
+                         <Font name="System Bold" size="14.0" />
+                    </font>
+                    </Text>
+
+                    <!-- Dynamic email addresses list container -->
+                    <VBox fx:id="emailListContainer" spacing="6.0" />
+
+                    <Button fx:id="addEmailButton" mnemonicParsing="false" onAction="#handleAddEmail" text="Add Email Address" />
                   <VBox fx:id="emailFieldsBox" spacing="6.0" />
-                  <Button fx:id="addEmailButton" mnemonicParsing="false" onAction="#handleAddEmail" text="Add Another Email" />
+
                </children>
             </VBox>
 

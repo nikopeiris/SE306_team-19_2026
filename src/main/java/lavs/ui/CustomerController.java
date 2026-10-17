@@ -122,6 +122,9 @@ public class CustomerController {
     @FXML private VBox phoneNumberListContainer;
     private boolean hasPrimaryPhone = false;
 
+    @FXML private VBox emailListContainer;
+    private boolean hasPrimaryEmail = false;
+
     // =====================================================================
     // Tab 3: Loan
     // =====================================================================
@@ -663,25 +666,86 @@ public class CustomerController {
 
     @FXML
     private void handleAddEmail(ActionEvent event) {
-        if (emailFieldsBox == null) return;
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle("Add Email Address");
 
-        javafx.scene.layout.HBox emailRow = new javafx.scene.layout.HBox(8);
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("Personal", "Work");
+        typeBox.setValue("Personal");
+        typeBox.setPromptText("Email Type");
 
-        TextField emailInput = new TextField();
-        emailInput.setPromptText("email@example.com");
-        emailInput.setPrefWidth(200);
+        TextField emailField = new TextField();
+        emailField.setPromptText("email@example.com");
 
-        ComboBox<String> emailTypeBox = new ComboBox<>();
-        emailTypeBox.getItems().addAll("Personal", "Work", "Other");
-        emailTypeBox.setValue("Personal");
-        emailTypeBox.setPrefWidth(100);
+        CheckBox primaryCheckBox = new CheckBox("Is Primary Email");
 
-        Button removeBtn = new Button("X");
-        removeBtn.setTextFill(javafx.scene.paint.Color.RED);
-        removeBtn.setOnAction(e -> emailFieldsBox.getChildren().remove(emailRow));
+        Button saveEmailButton = new Button("Save Email");
+        Button cancelButton = new Button("Cancel");
 
-        emailRow.getChildren().addAll(emailInput, emailTypeBox, removeBtn);
-        emailFieldsBox.getChildren().add(emailRow);
+        saveEmailButton.setOnAction(e -> {
+            try {
+                String type = typeBox.getValue() != null ? typeBox.getValue() : "";
+                String email = emailField.getText().trim();
+                boolean isPrimary = primaryCheckBox.isSelected();
+
+                if (email.isBlank() || !email.contains("@")) {
+                    throw new IllegalArgumentException("Please enter a valid email address.");
+                }
+
+                // Enforce single primary email rule
+                if (isPrimary && hasPrimaryEmail) {
+                    throw new IllegalArgumentException("Only one email address can be set as Primary.");
+                }
+
+                if (isPrimary) {
+                    hasPrimaryEmail = true;
+                }
+
+                // Create display row in the email list container
+                if (emailListContainer != null) {
+                    javafx.scene.layout.HBox emailRow = new javafx.scene.layout.HBox(12);
+                    emailRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                    String tag = isPrimary ? " [PRIMARY]" : "";
+                    String emailSummary = String.format("[%s]%s %s", type, tag, email);
+
+                    Text emailText = new Text(emailSummary);
+                    Button removeEmailBtn = new Button("Remove");
+                    removeEmailBtn.setTextFill(javafx.scene.paint.Color.RED);
+
+                    removeEmailBtn.setOnAction(remEvent -> {
+                        if (isPrimary) {
+                            hasPrimaryEmail = false;
+                        }
+                        emailListContainer.getChildren().remove(emailRow);
+                    });
+
+                    emailRow.getChildren().addAll(emailText, removeEmailBtn);
+                    emailListContainer.getChildren().add(emailRow);
+                }
+
+                popup.close();
+            } catch (Exception ex) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("Email Error");
+                alert.setHeaderText("Invalid Email");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+
+        cancelButton.setOnAction(e -> popup.close());
+
+        VBox layout = new VBox(10);
+        layout.setPadding(new javafx.geometry.Insets(20));
+        layout.getChildren().addAll(
+            new Text("Enter Email Details:"), typeBox, emailField, primaryCheckBox,
+            new javafx.scene.layout.HBox(10, saveEmailButton, cancelButton)
+        );
+
+        popup.setScene(new javafx.scene.Scene(layout, 320, 240));
+        popup.showAndWait();
     }
 
     @FXML
