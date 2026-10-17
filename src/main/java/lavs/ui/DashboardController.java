@@ -410,5 +410,18 @@ public class DashboardController {
         };
     }
 
+    @FXML
+    private void handleReloadCustomers(ActionEvent event) {
+        if (loadingCustomers) return; // Prevent overlapping reload calls
+        
+        // Clear existing caches to force a fresh fetch
+        emailCache.clear();
+        emailFailed.clear();
+        emailRequestedByRow.clear();
+        allCustomers.clear();
+
+        loadCustomers();
+    }
+
 
 }
