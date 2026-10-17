@@ -25,11 +25,17 @@
       <Text layoutX="13.0" layoutY="246.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Nationality" />
       <ComboBox fx:id="nationalityField" layoutX="13.0" layoutY="250.0" prefWidth="150.0" />
       
-      <Text layoutX="13.0" layoutY="300.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Status" />
-      <ComboBox fx:id="statusField" layoutX="13.0" layoutY="304.0" prefWidth="150.0" />
+      <!-- Title ComboBox -->
+      <Text layoutX="13.0" layoutY="300.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Title" />
+      <ComboBox fx:id="titleField" layoutX="13.0" layoutY="304.0" prefWidth="150.0" />
+
+      <!-- Status ComboBox -->
+      <Text layoutX="13.0" layoutY="353.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Status" />
+      <ComboBox fx:id="statusField" layoutX="13.0" layoutY="357.0" prefWidth="150.0" />
       
-      <Text layoutX="13.0" layoutY="353.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Customer ID" />
-      <TextField fx:id="customerIdField" layoutX="13.0" layoutY="357.0" />
+      <!-- Customer ID -->
+      <Text layoutX="13.0" layoutY="406.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Customer ID" />
+      <TextField fx:id="customerIdField" layoutX="13.0" layoutY="410.0" />
 
       <!-- Employment details -->
       <Text layoutX="194.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Job Title" />
@@ -58,7 +64,7 @@
       </Pane>
 
       <!-- Form actions -->
-      <Button fx:id="personalCancelButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="110.0" text="Cancel">
+      <Button fx:id="personalCancelButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handlePersonalInfoCancel" prefHeight="36.0" prefWidth="110.0" text="Cancel">
          <cursor>
             <Cursor fx:constant="HAND" />
          </cursor>

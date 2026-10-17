@@ -102,6 +102,7 @@
 </HBox>
 
 <!-- Scrollable customer list (all customers by default, filtered as you type) -->
+<Button fx:id="reloadCustomersButton" mnemonicParsing="false" onAction="#handleReloadCustomers" text="Reload Customers" />
 <ListView fx:id="customerListView" layoutX="215.0" layoutY="222.0" prefHeight="120.0" prefWidth="787.0" style="-fx-background-color: white; -fx-border-color: #d9d9d9; -fx-background-radius: 6; -fx-border-radius: 6; -fx-padding: 0;" />
 <Button fx:id="addCustomerButton" defaultButton="true" layoutX="870.0" layoutY="122.0" mnemonicParsing="false" onAction="#handleAddCustomer" prefHeight="28.0" prefWidth="134.0" style="-fx-background-color: #726e97;" text="Add New Customer" textFill="WHITE">
 <cursor>
