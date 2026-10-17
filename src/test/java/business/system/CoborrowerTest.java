@@ -130,4 +130,95 @@ class CoborrowerTest {
 
         assertEquals("Deletion failed", exception.getMessage());
     }
+
+    @Test
+    void retrieveCoborrowersSendsListMessageAndReturnsItems() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanCoborrower.List.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loanCoborrower.List.Item[] result =
+                coborrower.retrieveCoborrowers("  L456  ", 1L, 25L);
+
+        ArgumentCaptor<mainframe.client.messages.loanCoborrower.List> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanCoborrower.List.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(1L, captor.getValue().getPage());
+        assertEquals(0, result.length);
+    }
+
+    @Test
+    void retrieveCoborrowersRejectsInvalidLoanNumberOrPaging() {
+        ValidationException emptyLoanException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrowers("   ", 1L, 25L));
+        assertEquals("Loan number cannot be null or empty",
+                emptyLoanException.getResult().getError("loanNumber"));
+
+        ValidationException invalidPageException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrowers("L456", 0L, 25L));
+        assertEquals("Page must be a positive integer",
+                invalidPageException.getResult().getError("page"));
+
+        ValidationException invalidSizeException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrowers("L456", 1L, null));
+        assertEquals("Size cannot be empty",
+                invalidSizeException.getResult().getError("size"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void retrieveCoborrowersThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanCoborrower.List.class)))
+                .thenReturn(new Status(500, "Failed to list coborrowers", 99L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                coborrower.retrieveCoborrowers("L456", 1L, 25L));
+
+        assertEquals("Failed to list coborrowers", exception.getMessage());
+    }
+
+    @Test
+    void retrieveCoborrowerSendsRetrieveMessageAndReturnsIt() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanCoborrower.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loanCoborrower.Retrieve result =
+                coborrower.retrieveCoborrower(10L, "  L456  ");
+
+        ArgumentCaptor<mainframe.client.messages.loanCoborrower.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanCoborrower.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void retrieveCoborrowerRejectsInvalidIdOrLoanNumber() {
+        ValidationException nullIdException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrower(null, "L456"));
+        assertEquals("Coborrower id cannot be empty",
+                nullIdException.getResult().getError("id"));
+
+        ValidationException negativeIdException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrower(-5L, "L456"));
+        assertEquals("Coborrower id must be a positive integer",
+                negativeIdException.getResult().getError("id"));
+
+        ValidationException blankLoanException = assertThrows(ValidationException.class, () ->
+                coborrower.retrieveCoborrower(1L, "   "));
+        assertEquals("Loan number cannot be null or empty",
+                blankLoanException.getResult().getError("loanNumber"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void retrieveCoborrowerThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanCoborrower.Retrieve.class)))
+                .thenReturn(new Status(500, "Failed to retrieve", 99L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                coborrower.retrieveCoborrower(1L, "L456"));
+
+        assertEquals("Failed to retrieve", exception.getMessage());
+    }
 }
