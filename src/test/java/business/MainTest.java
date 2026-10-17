@@ -444,7 +444,15 @@ class MainTest {
             items.add(listMessage.new Item(1L, "Acme", "Primary"));
             return new Status(0, null, 1L);
         });
-        when(adapter.send(any(mainframe.client.messages.loan.Create.class)))
+        when(adapter.send(any(mainframe.client.messages.loan.Create.class))).thenAnswer(invocation -> {
+            mainframe.client.messages.loan.Create createMessage = invocation.getArgument(0);
+            Field loanNumberField =
+                    mainframe.client.messages.loan.Create.class.getDeclaredField("_loanNumber");
+            loanNumberField.setAccessible(true);
+            loanNumberField.set(createMessage, "L456");
+            return new Status(1);
+        });
+        when(adapter.send(any(mainframe.client.messages.loan.UpdateStatus.class)))
                 .thenReturn(new Status(1));
 
         java.time.LocalDate now = java.time.LocalDate.now();
@@ -462,6 +470,18 @@ class MainTest {
 
         assertTrue(result);
         verify(adapter).send(any(mainframe.client.messages.loan.Create.class));
+    }
+
+    @Test
+    void updateLoanStatusDelegatesToLoanService() throws Exception {
+        injectField(main, "currentLoanId", "L456");
+        when(adapter.send(any(mainframe.client.messages.loan.UpdateStatus.class)))
+                .thenReturn(new Status(1));
+
+        assertTrue(main.updateLoanStatus(
+                mainframe.client.messages.loan.UpdateStatus.STATUS_ACTIVE));
+
+        verify(adapter).send(any(mainframe.client.messages.loan.UpdateStatus.class));
     }
 
     private static void injectField(Object target, String fieldName, Object value)

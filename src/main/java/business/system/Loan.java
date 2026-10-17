@@ -13,6 +13,7 @@ import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.List;
 import mainframe.client.messages.loan.Retrieve;
 import mainframe.client.messages.loan.Update;
+import mainframe.client.messages.loan.UpdateStatus;
 
 /**
  * Business service for creating customer loans.
@@ -90,6 +91,7 @@ public class Loan {
             Coborrower coborrower = new Coborrower(loanAdapter);
             coborrower.addCoborrower(guarantorId.trim(), createMessage.getLoanNumber(), AddCoborrower.TYPE_GUARANTOR);
         }
+        updateLoanStatus(createMessage.getLoanNumber(), UpdateStatus.STATUS_PENDING);
         return createMessage;
     }
 
@@ -218,6 +220,28 @@ public class Loan {
         Status status = loanAdapter.send(updateMessage);
         Main.isValidStatus(status);
         return updateMessage;
+    }
+
+    /**
+     * Updates the status of a loan in the mainframe.
+     *
+     * @param loanNumber loan identifier to update
+     * @param status new loan status
+     * @return the updated status message
+     * @throws ValidationException if the loan number or status is invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public UpdateStatus updateLoanStatus(String loanNumber, String status)
+            throws IOException, LavsException {
+        LoanValidation.validateUpdateLoanStatus(loanNumber, status);
+
+        UpdateStatus updateStatusMessage = new UpdateStatus(
+                loanNumber.trim(),
+                status.trim());
+        Status responseStatus = loanAdapter.send(updateStatusMessage);
+        Main.isValidStatus(responseStatus);
+        return updateStatusMessage;
     }
 
     /**
