@@ -119,6 +119,9 @@ public class CustomerController {
     private boolean hasPrimaryAddress = false;
     private boolean hasMailingAddress = false;
 
+    @FXML private VBox phoneNumberListContainer;
+    private boolean hasPrimaryPhone = false;
+
     // =====================================================================
     // Tab 3: Loan
     // =====================================================================
@@ -563,7 +566,99 @@ public class CustomerController {
 
     @FXML
     private void handleAddNumber(ActionEvent event) {
-        // TODO: open add phone form
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle("Add Phone Number");
+
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("Mobile", "Home", "Work");
+        typeBox.setValue("Mobile");
+        typeBox.setPromptText("Phone Type");
+
+        ComboBox<String> countryCodeBox = new ComboBox<>();
+        countryCodeBox.getItems().addAll("+64 (NZ)", "+61 (AU)", "+1 (US/CA)", "+44 (UK)", "+86 (CN)", "Other");
+        countryCodeBox.setValue("+64 (NZ)");
+        countryCodeBox.setEditable(true);
+
+        TextField phoneNumberField = new TextField();
+        phoneNumberField.setPromptText("Phone Number (e.g. 0211234567)");
+
+        // Numerical check for phone number input
+        phoneNumberField.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                phoneNumberField.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
+
+        CheckBox primaryCheckBox = new CheckBox("Is Primary Phone");
+
+        Button savePhoneButton = new Button("Save Phone");
+        Button cancelButton = new Button("Cancel");
+
+        savePhoneButton.setOnAction(e -> {
+            try {
+                String type = typeBox.getValue() != null ? typeBox.getValue() : "";
+                String countryCode = countryCodeBox.getValue() != null ? countryCodeBox.getValue() : "";
+                String number = phoneNumberField.getText().trim();
+                boolean isPrimary = primaryCheckBox.isSelected();
+
+                if (number.isBlank()) {
+                    throw new IllegalArgumentException("Phone number cannot be empty.");
+                }
+
+                // Enforce single primary phone rule
+                if (isPrimary && hasPrimaryPhone) {
+                    throw new IllegalArgumentException("Only one phone number can be set as Primary.");
+                }
+
+                if (isPrimary) {
+                    hasPrimaryPhone = true;
+                }
+
+                // Create display row in the phone number list container
+                if (phoneNumberListContainer != null) {
+                    javafx.scene.layout.HBox phoneRow = new javafx.scene.layout.HBox(12);
+                    phoneRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                    String tag = isPrimary ? " [PRIMARY]" : "";
+                    String phoneSummary = String.format("[%s]%s %s %s", type, tag, countryCode, number);
+
+                    Text phoneText = new Text(phoneSummary);
+                    Button removePhoneBtn = new Button("Remove");
+                    removePhoneBtn.setTextFill(javafx.scene.paint.Color.RED);
+
+                    removePhoneBtn.setOnAction(remEvent -> {
+                        if (isPrimary) {
+                            hasPrimaryPhone = false;
+                        }
+                        phoneNumberListContainer.getChildren().remove(phoneRow);
+                    });
+
+                    phoneRow.getChildren().addAll(phoneText, removePhoneBtn);
+                    phoneNumberListContainer.getChildren().add(phoneRow);
+                }
+
+                popup.close();
+            } catch (Exception ex) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("Phone Number Error");
+                alert.setHeaderText("Invalid Phone Number");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+
+        cancelButton.setOnAction(e -> popup.close());
+
+        VBox layout = new VBox(10);
+        layout.setPadding(new javafx.geometry.Insets(20));
+        layout.getChildren().addAll(
+            new Text("Enter Phone Number Details:"), typeBox, countryCodeBox, phoneNumberField, primaryCheckBox,
+            new javafx.scene.layout.HBox(10, savePhoneButton, cancelButton)
+        );
+
+        popup.setScene(new javafx.scene.Scene(layout, 340, 280));
+        popup.showAndWait();
     }
 
     @FXML

@@ -124,8 +124,10 @@
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Text>
-                  <Button fx:id="addNumberButton" mnemonicParsing="false" onAction="#handleAddNumber" text="Add Phone Number" />
+                    <!-- Dynamic phone numbers list container -->
+                    <VBox fx:id="phoneNumberListContainer" spacing="6.0" />
 
+                    <Button fx:id="addNumberButton" mnemonicParsing="false" onAction="#handleAddNumber" text="Add Phone Number" />
                   <Text fx:id="emailsHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Email Addresses">
                      <font>
                         <Font name="System Bold" size="14.0" />
