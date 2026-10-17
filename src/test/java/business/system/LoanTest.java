@@ -107,7 +107,15 @@ class LoanTest {
     void addLoanSendsTrimmedMessageAndReturnsIt() throws Exception {
         stubPreReqCheck();
         stubEmployers();
-        when(adapter.send(any(Create.class))).thenReturn(new Status(1L));
+        when(adapter.send(any(Create.class))).thenAnswer(invocation -> {
+            Create createMessage = invocation.getArgument(0);
+            Field loanNumberField = Create.class.getDeclaredField("_loanNumber");
+            loanNumberField.setAccessible(true);
+            loanNumberField.set(createMessage, "L456");
+            return new Status(1L);
+        });
+        when(adapter.send(any(mainframe.client.messages.loan.UpdateStatus.class)))
+                .thenReturn(new Status(1L));
 
         String futureRenewalDate = LocalDate.now().plusDays(30).toString();
         String futureStartDate = LocalDate.now().plusDays(5).toString();
@@ -504,6 +512,49 @@ class LoanTest {
                         startDate));
 
         assertEquals("Update rejected", exception.getMessage());
+    }
+
+    @Test
+    void updateLoanStatusSendsTrimmedValuesAndReturnsMessage() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.UpdateStatus.class)))
+                .thenReturn(new Status(1));
+
+        mainframe.client.messages.loan.UpdateStatus result =
+                loan.updateLoanStatus("  L456  ", "  Active  ");
+
+        ArgumentCaptor<mainframe.client.messages.loan.UpdateStatus> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loan.UpdateStatus.class);
+        verify(adapter).send(captor.capture());
+        assertEquals("L456", captor.getValue().getLoanNumber());
+        assertEquals("Active", captor.getValue().getStatus());
+        assertEquals(result, captor.getValue());
+    }
+
+    @Test
+    void updateLoanStatusRejectsBlankOrInvalidValues() {
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                loan.updateLoanStatus(" ", "Active"));
+        assertEquals("Loan number cannot be null or empty",
+                exception.getResult().getError("loanNumber"));
+
+        exception = assertThrows(ValidationException.class, () ->
+                loan.updateLoanStatus("L456", "Unknown"));
+        assertEquals("Status must be a valid loan status",
+                exception.getResult().getError("status"));
+
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void updateLoanStatusThrowsLavsExceptionWhenMainframeRejects() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loan.UpdateStatus.class)))
+                .thenReturn(new Status(500, "Status update rejected", 99L));
+
+        LavsException exception = assertThrows(LavsException.class, () ->
+                loan.updateLoanStatus("L456",
+                        mainframe.client.messages.loan.UpdateStatus.STATUS_CANCELLED));
+
+        assertEquals("Status update rejected", exception.getMessage());
     }
 
     @Test

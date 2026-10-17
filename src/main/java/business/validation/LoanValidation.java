@@ -13,6 +13,7 @@ import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.messages.loan.Create;
+import mainframe.client.messages.loan.UpdateStatus;
 
 /**
  * Validation utilities for loans.
@@ -150,6 +151,28 @@ public final class LoanValidation {
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
+    }
+
+    public static void validateUpdateLoanStatus(String loanNumber, String status)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("loanNumber", loanNumber,
+                        "Loan number cannot be null or empty")
+                .requireNotBlank("status", status,
+                        "Status cannot be null or empty");
+
+        if (status != null && !status.isBlank()
+                && !Set.of(
+                        UpdateStatus.STATUS_NEW,
+                        UpdateStatus.STATUS_PENDING,
+                        UpdateStatus.STATUS_ACTIVE,
+                        UpdateStatus.STATUS_DEFAULTED,
+                        UpdateStatus.STATUS_CANCELLED)
+                        .contains(status.trim())) {
+            result.addError("status", "Status must be a valid loan status");
+        }
+
+        result.throwIfInvalid();
     }
 
     public static void validateDate(ValidationResult result, String startDate, String renewalDate) throws ValidationException {

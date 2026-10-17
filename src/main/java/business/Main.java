@@ -607,6 +607,19 @@ public class Main {
   }
 
   /**
+   * Updates the status of a loan via the mainframe adapter.
+   * @param status new loan status
+   * @return true if the loan status was updated successfully
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateLoanStatus(String status) throws IOException, LavsException {
+    Loan loanService = new Loan(adapter);
+    loanService.updateLoanStatus(currentLoanId, status);
+    return true;
+  }
+
+  /**
    * Adds a coborrower to a loan via the mainframe adapter after validating all coborrower fields and checking for a mailing address.
    * @param customerNumber customer number to which the coborrower belongs
    * @param type coborrower type
