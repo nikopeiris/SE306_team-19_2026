@@ -242,4 +242,85 @@ public class ContactInfoController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+        public void populateContactData() {
+            javafx.application.Platform.runLater(() -> {
+                hasPrimaryAddress = false;
+                hasMailingAddress = false;
+                hasPrimaryPhone = false;
+                hasPrimaryEmail = false;
+
+                if (addressListContainer != null) addressListContainer.getChildren().clear();
+                if (phoneNumberListContainer != null) phoneNumberListContainer.getChildren().clear();
+                if (emailListContainer != null) emailListContainer.getChildren().clear();
+
+                // Populate Addresses
+                for (CustomerContext.AddressDto addr : context.getSavedAddresses()) {
+                    if (addr.isPrimary()) hasPrimaryAddress = true;
+                    if (addr.isMailing()) hasMailingAddress = true;
+
+                    if (addressListContainer != null) {
+                        HBox row = new HBox(12);
+                        row.setAlignment(Pos.CENTER_LEFT);
+                        String tags = (addr.isPrimary() ? " [PRIMARY]" : "") + (addr.isMailing() ? " [MAILING]" : "");
+                        Text text = new Text(String.format("[%s]%s - %s, %s, %s", addr.type(), tags, addr.line1(), addr.city(), addr.country()));
+                        Button removeBtn = new Button("Remove");
+                        removeBtn.setTextFill(Color.RED);
+
+                        removeBtn.setOnAction(rem -> {
+                            if (addr.isPrimary()) hasPrimaryAddress = false;
+                            if (addr.isMailing()) hasMailingAddress = false;
+                            context.getSavedAddresses().remove(addr);
+                            addressListContainer.getChildren().remove(row);
+                        });
+                        row.getChildren().addAll(text, removeBtn);
+                        addressListContainer.getChildren().add(row);
+                    }
+                }
+
+                // Populate Phone Numbers
+                for (CustomerContext.PhoneDto phone : context.getSavedPhones()) {
+                    if (phone.isPrimary()) hasPrimaryPhone = true;
+
+                    if (phoneNumberListContainer != null) {
+                        HBox row = new HBox(12);
+                        row.setAlignment(Pos.CENTER_LEFT);
+                        Text text = new Text(String.format("[%s]%s %s %s", phone.type(), (phone.isPrimary() ? " [PRIMARY]" : ""), phone.countryCode(), phone.number()));
+                        Button removeBtn = new Button("Remove");
+                        removeBtn.setTextFill(Color.RED);
+
+                        removeBtn.setOnAction(rem -> {
+                            if (phone.isPrimary()) hasPrimaryPhone = false;
+                            context.getSavedPhones().remove(phone);
+                            phoneNumberListContainer.getChildren().remove(row);
+                        });
+                        row.getChildren().addAll(text, removeBtn);
+                        phoneNumberListContainer.getChildren().add(row);
+                    }
+                }
+
+                // Populate Emails
+                for (CustomerContext.EmailDto email : context.getSavedEmails()) {
+                    if (email.isPrimary()) hasPrimaryEmail = true;
+
+                    if (emailListContainer != null) {
+                        HBox row = new HBox(12);
+                        row.setAlignment(Pos.CENTER_LEFT);
+                        Text text = new Text(String.format("[%s]%s %s", email.type(), (email.isPrimary() ? " [PRIMARY]" : ""), email.email()));
+                        Button removeBtn = new Button("Remove");
+                        removeBtn.setTextFill(Color.RED);
+
+                        removeBtn.setOnAction(rem -> {
+                            if (email.isPrimary()) hasPrimaryEmail = false;
+                            context.getSavedEmails().remove(email);
+                            emailListContainer.getChildren().remove(row);
+                        });
+                        row.getChildren().addAll(text, removeBtn);
+                        emailListContainer.getChildren().add(row);
+                    }
+                }
+            });
+     }
+
+
 }

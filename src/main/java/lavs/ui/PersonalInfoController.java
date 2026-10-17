@@ -1,9 +1,6 @@
 package lavs.ui;
 
-import java.time.LocalDate;
-
 import business.system.customer.CustomerEmployerService;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -185,39 +182,87 @@ public class PersonalInfoController {
         }
     }
 
+    public void populateEmployerData(Object[] employers) {
+        if (employers == null || employers.length == 0) {
+            if (employerField != null) employerField.setValue("None");
+            return;
+        }
+
+        if (employerField != null) employerField.setValue("Employed");
+
+        for (var emp : employers) {
+            String type = readEmployerValue(emp, "getType", "getTypeName");
+            String position = readEmployerValue(emp, "getPosition", "getJobTitle", "getRole");
+            String name = readEmployerValue(emp, "getName", "getCompanyName", "getCompany");
+            String salary = readEmployerValue(emp, "getSalary", "getAmount");
+
+            if (CustomerEmployerService.TYPE_PRIMARY.equals(type)) {
+                if (jobTitleField != null) jobTitleField.setText(position);
+                if (companyField != null) companyField.setText(name);
+                if (salaryField != null) salaryField.setText(salary);
+            } else if (CustomerEmployerService.TYPE_SECONDARY.equals(type)) {
+                if (secondaryEmploymentPane != null) {
+                    secondaryEmploymentPane.setVisible(true);
+                    secondaryEmploymentPane.setManaged(true);
+                    if (addSecondaryEmploymentButton != null) {
+                        addSecondaryEmploymentButton.setVisible(false);
+                        addSecondaryEmploymentButton.setManaged(false);
+                    }
+                }
+                if (secondaryJobTitleField != null) secondaryJobTitleField.setText(position);
+                if (secondaryCompanyField != null) secondaryCompanyField.setText(name);
+                if (secondarySalaryField != null) secondarySalaryField.setText(salary);
+            }
+        }
+    }
+
+    private static String readEmployerValue(Object employer, String... getters) {
+        for (String getter : getters) {
+            try {
+                java.lang.reflect.Method m = employer.getClass().getMethod(getter);
+                Object val = m.invoke(employer);
+                if (val != null) return val.toString().trim();
+            } catch (Exception ignored) {}
+        }
+        return "";
+    }
+    
     public void populateCustomerData(Retrieve retrieve) {
-        Platform.runLater(() -> {
-            if (firstNameField != null) {
-                firstNameField.setText(retrieve.getFirstName());
-            }
-            if (lastNameField != null) {
-                lastNameField.setText(retrieve.getFamilyName());
-            }
-            if (customerIdField != null) {
-                customerIdField.setText(retrieve.getNumber());
-            }
-            if (dateOfBirthField != null && retrieve.getDateOfBirth() != null && !retrieve.getDateOfBirth().isBlank()) {
-                try {
-                    dateOfBirthField.setValue(LocalDate.parse(retrieve.getDateOfBirth().trim()));
-                } catch (Exception ignored) {}
-            }
-            if (nationalityField != null && retrieve.getNationality() !=null) {
-                nationalityField.setValue(retrieve.getNationality());
-            }
-            if (titleField != null && retrieve.getTitle() != null) {
-                titleField.setValue(retrieve.getTitle());
-            }
+    javafx.application.Platform.runLater(() -> {
+        if (firstNameField != null) {
+            firstNameField.setText(retrieve.getFirstName());
+        }
+        if (lastNameField != null) {
+            lastNameField.setText(retrieve.getFamilyName());
+        }
+        if (customerIdField != null) {
+            customerIdField.setText(retrieve.getNumber());
+        }
+        if (dateOfBirthField != null && retrieve.getDateOfBirth() != null && !retrieve.getDateOfBirth().isBlank()) {
+            try {
+                dateOfBirthField.setValue(java.time.LocalDate.parse(retrieve.getDateOfBirth().trim()));
+            } catch (Exception ignored) {}
+        }
+        if (nationalityField != null && retrieve.getNationality() != null) {
+            nationalityField.setValue(retrieve.getNationality());
+        }
+        if (titleField != null && retrieve.getTitle() != null) {
+            titleField.setValue(retrieve.getTitle());
+        }
+        if (statusField != null && retrieve.getStatus() != null) {
+            statusField.setValue(retrieve.getStatus());
+        } else if (statusField != null) {
+            statusField.setValue("Active"); // Default fallback
+        }
+    });
+    }
 
-            // Default status to Active when loading
-            if (statusField != null) {
-                statusField.setValue("Active");
-            }
-
-            // Default employer to None (unless specific employer data is loaded from your service)
-            if (employerField != null) {
-                employerField.setValue("None");
-            }
-        });
+    private static String readEmployerValue(Object employer, String getter) {
+        try {
+            return String.valueOf(employer.getClass().getMethod(getter).invoke(employer));
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalArgumentException("Unable to read employer details.", e);
+        }
     }
 
     private static Double parseSalary(String text) {
