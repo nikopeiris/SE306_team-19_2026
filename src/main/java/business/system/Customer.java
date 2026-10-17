@@ -8,6 +8,7 @@ import java.util.Map;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
+import business.system.customer.CustomerAddressService;
 import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -473,5 +474,18 @@ public class Customer {
         if (!result.isValid()) {
             throw new ValidationException(result);
         }
+    }
+
+    public void validateAddressDetails(
+            String city,
+            String country,
+            String customer,
+            String line1,
+            String otherType,
+            String postCode,
+            String suburb,
+            String type) throws ValidationException {
+        new CustomerAddressService(customerAdapter).validateAddressDetails(
+                city, country, customer, line1, otherType, postCode, suburb, type);
     }
 }
