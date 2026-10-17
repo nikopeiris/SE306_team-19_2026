@@ -34,4 +34,22 @@ public final class ValidationResult {
     public String getError(String field) {
         return _errors.get(field);
     }
+
+    // records an error if the id is null or not a positive integer
+    public ValidationResult requirePositive(String field, Long value, String label) {
+        if (value == null) {
+            addError(field, label + " cannot be empty");
+        } else if (value < 1) {
+            addError(field, label + " must be a positive integer");
+        }
+        return this;
+    }
+
+    // throws if any error was recorded
+    public void throwIfInvalid() throws ValidationException {
+        if (!isValid()) {
+            throw new ValidationException(this);
+        }
+    }
+
 }

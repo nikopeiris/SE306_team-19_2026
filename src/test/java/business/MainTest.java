@@ -131,6 +131,36 @@ class MainTest {
     }
 
     @Test
+    void updateAddressDelegatesToTheCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.updateAddress(
+                "Auckland",
+                "New Zealand",
+                "C123",
+                17L,
+                true,
+                true,
+                "1 Main St",
+                "Unit 2",
+                null,
+                "1010",
+                "CBD",
+                "Residential"));
+
+        verify(adapter).send(any(Message.class));
+    }
+
+    @Test
+    void deleteAddressDelegatesToTheCustomerService() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        assertTrue(main.deleteAddress("C123", 17L));
+
+        verify(adapter).send(any(Message.class));
+    }
+
+    @Test
     void setLoanIdSetsCurrentLoanId() throws Exception {
         main.setLoanId("L123");
 

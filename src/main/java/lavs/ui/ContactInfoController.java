@@ -1,5 +1,6 @@
 package lavs.ui;
 
+import business.system.customer.CustomerAddressService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -70,11 +71,7 @@ public class ContactInfoController {
                 if (isPrimary && hasPrimaryAddress) throw new IllegalArgumentException("Only one address can be set as Primary.");
                 if (isMailing && hasMailingAddress) throw new IllegalArgumentException("Only one address can be set as Mailing.");
 
-                if (context != null && context.getCustomerService() != null) {
-                    context.getCustomerService().validateAddressDetails(city, country, "TEMP", l1, null, postCode, suburb, type);
-                } else if (city.isBlank() || country.isBlank() || l1.isBlank() || postCode.isBlank() || suburb.isBlank()) {
-                    throw new IllegalArgumentException("All required address fields must be filled.");
-                }
+                CustomerAddressService.validateAddressDetails(city, country, "TEMP", l1, null, postCode, suburb, type);
 
                 // Updated to reference CustomerContext instead of CustomerController
                 CustomerContext.AddressDto newAddress = new CustomerContext.AddressDto(type, l1, l2, suburb, city, country, postCode, isPrimary, isMailing);
