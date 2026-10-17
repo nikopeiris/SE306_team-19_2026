@@ -11,6 +11,7 @@ import business.system.Customer;
 import business.system.Loan;
 import business.system.LoginService;
 import business.system.SignupService;
+import business.system.customer.CustomerAddressService;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
@@ -156,8 +157,8 @@ public class Main {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    customerService.addAddress(city,  country,  customer,  isMailing,  isPrimary,  line1,  line2,  otherType,  postCode,  suburb,  type);
+    CustomerAddressService addressService = new CustomerAddressService(adapter);
+    addressService.addAddress(city,  country,  customer,  isMailing,  isPrimary,  line1,  line2,  otherType,  postCode,  suburb,  type);
     return true;
   }
 
@@ -192,8 +193,8 @@ public class Main {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    customerService.updateAddress(city, country, customer, addressId, isMailing, isPrimary, line1, line2, otherType, postCode, suburb, type);
+    CustomerAddressService addressService = new CustomerAddressService(adapter);
+    addressService.updateAddress(city, country, customer, addressId, isMailing, isPrimary, line1, line2, otherType, postCode, suburb, type);
     return true;
   }
 
@@ -207,8 +208,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public boolean deleteAddress(String customerId, long addressId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    customerService.deleteAddress(customerId, addressId);
+    CustomerAddressService addressService = new CustomerAddressService(adapter);
+    addressService.deleteAddress(customerId, addressId);
     return true;
   }
 
@@ -248,8 +249,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public List.Item[] listCustomerAddresses(String customerId, int page, int size) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.listAddresses(customerId, (long) page, (long) size);
+    CustomerAddressService addressService = new CustomerAddressService(adapter);
+    return addressService.listAddresses(customerId, (long) page, (long) size);
   }
 
   /**
@@ -261,8 +262,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerAddress.Retrieve getAddress(String customerId, long addressId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.retrieveAddress(customerId, addressId);
+    CustomerAddressService addressService = new CustomerAddressService(adapter);
+    return addressService.retrieveAddress(customerId, addressId);
   }
 
   /**

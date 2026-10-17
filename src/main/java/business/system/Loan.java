@@ -7,6 +7,7 @@ import java.util.Set;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
+import business.system.customer.CustomerAddressService;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -278,8 +279,8 @@ public class Loan {
 
     private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
       if (customerNumber != null && !customerNumber.isBlank()) {
-        Customer customerService = new Customer(loanAdapter);
-        if (customerService.findMailingAddress(customerNumber.trim()) == null) {
+        CustomerAddressService addressService = new CustomerAddressService(loanAdapter);
+        if (addressService.findMailingAddress(customerNumber.trim()) == null) {
             throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
         }
       }
