@@ -1,47 +1,23 @@
 package business.system;
 
 import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.Set;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
-import business.system.customer.CustomerAddressService;
+import business.validation.LoanValidation;
 import business.validation.ValidationException;
-import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.List;
 import mainframe.client.messages.loan.Retrieve;
+import mainframe.client.messages.loan.Update;
 
 /**
  * Business service for creating customer loans.
  */
 public class Loan {
-    private static final Set<String> VALID_LOAN_TYPES = Set.of(
-            Create.RATETYPE_FIXED,
-            Create.RATETYPE_FLOATING,
-            Create.RATETYPE_INTERESTONLY
-    );
-
-    private static final Set<String> VALID_PAYMENT_FREQUENCIES = Set.of(
-            Create.PAYMENTFREQUENCY_WEEKLY,
-            Create.PAYMENTFREQUENCY_FORTNIGHTLY,
-            Create.PAYMENTFREQUENCY_MONTHLY,
-            Create.PAYMENTFREQUENCY_YEARLY,
-            Create.PAYMENTFREQUENCY_ONRENEWAL
-    );
-
-    private static final Set<String> VALID_COMPOUND_TYPES = Set.of(
-            Create.RATEFREQUENCY_DAILY,
-            Create.RATEFREQUENCY_WEEKLY,
-            Create.RATEFREQUENCY_FORTNIGHTLY,
-            Create.RATEFREQUENCY_MONTHLY,
-            Create.RATEFREQUENCY_YEARLY
-    );
-
     private final MainframeAdapter loanAdapter;
 
     public Loan(MainframeAdapter loanAdapter) {
@@ -61,6 +37,9 @@ public class Loan {
      * @param loanType valid loan category code
      * @param paymentFrequency valid payment frequency code
      * @param compoundType valid compounding frequency code
+     * @param renewalDate renewal date in yyyy-MM-dd format
+     * @param startDate start date in yyyy-MM-dd format
+     * @param guarantorId guarantor identifier (customer id of guarantor)
      * @return the created mainframe loan message
      * @throws ValidationException if business validation fails
      * @throws LavsException if the mainframe rejects the request
@@ -73,9 +52,9 @@ public class Loan {
             int term,
             String loanType,
             String paymentFrequency,
-            String compoundType, String renewalDate, String startDate)
+            String compoundType, String renewalDate, String startDate, String guarantorId)
             throws IOException, LavsException {
-        validateLoanDetails(
+        LoanValidation.validateLoanDetails(
                 customerNumber,
                 principal,
                 annualRate,
@@ -83,7 +62,8 @@ public class Loan {
                 loanType,
                 paymentFrequency,
                 compoundType, renewalDate, startDate);
-        mailingAddressCheck(customerNumber);
+        LoanValidation.preReqCheck(customerNumber, loanAdapter);
+        LoanValidation.validateCustomerJobAndGuarantor(customerNumber, guarantorId, loanAdapter);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
@@ -105,6 +85,10 @@ public class Loan {
 
         Status status = loanAdapter.send(createMessage);
         Main.isValidStatus(status);
+        if (guarantorId != null && !guarantorId.isBlank()) {
+            Coborrower coborrower = new Coborrower(loanAdapter);
+            coborrower.addCoborrower(guarantorId.trim(), createMessage.getLoanNumber(), AddCoborrower.TYPE_GUARANTOR);
+        }
         return createMessage;
     }
 
@@ -178,6 +162,64 @@ public class Loan {
     }
 
     /**
+     * Updates loan details in the mainframe after validating the input values.
+     *
+     * @param customerNumber customer identifier
+     * @param loanNumber loan identifier
+     * @param paymentAmount repayment amount per period
+     * @param paymentFrequency payment frequency category code
+     * @param principal total loan principal amount
+     * @param rateAmount interest rate amount
+     * @param rateFrequency compounding rate frequency code
+     * @param rateType loan rate type code
+     * @param renewalDate renewal date in yyyy-MM-dd format
+     * @param startDate start date in yyyy-MM-dd format
+     * @return the updated Update mainframe message
+     * @throws ValidationException if business validation fails
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public Update updateLoan(
+            String customerNumber,
+            String loanNumber,
+            double paymentAmount,
+            String paymentFrequency,
+            double principal,
+            double rateAmount,
+            String rateFrequency,
+            String rateType,
+            String renewalDate,
+            String startDate) throws IOException, LavsException {
+        LoanValidation.validateUpdateLoanDetails(
+                customerNumber,
+                loanNumber,
+                paymentAmount,
+                paymentFrequency,
+                principal,
+                rateAmount,
+                rateFrequency,
+                rateType,
+                renewalDate,
+                startDate);
+
+        Update updateMessage = new Update(
+                customerNumber.trim(),
+                loanNumber.trim(),
+                paymentAmount,
+                paymentFrequency.trim(),
+                principal,
+                rateAmount,
+                rateFrequency.trim(),
+                rateType.trim(),
+                renewalDate.trim(),
+                startDate.trim());
+
+        Status status = loanAdapter.send(updateMessage);
+        Main.isValidStatus(status);
+        return updateMessage;
+    }
+
+    /**
      * Convenience wrapper used when the business validation is the only requirement.
      */
     public boolean addLoanToCustomerCheck(
@@ -191,7 +233,7 @@ public class Loan {
             String renewalDate,
             String startDate)
             throws LavsException, IOException {
-        validateLoanDetails(
+        LoanValidation.validateLoanDetails(
                 customerNumber,
                 principal,
                 annualRate,
@@ -202,87 +244,5 @@ public class Loan {
                 renewalDate,
                 startDate);
         return true;
-    }
-
-    public void validateLoanDetails(
-            String customerNumber,
-            double principal,
-            double annualRate,
-            int term,
-            String loanType,
-            String paymentFrequency,
-            String compoundType,
-            String renewalDate,
-            String startDate)
-            throws LavsException, IOException {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("customerNumber", customerNumber,
-                        "Customer number cannot be null or empty")
-                .requireNotBlank("loanType", loanType,
-                        "Loan type cannot be null or empty")
-                .requireNotBlank("paymentFrequency", paymentFrequency,
-                        "Payment frequency cannot be null or empty")
-                .requireNotBlank("compoundType", compoundType,
-                        "Compound type cannot be null or empty")
-                .requireNotBlank("renewalDate", renewalDate,
-                        "Renewal date cannot be null or empty")
-                .requireNotBlank("startDate", startDate,
-                        "Start date cannot be null or empty");
-
-        if (principal <= 0) {
-            result.addError("principal", "Loan principal must be greater than zero");
-        }
-        if (annualRate < 0) {
-            result.addError("annualRate", "Annual rate cannot be negative");
-        }
-        if (term <= 0) {
-            result.addError("term", "Term must be greater than zero");
-        }
-
-        if (loanType != null && !loanType.isBlank() && !VALID_LOAN_TYPES.contains(loanType.trim())) {
-            result.addError("loanType", "Loan type must be a valid category code");
-        }
-        if (paymentFrequency != null && !paymentFrequency.isBlank()
-                && !VALID_PAYMENT_FREQUENCIES.contains(paymentFrequency.trim())) {
-            result.addError("paymentFrequency", "Payment frequency must be a valid category code");
-        }
-        if (compoundType != null && !compoundType.isBlank()
-                && !VALID_COMPOUND_TYPES.contains(compoundType.trim())) {
-            result.addError("compoundType", "Compound type must be a valid category code");
-        }
-
-        if (renewalDate != null && !renewalDate.isBlank()) {
-            try {
-                LocalDate renewalLocalDate = LocalDate.parse(renewalDate.trim());
-                if (renewalLocalDate.isBefore(LocalDate.now())) {
-                    result.addError("renewalDate", "Renewal date must be today or later");
-                }
-            } catch (DateTimeParseException e) {
-                result.addError("renewalDate", "Renewal date must be in yyyy-MM-dd format");
-            }
-        }
-
-        if (startDate != null && !startDate.isBlank()) {
-            try {
-                LocalDate startLocalDate = LocalDate.parse(startDate.trim());
-                if (startLocalDate.isBefore(LocalDate.now())) {
-                    result.addError("startDate", "Start date must be today or later");
-                }
-            } catch (DateTimeParseException e) {
-                result.addError("startDate", "Start date must be in yyyy-MM-dd format");
-            }
-        }
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
-    }
-
-    private void mailingAddressCheck(String customerNumber) throws IOException, LavsException {
-      if (customerNumber != null && !customerNumber.isBlank()) {
-        CustomerAddressService addressService = new CustomerAddressService(loanAdapter);
-        if (addressService.findMailingAddress(customerNumber.trim()) == null) {
-            throw new LavsException("Does not have a mailing address. Please add a mailing address before adding a loan.");
-        }
-      }
     }
 }

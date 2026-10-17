@@ -52,4 +52,8 @@ public final class ValidationResult {
         }
     }
 
+    public void removeError(String field) {
+        _errors.remove(field);
+    }
+
 }

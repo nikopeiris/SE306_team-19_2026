@@ -24,9 +24,11 @@ mainframe\client\messages\constantCategory\List$Item.class
 mainframe\client\messages\customer\Retrieve.class
 mainframe\client\messages\customerEmployer\List$Item.class
 mainframe\client\messages\customer\AddPhoneNumber.class
+business\system\customer\CustomerEmployerService.class
 mainframe\client\messages\customer\DeleteEmail.class
 mainframe\client\messages\loanNote\List$Item.class
 mainframe\client\MessageResponse.class
+business\validation\LoanValidation.class
 lavs\ui\LoginController$1.class
 mainframe\client\messages\user\List.class
 mainframe\client\messages\customer\UpdateRelationship.class
@@ -68,6 +70,7 @@ lavs\ui\LoginController.class
 mainframe\client\messages\loan\List$Item.class
 mainframe\client\messages\customer\Create.class
 lavs\ui\CustomerContext.class
+business\system\Coborrower.class
 mainframe\client\messages\loan\AddCoborrower.class
 mainframe\client\MessageRequest.class
 mainframe\client\messages\loan\UpdateNote.class
@@ -105,6 +108,7 @@ mainframe\client\messages\customerEmployer\Retrieve.class
 mainframe\client\HttpConnection$1.class
 mainframe\client\messages\loanPayment\Retrieve.class
 business\system\LoginService.class
+business\system\customer\CustomerEmailService.class
 mainframe\client\messages\customerPhoneNumber\Retrieve.class
 mainframe\client\messages\customerEmail\Retrieve.class
 dataaccess\systemadapters\MainframeAdapter.class
@@ -121,6 +125,7 @@ mainframe\client\messages\customer\AddNote.class
 mainframe\client\messages\customer\Update.class
 lavs\ui\ContactInfoController.class
 mainframe\client\messages\user\Update.class
+business\system\customer\CustomerPhoneNumberService.class
 mainframe\client\messages\loanNote\Retrieve.class
 mainframe\client\messages\loanRepaymentSchedule\List$Item.class
 business\validation\ValidationException.class
