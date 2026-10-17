@@ -4,6 +4,7 @@ import java.net.URL;
 
 import business.system.Customer;
 import business.system.LoginService;
+import business.system.customer.CustomerEmailService;
 import dataaccess.systemadapters.MainframeAdapter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -21,6 +22,7 @@ public class Main extends Application {
         MainframeAdapter mainframeAdapter = new MainframeAdapter("https://animating-eraser-arrogance.ngrok-free.dev/");
         LoginService loginService = new LoginService(mainframeAdapter);
         Customer customerService = new Customer(mainframeAdapter);
+        CustomerEmailService emailService = new CustomerEmailService(mainframeAdapter);
 
 
         // ui layer
@@ -34,6 +36,7 @@ public class Main extends Application {
             LoginController logIncontroller = loader.getController();
             logIncontroller.setLoginService(loginService);
             logIncontroller.setCustomerService(customerService);
+            logIncontroller.setEmailService(emailService);
 
             // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
             Scene scene = new Scene(root, 1200, 800);

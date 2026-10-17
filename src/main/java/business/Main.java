@@ -12,6 +12,9 @@ import business.system.Loan;
 import business.system.LoginService;
 import business.system.SignupService;
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerEmployerService;
+import business.system.customer.CustomerPhoneNumberService;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Connection;
@@ -276,8 +279,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerPhoneNumber.List.Item[] listPhoneNumbers(String customerId, int page, int size) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.listPhoneNumbers(customerId, (long) page, (long) size);
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    return phoneService.listPhoneNumbers(customerId, (long) page, (long) size);
   }
 
   /**
@@ -289,8 +292,195 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerPhoneNumber.Retrieve getPhoneNumber(String customerId, long phoneNumberId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.retrievePhoneNumber(customerId, phoneNumberId);
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    return phoneService.retrievePhoneNumber(customerId, phoneNumberId);
+  }
+
+  /**
+   * Adds a phone number to an existing customer via the mainframe adapter after validating the phone fields.
+   * @param canTxt true if the number can receive text messages
+   * @param countryCode country calling code of the number
+   * @param customer customer number to which the phone number belongs
+   * @param isPrimary true if the number is the primary phone number
+   * @param number the phone number
+   * @param otherType other type of the phone number
+   * @param type type of the phone number
+   * @return true if the phone number was added successfully
+   * @throws ValidationException if a required field or phone type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addPhoneNumber(boolean canTxt, String countryCode, String customer, boolean isPrimary, String number, String otherType, String type) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.addPhoneNumber(canTxt, countryCode, customer, isPrimary, number, otherType, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing phone number of a customer via the mainframe adapter after validating the phone fields.
+   * @param canTxt true if the number can receive text messages
+   * @param countryCode country calling code of the number
+   * @param customer customer number to which the phone number belongs
+   * @param phoneNumberId ID of the phone number to update
+   * @param isPrimary true if the number is the primary phone number
+   * @param number the phone number
+   * @param otherType other type of the phone number
+   * @param type type of the phone number
+   * @return true if the phone number was updated successfully
+   * @throws ValidationException if the phone number id, a required field or phone type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updatePhoneNumber(boolean canTxt, String countryCode, String customer, long phoneNumberId, boolean isPrimary, String number, String otherType, String type) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.updatePhoneNumber(canTxt, countryCode, customer, phoneNumberId, isPrimary, number, otherType, type);
+    return true;
+  }
+
+  /**
+   * Deletes a phone number of a customer via the mainframe adapter.
+   * @param customerId the customer number the phone number belongs to
+   * @param phoneNumberId the ID of the phone number to delete
+   * @return true if the phone number was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deletePhoneNumber(String customerId, long phoneNumberId) throws IOException, LavsException {
+    CustomerPhoneNumberService phoneService = new CustomerPhoneNumberService(adapter);
+    phoneService.deletePhoneNumber(customerId, phoneNumberId);
+    return true;
+  }
+
+  /**
+   * Adds an employer to an existing customer via the mainframe adapter after validating the employer fields.
+   * @param customer customer number to which the employer belongs
+   * @param name name of the employer
+   * @param position the customer's position at the employer
+   * @param salary the customer's salary from the employer
+   * @param type type of the employer (Primary or Secondary)
+   * @return true if the employer was added successfully
+   * @throws ValidationException if a required field, the salary or employer type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addEmployer(String customer, String name, String position, double salary, String type) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.addEmployer(customer, name, position, salary, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing employer of a customer via the mainframe adapter after validating the employer fields.
+   * @param customer customer number to which the employer belongs
+   * @param employerId ID of the employer to update
+   * @param name name of the employer
+   * @param position the customer's position at the employer
+   * @param salary the customer's salary from the employer
+   * @param type type of the employer (Primary or Secondary)
+   * @return true if the employer was updated successfully
+   * @throws ValidationException if the employer id, a required field, the salary or employer type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateEmployer(String customer, long employerId, String name, String position, double salary, String type) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.updateEmployer(customer, employerId, name, position, salary, type);
+    return true;
+  }
+
+  /**
+   * Deletes an employer of a customer via the mainframe adapter.
+   * @param customerId the customer number the employer belongs to
+   * @param employerId the ID of the employer to delete
+   * @return true if the employer was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deleteEmployer(String customerId, long employerId) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    employerService.deleteEmployer(customerId, employerId);
+    return true;
+  }
+
+  /**
+   * Lists customer employers via the mainframe adapter.
+   * @param customerId the customer number to retrieve employers for
+   * @param page the page number to retrieve
+   * @param size the number of results per page
+   * @return an array of customer employer items
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmployer.List.Item[] listEmployers(String customerId, int page, int size) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    return employerService.listEmployers(customerId, (long) page, (long) size);
+  }
+
+  /**
+   * Retrieves a customer employer via the mainframe adapter.
+   * @param customerId the customer number to retrieve the employer for
+   * @param employerId the ID of the employer to retrieve
+   * @return a Retrieve object containing the employer details
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public mainframe.client.messages.customerEmployer.Retrieve getEmployer(String customerId, long employerId) throws IOException, LavsException {
+    CustomerEmployerService employerService = new CustomerEmployerService(adapter);
+    return employerService.retrieveEmployer(customerId, employerId);
+  }
+
+  /**
+   * Adds an email address to an existing customer via the mainframe adapter after validating the email fields.
+   * @param address the email address
+   * @param customer customer number to which the email belongs
+   * @param isPrimary true if the email is the primary email
+   * @param otherType other type of the email
+   * @param type type of the email
+   * @return true if the email was added successfully
+   * @throws ValidationException if a required field, the address format or email type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean addEmail(String address, String customer, boolean isPrimary, String otherType, String type) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.addEmail(address, customer, isPrimary, otherType, type);
+    return true;
+  }
+
+  /**
+   * Updates an existing email address of a customer via the mainframe adapter after validating the email fields.
+   * @param address the email address
+   * @param customer customer number to which the email belongs
+   * @param emailId ID of the email to update
+   * @param isPrimary true if the email is the primary email
+   * @param otherType other type of the email
+   * @param type type of the email
+   * @return true if the email was updated successfully
+   * @throws ValidationException if the email id, a required field, the address format or email type is invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean updateEmail(String address, String customer, long emailId, boolean isPrimary, String otherType, String type) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.updateEmail(address, customer, emailId, isPrimary, otherType, type);
+    return true;
+  }
+
+  /**
+   * Deletes an email address of a customer via the mainframe adapter.
+   * @param customerId the customer number the email belongs to
+   * @param emailId the ID of the email to delete
+   * @return true if the email was deleted successfully
+   * @throws ValidationException if either identifier is missing or invalid
+   * @throws IOException if network or mainframe connection fails
+   * @throws LavsException if the mainframe rejects the request
+   */
+  public boolean deleteEmail(String customerId, long emailId) throws IOException, LavsException {
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    emailService.deleteEmail(customerId, emailId);
+    return true;
   }
 
   /**
@@ -303,8 +493,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerEmail.List.Item[] listEmails(String customerId, int page, int size) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.listEmails(customerId, (long) page, (long) size);
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    return emailService.listEmails(customerId, (long) page, (long) size);
   }
 
   /**
@@ -316,8 +506,8 @@ public class Main {
    * @throws LavsException if the mainframe rejects the request
    */
   public mainframe.client.messages.customerEmail.Retrieve getEmail(String customerId, long emailId) throws IOException, LavsException {
-    Customer customerService = new Customer(adapter);
-    return customerService.retrieveEmail(customerId, emailId);
+    CustomerEmailService emailService = new CustomerEmailService(adapter);
+    return emailService.retrieveEmail(customerId, emailId);
   }
 
 

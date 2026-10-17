@@ -1,6 +1,8 @@
 package lavs.ui;
 
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerPhoneNumberService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -139,7 +141,7 @@ public class ContactInfoController {
                 String num = phoneField.getText().trim();
                 boolean isPrimary = primaryCheckBox.isSelected();
 
-                if (num.isBlank()) throw new IllegalArgumentException("Phone number cannot be empty.");
+                CustomerPhoneNumberService.validatePhoneNumberDetails(code, "TEMP", num, null, type);
                 if (isPrimary && hasPrimaryPhone) throw new IllegalArgumentException("Only one primary phone allowed.");
 
                 // Updated to reference CustomerContext instead of CustomerController
@@ -197,7 +199,7 @@ public class ContactInfoController {
                 String email = emailField.getText().trim();
                 boolean isPrimary = primaryCheckBox.isSelected();
 
-                if (email.isBlank() || !email.contains("@")) throw new IllegalArgumentException("Invalid email format.");
+                CustomerEmailService.validateEmailDetails(email, "TEMP", null, type);
                 if (isPrimary && hasPrimaryEmail) throw new IllegalArgumentException("Only one primary email allowed.");
 
                 // Updated to reference CustomerContext instead of CustomerController
