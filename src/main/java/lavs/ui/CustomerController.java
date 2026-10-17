@@ -74,7 +74,19 @@ public class CustomerController {
     @FXML private Button addSecondaryEmploymentButton;
 
     @FXML private Button personalCancelButton;
-    @FXML private Button personalNextButton;
+    @FXML
+    private Button personalNextButton;
+    
+    @FXML private Pane secondaryEmploymentPane;
+    @FXML private TextField secondaryJobTitleField;
+    @FXML private DatePicker secondaryStartDateField;
+    @FXML private TextField secondarySalaryField;
+    @FXML
+    private Button removeSecondaryEmploymentButton;
+    @FXML private TextField companyField;
+    @FXML
+    private TextField secondaryCompanyField;
+    @FXML private VBox emailFieldsBox;
 
     // =====================================================================
     // Tab 2: Contact Info
@@ -83,7 +95,9 @@ public class CustomerController {
     @FXML private Text mailingAddressLabel;
     @FXML private Text mailingAddressText;
     @FXML private CheckBox residentialSameAsMailingCheckBox;
-    @FXML private Button addAddressButton;
+    @FXML
+    private Button addAddressButton;
+    @FXML private VBox addressListContainer;
 
     @FXML private Text phoneNumbersHeading;
     @FXML private Text mobileNumberLabel;
@@ -100,7 +114,10 @@ public class CustomerController {
     @FXML private Button addEmailButton;
 
     @FXML private Button contactBackButton;
-    @FXML private Button contactNextButton;
+    @FXML
+    private Button contactNextButton;
+    private boolean hasPrimaryAddress = false;
+    private boolean hasMailingAddress = false;
 
     // =====================================================================
     // Tab 3: Loan
@@ -185,20 +202,44 @@ public class CustomerController {
           statusField.getItems().addAll("Active", "Reactive");
         }
         if (employerField != null) {
-            employerField.getItems().addAll("Employed", "None");
-            
-            // Listen for changes to toggle job details requirements
+          employerField.getItems().addAll("Employed", "None");
+
+          // Listen for changes to toggle job details requirements
+          employerField.valueProperty().addListener((obs, oldValue, newValue) -> {
+            boolean isEmployed = "Employed".equals(newValue);
+
+            // Enable or disable employment detail fields
+            if (jobTitleField != null)
+              jobTitleField.setDisable(!isEmployed);
+            if (startDateField != null)
+              startDateField.setDisable(!isEmployed);
+            if (salaryField != null)
+              salaryField.setDisable(!isEmployed);
+
+            // Clear fields if "None" is selected
+            if (!isEmployed) {
+              if (jobTitleField != null)
+                jobTitleField.clear();
+              if (startDateField != null)
+                startDateField.setValue(null);
+              if (salaryField != null)
+                salaryField.clear();
+            }
+          });
+        }
+        
+        // Primary employer listener update
+        if (employerField != null) {
             employerField.valueProperty().addListener((obs, oldValue, newValue) -> {
                 boolean isEmployed = "Employed".equals(newValue);
-                
-                // Enable or disable employment detail fields
                 if (jobTitleField != null) jobTitleField.setDisable(!isEmployed);
+                if (companyField != null) companyField.setDisable(!isEmployed); // Added
                 if (startDateField != null) startDateField.setDisable(!isEmployed);
                 if (salaryField != null) salaryField.setDisable(!isEmployed);
                 
-                // Clear fields if "None" is selected
                 if (!isEmployed) {
                     if (jobTitleField != null) jobTitleField.clear();
+                    if (companyField != null) companyField.clear(); // Added
                     if (startDateField != null) startDateField.setValue(null);
                     if (salaryField != null) salaryField.clear();
                 }
@@ -311,18 +352,31 @@ public class CustomerController {
                 : "";
             
             Long organisation = 1L;
-            // Check employment selection
+            // Primary Employment Validation
             String employmentStatus = (employerField != null && employerField.getValue() != null) 
                 ? employerField.getValue().toString() 
                 : "";
 
             if ("Employed".equals(employmentStatus)) {
                 String jobTitle = jobTitleField != null ? jobTitleField.getText() : "";
+                String company = companyField != null ? companyField.getText() : ""; // Added
                 String salary = salaryField != null ? salaryField.getText() : "";
                 var startDate = startDateField != null ? startDateField.getValue() : null;
 
-                if (jobTitle.isBlank() || salary.isBlank() || startDate == null) {
-                    throw new IllegalArgumentException("Job title, start date, and salary are required when employed.");
+                if (jobTitle.isBlank() || company.isBlank() || salary.isBlank() || startDate == null) {
+                    throw new IllegalArgumentException("Job title, company, start date, and salary are required when employed.");
+                }
+            }
+
+            // Secondary Employment Validation
+            if (secondaryEmploymentPane != null && secondaryEmploymentPane.isVisible()) {
+                String secJobTitle = secondaryJobTitleField != null ? secondaryJobTitleField.getText() : "";
+                String secCompany = secondaryCompanyField != null ? secondaryCompanyField.getText() : "";
+                String secSalary = secondarySalaryField != null ? secondarySalaryField.getText() : "";
+                var secStartDate = secondaryStartDateField != null ? secondaryStartDateField.getValue() : null;
+
+                if (secJobTitle.isBlank() || secCompany.isBlank() || secSalary.isBlank() || secStartDate == null) {
+                    throw new IllegalArgumentException("Job title, company, start date, and salary are required for secondary employment.");
                 }
             }
 
@@ -356,7 +410,28 @@ public class CustomerController {
 
     @FXML
     private void handleAddSecondaryEmployment(ActionEvent event) {
-        // TODO: add a second set of employment fields
+        if (secondaryEmploymentPane != null) {
+            secondaryEmploymentPane.setVisible(true);
+            secondaryEmploymentPane.setManaged(true);
+            addSecondaryEmploymentButton.setVisible(false); // Hide button once added
+            addSecondaryEmploymentButton.setManaged(false);
+        }
+    }
+
+    @FXML
+    private void handleRemoveSecondaryEmployment(ActionEvent event) {
+        if (secondaryEmploymentPane != null) {
+            secondaryEmploymentPane.setVisible(false);
+            secondaryEmploymentPane.setManaged(false);
+            
+            // Clear secondary fields when removed
+            if (secondaryJobTitleField != null) secondaryJobTitleField.clear();
+            if (secondaryStartDateField != null) secondaryStartDateField.setValue(null);
+            if (secondarySalaryField != null) secondarySalaryField.clear();
+            
+            addSecondaryEmploymentButton.setVisible(true); // Bring button back
+            addSecondaryEmploymentButton.setManaged(true);
+        }
     }
 
     @FXML
@@ -380,7 +455,110 @@ public class CustomerController {
 
     @FXML
     private void handleAddAddress(ActionEvent event) {
-        // TODO: open add address form
+        javafx.stage.Stage popup = new javafx.stage.Stage();
+        popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        popup.setTitle("Add Customer Address");
+
+        ComboBox<String> typeBox = new ComboBox<>();
+        typeBox.getItems().addAll("Residential", "Postal");
+        typeBox.setValue("Residential");
+        typeBox.setPromptText("Address Type");
+
+        TextField line1Field = new TextField(); line1Field.setPromptText("Line 1");
+        TextField line2Field = new TextField(); line2Field.setPromptText("Line 2 (Optional)");
+        TextField suburbField = new TextField(); suburbField.setPromptText("Suburb");
+        TextField cityField = new TextField(); cityField.setPromptText("City");
+        TextField countryField = new TextField(); countryField.setPromptText("Country");
+        TextField postCodeField = new TextField(); postCodeField.setPromptText("Postcode");
+
+        CheckBox primaryCheckBox = new CheckBox("Is Primary Address");
+        CheckBox mailingCheckBox = new CheckBox("Is Mailing Address");
+
+        Button saveAddressButton = new Button("Save Address");
+        Button cancelButton = new Button("Cancel");
+
+        saveAddressButton.setOnAction(e -> {
+            try {
+                String type = typeBox.getValue() != null ? typeBox.getValue() : "";
+                String l1 = line1Field.getText();
+                String l2 = line2Field.getText();
+                String suburb = suburbField.getText();
+                String city = cityField.getText();
+                String country = countryField.getText();
+                String postCode = postCodeField.getText();
+                boolean isPrimary = primaryCheckBox.isSelected();
+                boolean isMailing = mailingCheckBox.isSelected();
+                String customerNum = customerIdField != null ? customerIdField.getText() : "TEMP";
+
+                // Enforce single primary and single mailing rules
+                if (isPrimary && hasPrimaryAddress) {
+                    throw new IllegalArgumentException("Only one address can be set as Primary.");
+                }
+                if (isMailing && hasMailingAddress) {
+                    throw new IllegalArgumentException("Only one address can be set as Mailing.");
+                }
+
+                // Validate using business layer rules[cite: 1]
+                if (customerService != null) {
+                    customerService.validateAddressDetails(city, country, customerNum, l1, null, postCode, suburb, type);
+                } else {
+                    if (city.isBlank() || country.isBlank() || l1.isBlank() || postCode.isBlank() || suburb.isBlank() || type.isBlank()) {
+                        throw new IllegalArgumentException("All required address fields must be filled.");
+                    }
+                }
+
+                // Lock in primary/mailing flags if selected
+                if (isPrimary) hasPrimaryAddress = true;
+                if (isMailing) hasMailingAddress = true;
+
+                // Create display row
+                if (addressListContainer != null) {
+                    javafx.scene.layout.HBox addressRow = new javafx.scene.layout.HBox(12);
+                    addressRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+                    String tags = "";
+                    if (isPrimary) tags += " [PRIMARY]";
+                    if (isMailing) tags += " [MAILING]";
+
+                    String addressSummary = String.format("[%s]%s - %s, %s, %s, %s (%s)", 
+                        type, tags, l1, suburb, city, country, postCode);
+                    
+                    Text addressText = new Text(addressSummary);
+                    Button removeAddressBtn = new Button("Remove");
+                    removeAddressBtn.setTextFill(javafx.scene.paint.Color.RED);
+                    
+                    removeAddressBtn.setOnAction(remEvent -> {
+                        if (isPrimary) hasPrimaryAddress = false;
+                        if (isMailing) hasMailingAddress = false;
+                        addressListContainer.getChildren().remove(addressRow);
+                    });
+
+                    addressRow.getChildren().addAll(addressText, removeAddressBtn);
+                    addressListContainer.getChildren().add(addressRow);
+                }
+
+                popup.close();
+            } catch (Exception ex) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("Address Error");
+                alert.setHeaderText("Invalid Address");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+
+        cancelButton.setOnAction(e -> popup.close());
+
+        VBox layout = new VBox(10);
+        layout.setPadding(new javafx.geometry.Insets(20));
+        layout.getChildren().addAll(
+            new Text("Enter Address Details:"), typeBox, line1Field, line2Field, suburbField,
+            cityField, countryField, postCodeField, primaryCheckBox, mailingCheckBox,
+            new javafx.scene.layout.HBox(10, saveAddressButton, cancelButton)
+        );
+
+        popup.setScene(new javafx.scene.Scene(layout, 350, 520));
+        popup.showAndWait();
     }
 
     @FXML
@@ -390,7 +568,25 @@ public class CustomerController {
 
     @FXML
     private void handleAddEmail(ActionEvent event) {
-        // TODO: open add email form
+        if (emailFieldsBox == null) return;
+
+        javafx.scene.layout.HBox emailRow = new javafx.scene.layout.HBox(8);
+
+        TextField emailInput = new TextField();
+        emailInput.setPromptText("email@example.com");
+        emailInput.setPrefWidth(200);
+
+        ComboBox<String> emailTypeBox = new ComboBox<>();
+        emailTypeBox.getItems().addAll("Personal", "Work", "Other");
+        emailTypeBox.setValue("Personal");
+        emailTypeBox.setPrefWidth(100);
+
+        Button removeBtn = new Button("X");
+        removeBtn.setTextFill(javafx.scene.paint.Color.RED);
+        removeBtn.setOnAction(e -> emailFieldsBox.getChildren().remove(emailRow));
+
+        emailRow.getChildren().addAll(emailInput, emailTypeBox, removeBtn);
+        emailFieldsBox.getChildren().add(emailRow);
     }
 
     @FXML

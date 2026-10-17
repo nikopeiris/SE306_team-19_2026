@@ -10,6 +10,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
@@ -62,15 +63,28 @@
             <!-- Employment -->
             <Text fx:id="jobTitleLabel" layoutX="194.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Job Title" />
             <TextField fx:id="jobTitleField" layoutX="194.0" layoutY="199.0" />
-            
-            <Text fx:id="startDateLabel" layoutX="382.0" layoutY="199.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Start date" />
-            <DatePicker fx:id="startDateField" layoutX="370.0" layoutY="203.0" prefWidth="150.0" />
-            
-            <Text fx:id="salaryLabel" layoutX="558.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Salary" />
-            <TextField fx:id="salaryField" layoutX="558.0" layoutY="199.0" />
-            
-            <Text fx:id="secondaryEmploymentText" layoutX="734.0" layoutY="228.0" strokeType="OUTSIDE" strokeWidth="0.0" />
-            <Button fx:id="addSecondaryEmploymentButton" layoutX="746.0" layoutY="211.0" mnemonicParsing="false" onAction="#handleAddSecondaryEmployment" text="Add Secondary Employment" />
+
+            <Text fx:id="companyLabel" layoutX="370.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Company" />
+            <TextField fx:id="companyField" layoutX="370.0" layoutY="199.0" prefWidth="130.0" />
+
+            <Text fx:id="startDateLabel" layoutX="515.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Start date" />
+            <DatePicker fx:id="startDateField" layoutX="515.0" layoutY="199.0" prefWidth="130.0" />
+
+            <Text fx:id="salaryLabel" layoutX="660.0" layoutY="195.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Salary" />
+            <TextField fx:id="salaryField" layoutX="660.0" layoutY="199.0" prefWidth="90.0" />
+
+            <Button fx:id="addSecondaryEmploymentButton" layoutX="765.0" layoutY="198.0" mnemonicParsing="false" onAction="#handleAddSecondaryEmployment" text="Add Secondary" />
+
+            <!-- Secondary Employment Pane (Initially hidden) -->
+            <Pane fx:id="secondaryEmploymentPane" layoutX="185.0" layoutY="245.0" prefHeight="50.0" prefWidth="850.0" visible="false" managed="false">
+               <children>
+                  <TextField fx:id="secondaryJobTitleField" layoutX="9.0" layoutY="4.0" prefWidth="120.0" promptText="Job Title" />
+                  <TextField fx:id="secondaryCompanyField" layoutX="135.0" layoutY="4.0" prefWidth="120.0" promptText="Company" />
+                  <DatePicker fx:id="secondaryStartDateField" layoutX="260.0" layoutY="4.0" prefWidth="140.0" promptText="Start Date" />
+                  <TextField fx:id="secondarySalaryField" layoutX="405.0" layoutY="4.0" prefWidth="100.0" promptText="Salary" />
+                  <Button fx:id="removeSecondaryEmploymentButton" layoutX="515.0" layoutY="4.0" mnemonicParsing="false" onAction="#handleRemoveSecondaryEmployment" text="Remove" textFill="RED" />
+               </children>
+            </Pane>
 
             <!-- Form actions -->
             <Button fx:id="personalCancelButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handlePersonalInfoCancel" prefHeight="36.0" prefWidth="110.0" text="Cancel">
@@ -87,27 +101,42 @@
          </children>
       </Pane>
 
-      <!-- ================================================================= -->
+     <!-- ================================================================= -->
       <!-- TAB 2: Contact Info Pane -->
       <!-- ================================================================= -->
-      <Pane fx:id="contactInfoPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false">
+      <Pane fx:id="contactInfoPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false" managed="false">
          <children>
-            <Text fx:id="addressesHeading" layoutX="14.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Addresses" />
-            <Text fx:id="mailingAddressLabel" layoutX="14.0" layoutY="60.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mailing Address:" />
-            <Text fx:id="mailingAddressText" layoutX="120.0" layoutY="60.0" strokeType="OUTSIDE" strokeWidth="0.0" text="None set" />
-            <CheckBox fx:id="residentialSameAsMailingCheckBox" layoutX="14.0" layoutY="85.0" mnemonicParsing="false" onAction="#handleResidentialSameAsMailing" text="Residential same as mailing" />
-            <Button fx:id="addAddressButton" layoutX="14.0" layoutY="115.0" mnemonicParsing="false" onAction="#handleAddAddress" text="Add Address" />
+            <VBox layoutX="20.0" layoutY="20.0" prefWidth="900.0" spacing="12.0">
+               <children>
+                  <Text fx:id="addressesHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Addresses">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Text>
+                  
+                  <!-- Dynamic address list container -->
+                  <VBox fx:id="addressListContainer" spacing="6.0" />
+                  
+                  <Button fx:id="addAddressButton" mnemonicParsing="false" onAction="#handleAddAddress" text="Add Address" />
 
-            <Text fx:id="phoneNumbersHeading" layoutX="14.0" layoutY="180.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Phone Numbers" />
-            <Text fx:id="mobileNumberLabel" layoutX="14.0" layoutY="210.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mobile:" />
-            <Text fx:id="mobileNumberText" layoutX="70.0" layoutY="210.0" strokeType="OUTSIDE" strokeWidth="0.0" text="None set" />
-            <Button fx:id="addNumberButton" layoutX="14.0" layoutY="235.0" mnemonicParsing="false" onAction="#handleAddNumber" text="Add Phone Number" />
+                  <Text fx:id="phoneNumbersHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Phone Numbers">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Text>
+                  <Button fx:id="addNumberButton" mnemonicParsing="false" onAction="#handleAddNumber" text="Add Phone Number" />
 
-            <Text fx:id="emailsHeading" layoutX="14.0" layoutY="300.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Email Addresses" />
-            <Text fx:id="personalEmailLabel" layoutX="14.0" layoutY="330.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Personal:" />
-            <Text fx:id="personalEmailText" layoutX="80.0" layoutY="330.0" strokeType="OUTSIDE" strokeWidth="0.0" text="None set" />
-            <Button fx:id="addEmailButton" layoutX="14.0" layoutY="355.0" mnemonicParsing="false" onAction="#handleAddEmail" text="Add Email" />
+                  <Text fx:id="emailsHeading" strokeType="OUTSIDE" strokeWidth="0.0" text="Email Addresses">
+                     <font>
+                        <Font name="System Bold" size="14.0" />
+                     </font>
+                  </Text>
+                  <VBox fx:id="emailFieldsBox" spacing="6.0" />
+                  <Button fx:id="addEmailButton" mnemonicParsing="false" onAction="#handleAddEmail" text="Add Another Email" />
+               </children>
+            </VBox>
 
+            <!-- Navigation Buttons -->
             <Button fx:id="contactBackButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleContactInfoBack" prefHeight="36.0" prefWidth="110.0" text="Back" />
             <Button fx:id="contactNextButton" defaultButton="true" layoutX="925.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleContactInfoNext" prefHeight="36.0" prefWidth="120.0" style="-fx-background-color: #011936;" text="Next" textFill="WHITE" />
          </children>
@@ -116,7 +145,7 @@
       <!-- ================================================================= -->
       <!-- TAB 3: Loan Pane -->
       <!-- ================================================================= -->
-      <Pane fx:id="loanPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false">
+      <Pane fx:id="loanPane" layoutX="75.0" layoutY="146.0" prefHeight="595.0" prefWidth="1057.0" visible="false" managed="false">
          <children>
             <Text fx:id="loansHeading" layoutX="14.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Loans" />
             <TableView fx:id="loansTable" layoutX="14.0" layoutY="45.0" prefHeight="180.0" prefWidth="1030.0">
@@ -133,24 +162,14 @@
             <Button fx:id="loanBackButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleLoanBack" prefHeight="36.0" prefWidth="110.0" text="Back" />
             <Button fx:id="saveButton" defaultButton="true" layoutX="925.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleSave" prefHeight="36.0" prefWidth="120.0" style="-fx-background-color: #011936;" text="Save Customer" textFill="WHITE" />
 
-            <!-- Add Loan Overlay Pane (Initially hidden) -->
-            <Pane fx:id="addLoanPane" layoutX="100.0" layoutY="50.0" prefHeight="450.0" prefWidth="850.0" style="-fx-background-color: white; -fx-border-color: black; -fx-border-radius: 10;" visible="false">
+            <!-- Add Loan Overlay Pane -->
+            <Pane fx:id="addLoanPane" layoutX="100.0" layoutY="50.0" prefHeight="450.0" prefWidth="850.0" style="-fx-background-color: white; -fx-border-color: black; -fx-border-radius: 10;" visible="false" managed="false">
                <children>
                   <Text layoutX="20.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Add New Loan">
                      <font>
                         <Font name="System Bold" size="16.0" />
                      </font>
                   </Text>
-                  
-                  <Text fx:id="loanTypeLabel" layoutX="20.0" layoutY="70.0" text="Loan Type" />
-                  <ComboBox fx:id="loanTypeComboBox" layoutX="20.0" layoutY="85.0" prefWidth="200.0" />
-
-                  <Text fx:id="amountLabel" layoutX="250.0" layoutY="70.0" text="Amount" />
-                  <TextField fx:id="amountField" layoutX="250.0" layoutY="85.0" prefWidth="200.0" />
-
-                  <Text fx:id="loanTermLabel" layoutX="480.0" layoutY="70.0" text="Term (Months)" />
-                  <TextField fx:id="loanTermField" layoutX="480.0" layoutY="85.0" prefWidth="200.0" />
-
                   <Button fx:id="cancelLoanButton" layoutX="600.0" layoutY="400.0" mnemonicParsing="false" onAction="#handleCancelLoan" text="Cancel" />
                   <Button fx:id="submitLoanButton" layoutX="700.0" layoutY="400.0" mnemonicParsing="false" onAction="#handleSubmitLoan" text="Submit Loan" />
                </children>
