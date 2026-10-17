@@ -321,9 +321,21 @@ public class DashboardController {
     // ------------------------------------------------------------------
 
     private void handleCustomerSelected(CustomerSummary customer) {
-        // TODO: open the customer's details screen here, e.g. load customer.fxml and pass it
-        // customer.getNumber(); that screen can call customerService.retrieveCustomer(number).
-        System.out.println("Selected customer: " + customer.getNumber());
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
+            Parent root = loader.load();
+
+            CustomerController controller = loader.getController();
+            controller.setServices(loginService, customerService);
+            controller.loadCustomer(customer.getNumber());
+
+            Stage stage = (Stage) customerListView.getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // ------------------------------------------------------------------

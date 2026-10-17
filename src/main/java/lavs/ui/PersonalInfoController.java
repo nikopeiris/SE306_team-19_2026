@@ -1,6 +1,9 @@
 package lavs.ui;
 
+import java.time.LocalDate;
+
 import business.system.customer.CustomerEmployerService;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -9,6 +12,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
+import mainframe.client.messages.customer.Retrieve;
 
 public class PersonalInfoController {
 
@@ -200,5 +204,30 @@ public class PersonalInfoController {
     @FXML
     private void handlePersonalInfoCancel(ActionEvent event) {
         // Handle cancel navigation logic here
+    }
+
+    public void populateCustomerData(Retrieve retrieve) {
+        Platform.runLater(() -> {
+            if (firstNameField != null) {
+                firstNameField.setText(retrieve.getFirstName());
+            }
+            if (lastNameField != null) {
+                lastNameField.setText(retrieve.getFamilyName());
+            }
+            if (customerIdField != null) {
+                customerIdField.setText(retrieve.getNumber());
+            }
+            if (dateOfBirthField != null && retrieve.getDateOfBirth() != null && !retrieve.getDateOfBirth().isBlank()) {
+                try {
+                    dateOfBirthField.setValue(LocalDate.parse(retrieve.getDateOfBirth().trim()));
+                } catch (Exception ignored) {}
+            }
+            if (nationalityField != null && retrieve.getNationality() != null) {
+                nationalityField.setValue(retrieve.getNationality());
+            }
+            if (statusField != null && retrieve.getTitle() != null) {
+                statusField.setValue(retrieve.getTitle());
+            }
+        });
     }
 }

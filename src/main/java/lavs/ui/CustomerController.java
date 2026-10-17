@@ -2,9 +2,11 @@ package lavs.ui;
 
 import business.system.Customer;
 import business.system.LoginService;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.layout.Pane;
+import mainframe.client.messages.customer.Retrieve;
 
 public class CustomerController {
 
@@ -79,8 +81,44 @@ public class CustomerController {
     }
 
     private void showLoanTab() {
-        personalInfoPane.setVisible(false); personalInfoPane.setManaged(false);
-        contactInfoPane.setVisible(false); contactInfoPane.setManaged(false);
-        loanPane.setVisible(true); loanPane.setManaged(true);
+        personalInfoPane.setVisible(false);
+        personalInfoPane.setManaged(false);
+        contactInfoPane.setVisible(false);
+        contactInfoPane.setManaged(false);
+        loanPane.setVisible(true);
+        loanPane.setManaged(true);
     }
+    
+
+    // load customer if you click on it
+    public void loadCustomer(String customerNumber) {
+    Task<Retrieve> task = new Task<>() {
+        @Override
+        protected Retrieve call() throws Exception {
+            return context.getCustomerService().retrieveCustomer(customerNumber);
+        }
+    };
+
+    task.setOnSucceeded(e -> {
+        Retrieve retrieve = task.getValue();
+        if (retrieve != null) {
+            if (personalInfoTabController != null) {
+                personalInfoTabController.populateCustomerData(retrieve);
+            }
+            // TODO: If you have service calls for existing addresses, phones, and emails, 
+            // you can load them here and populate context.getSavedAddresses(), etc.
+        }
+    });
+
+    task.setOnFailed(e -> {
+        Throwable ex = task.getException();
+        if (ex != null) {
+            ex.printStackTrace();
+        }
+    });
+
+    Thread thread = new Thread(task, "load-customer-" + customerNumber);
+    thread.setDaemon(true);
+    thread.start();
+}
 }
