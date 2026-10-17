@@ -527,9 +527,9 @@ public class Main {
    * @throws IOException if network or mainframe connection fails
    * @throws LavsException if the mainframe rejects the request or validation fails
    */
-  public boolean addLoan(String customerNumber, double principal, double annualRate, int term, String loanType, String paymentFrequency, String compoundType, String renewalDate, String startDate) throws IOException, LavsException {
+  public boolean addLoan(String customerNumber, double principal, double annualRate, int term, String loanType, String paymentFrequency, String compoundType, String renewalDate, String startDate, String guarantorId) throws IOException, LavsException {
     Loan loanService = new Loan(adapter);
-    loanService.addLoan(customerNumber, principal, annualRate, term, loanType, paymentFrequency, compoundType, renewalDate, startDate);
+    loanService.addLoan(customerNumber, principal, annualRate, term, loanType, paymentFrequency, compoundType, renewalDate, startDate, guarantorId);
     return true;
   }
 

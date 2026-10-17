@@ -9,11 +9,13 @@ import business.Main;
 import business.lavsexceptions.LavsException;
 import business.system.customer.CustomerAddressService;
 import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
+import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.List;
 import mainframe.client.messages.loan.Retrieve;
@@ -76,7 +78,7 @@ public class Loan {
             int term,
             String loanType,
             String paymentFrequency,
-            String compoundType, String renewalDate, String startDate)
+            String compoundType, String renewalDate, String startDate, String guarantorId)
             throws IOException, LavsException {
         validateLoanDetails(
                 customerNumber,
@@ -87,6 +89,7 @@ public class Loan {
                 paymentFrequency,
                 compoundType, renewalDate, startDate);
         preReqCheck(customerNumber, loanAdapter);
+        validateCustomerJobAndGuarantor(customerNumber, guarantorId);
 
         String normalizedCustomerNumber = customerNumber.trim();
         String normalizedLoanType = loanType.trim();
@@ -108,6 +111,10 @@ public class Loan {
 
         Status status = loanAdapter.send(createMessage);
         Main.isValidStatus(status);
+        if (guarantorId != null && !guarantorId.isBlank()) {
+            Coborrower coborrower = new Coborrower(loanAdapter);
+            coborrower.addCoborrower(guarantorId.trim(), createMessage.getLoanNumber(), AddCoborrower.TYPE_GUARANTOR);
+        }
         return createMessage;
     }
 
@@ -430,5 +437,37 @@ public class Loan {
           throw new ValidationException(result);
         }
       }
+    }
+
+    public void validateCustomerJobAndGuarantor(String customerId, String guarantorId)
+            throws IOException, LavsException {
+        ValidationResult result = new ValidationResult();
+
+        CustomerEmployerService employerService = new CustomerEmployerService(loanAdapter);
+        mainframe.client.messages.customerEmployer.List.Item[] employers =
+                employerService.listEmployers(customerId, 1L, 100L);
+
+        boolean hasJobs = employers != null && employers.length > 0;
+
+        if (!hasJobs) {
+            if (guarantorId == null || guarantorId.isBlank()) {
+                result.addError("guarantorId", "Guarantor is required when customer has no employment.");
+                throw new ValidationException(result);
+            }
+        }
+
+        if (guarantorId != null && !guarantorId.isBlank()) {
+            Customer customerService = new Customer(loanAdapter);
+            try {
+                customerService.retrieveCustomer(guarantorId.trim());
+            } catch (LavsException e) {
+                result.addError("guarantorId", "Guarantor must be a valid customer.");
+                throw new ValidationException(result);
+            }
+        }
+
+        if (!result.isValid()) {
+            throw new ValidationException(result);
+        }
     }
 }

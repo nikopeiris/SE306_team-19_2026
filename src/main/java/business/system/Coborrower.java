@@ -41,6 +41,7 @@ public class Coborrower extends Customer {
     public AddCoborrower addCoborrower(String coborrowerNumber, String loanNumber, String type)
             throws IOException, LavsException {
         validateCoborrowerDetails(coborrowerNumber, loanNumber, type);
+        business.system.Loan.preReqCheck(coborrowerNumber, coborrowerAdapter);
 
         AddCoborrower addCoborrowerMessage = new AddCoborrower(
                 coborrowerNumber.trim(),

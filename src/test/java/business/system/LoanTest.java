@@ -446,4 +446,60 @@ class LoanTest {
 
         assertEquals("Update rejected", exception.getMessage());
     }
+
+    @Test
+    void validateCustomerJobAndGuarantorSucceedsWhenCustomerHasJobsWithoutGuarantor() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.customerEmployer.List.class))).thenAnswer(invocation -> {
+            mainframe.client.messages.customerEmployer.List listMessage = invocation.getArgument(0);
+            Field dataField = mainframe.client.messages.customerEmployer.List.class.getDeclaredField("_data");
+            dataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            ArrayList<mainframe.client.messages.customerEmployer.List.Item> items =
+                    (ArrayList<mainframe.client.messages.customerEmployer.List.Item>) dataField.get(listMessage);
+            items.add(listMessage.new Item(1L, "Acme", "Primary"));
+            return new Status(0, null, 1L);
+        });
+
+        loan.validateCustomerJobAndGuarantor("C123", null);
+        loan.validateCustomerJobAndGuarantor("C123", "");
+    }
+
+    @Test
+    void validateCustomerJobAndGuarantorThrowsWhenNoJobsAndNoGuarantor() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.customerEmployer.List.class)))
+                .thenReturn(new Status(0, null, 1L));
+
+        ValidationException exceptionNull = assertThrows(ValidationException.class, () ->
+                loan.validateCustomerJobAndGuarantor("C123", null));
+        assertEquals("Guarantor is required when customer has no employment.",
+                exceptionNull.getResult().getError("guarantorId"));
+
+        ValidationException exceptionBlank = assertThrows(ValidationException.class, () ->
+                loan.validateCustomerJobAndGuarantor("C123", "   "));
+        assertEquals("Guarantor is required when customer has no employment.",
+                exceptionBlank.getResult().getError("guarantorId"));
+    }
+
+    @Test
+    void validateCustomerJobAndGuarantorSucceedsWithValidGuarantorWhenNoJobs() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.customerEmployer.List.class)))
+                .thenReturn(new Status(0, null, 1L));
+        when(adapter.send(any(mainframe.client.messages.customer.Retrieve.class)))
+                .thenReturn(new Status(1));
+
+        loan.validateCustomerJobAndGuarantor("C123", "G999");
+    }
+
+    @Test
+    void validateCustomerJobAndGuarantorThrowsWhenGuarantorIsInvalid() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.customerEmployer.List.class)))
+                .thenReturn(new Status(0, null, 1L));
+        when(adapter.send(any(mainframe.client.messages.customer.Retrieve.class)))
+                .thenReturn(new Status(404, "Customer not found", 99L));
+
+        ValidationException exception = assertThrows(ValidationException.class, () ->
+                loan.validateCustomerJobAndGuarantor("C123", "G999"));
+        assertEquals("Guarantor must be a valid customer.",
+                exception.getResult().getError("guarantorId"));
+    }
 }
