@@ -33,6 +33,18 @@ public class CustomerDocumentService {
     return addDocument;
   }
 
+  public AddDocument updateDocument(String customer, long documentId) throws IOException, LavsException {
+    Retrieve customerDocument = retrieveCustomerDocument(customer, documentId);
+    String fileName = customerDocument.getFileName();
+    String fileType = customerDocument.getFileType();
+    Long size = customerDocument.getSize();
+    String type = customerDocument.getType();
+
+    deleteDocument(customer, documentId);
+    AddDocument updatedDocument = addDocument(customer, fileName, fileType, size, type);
+    return updatedDocument;
+  }
+
   public DeleteDocument deleteDocument(String customer, long id) throws IOException, LavsException {
     DeleteDocument deleteDocument = new DeleteDocument(customer.trim(), id);
     send(deleteDocument);
