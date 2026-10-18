@@ -267,8 +267,8 @@ public class PersonalInfoController {
         if (original == null || original.personal().isNew()) {
             return;
         }
-        new CustomerDocumentsDialog(context, original.personal().number())
-                .show(documentsButton.getScene().getWindow());
+        CustomerDocumentsDialog.show(context, original.personal().number(),
+                documentsButton.getScene().getWindow());
     }
 
     @FXML
