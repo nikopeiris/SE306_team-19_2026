@@ -660,6 +660,12 @@ public class Main {
     return true;
   }
 
+  public boolean updateCoborrower(long coborrowerId, String customerNumber, String type) throws IOException, LavsException {
+    removeCoborrower(coborrowerId);
+    addCoborrower(customerNumber, type);
+    return true;
+  }
+
   /**
      * Loads key-value pairs from the .env file in the project root.
      *
