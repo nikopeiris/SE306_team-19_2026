@@ -60,6 +60,12 @@ public class CustomerContext {
 
     public CustomerDetails getOriginal() { return original; }
 
+    /** The customer's number, or null while the customer has not been saved yet. */
+    public String getCustomerNumber() {
+        // ASSUMPTION: CustomerDetails.Personal has a number() accessor. Adjust to match the record.
+        return original == null ? null : original.personal().number();
+    }
+
     public LoginService getLoginService() { return loginService; }
     public Customer getCustomerService() { return customerService; }
     public CustomerEmailService getEmailService() { return emailService; }
