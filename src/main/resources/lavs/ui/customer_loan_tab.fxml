@@ -1,37 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<Pane prefHeight="595.0" prefWidth="1057.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.LoanTabController">
+<Pane fx:id="loanTabRoot" prefHeight="595.0" prefWidth="1057.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.LoanTabController">
    <children>
-      <Text layoutX="14.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Loans" />
-      <TableView fx:id="loansTable" layoutX="14.0" layoutY="45.0" prefHeight="180.0" prefWidth="1030.0">
+      <Text layoutX="14.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Loans">
+         <font><Font name="System Bold" size="14.0" /></font>
+      </Text>
+      <TableView fx:id="loansTable" layoutX="14.0" layoutY="40.0" prefHeight="400.0" prefWidth="1030.0">
         <columns>
-          <TableColumn fx:id="loanSelectColumn" prefWidth="50.0" text="Select" />
-          <TableColumn fx:id="loanIdColumn" prefWidth="100.0" text="Loan ID" />
-          <TableColumn fx:id="loanTypeColumn" prefWidth="150.0" text="Type" />
-          <TableColumn fx:id="loanAmountColumn" prefWidth="150.0" text="Amount" />
+          <TableColumn fx:id="loanIdColumn" prefWidth="120.0" text="Loan ID" />
+          <TableColumn fx:id="loanTypeColumn" prefWidth="170.0" text="Type" />
+          <TableColumn fx:id="loanAmountColumn" prefWidth="200.0" text="Amount" />
           <TableColumn fx:id="loanDateCreatedColumn" prefWidth="200.0" text="Date Created" />
+          <TableColumn fx:id="loanStatusColumn" prefWidth="150.0" text="Status" />
         </columns>
+        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /></columnResizePolicy>
       </TableView>
-      <Button mnemonicParsing="false" onAction="#handleAddLoan" layoutX="14.0" layoutY="235.0" text="Add Loan" />
+      <Button fx:id="addLoanButton" mnemonicParsing="false" onAction="#handleAddLoan" layoutX="14.0" layoutY="450.0" text="Add Loan" />
+      <Button fx:id="viewLoanButton" mnemonicParsing="false" onAction="#handleViewLoan" layoutX="100.0" layoutY="450.0" text="View Loan" />
 
-      <Button fx:id="loanBackButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" prefHeight="36.0" prefWidth="110.0" text="Back" />
+      <Label fx:id="messageLabel" layoutX="14.0" layoutY="490.0" prefWidth="1030.0" wrapText="true" />
+
+      <Button fx:id="loanBackButton" layoutX="805.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleBack" prefHeight="36.0" prefWidth="110.0" text="Back" />
       <Button fx:id="saveButton" defaultButton="true" layoutX="925.0" layoutY="539.0" mnemonicParsing="false" onAction="#handleSave" prefHeight="36.0" prefWidth="120.0" style="-fx-background-color: #011936;" text="Save Customer" textFill="WHITE" />
 
-      <!-- Add Loan Overlay Pane -->
-      <Pane fx:id="addLoanPane" layoutX="100.0" layoutY="50.0" prefHeight="450.0" prefWidth="850.0" style="-fx-background-color: white; -fx-border-color: black; -fx-border-radius: 10;" visible="false" managed="false">
+      <Pane fx:id="addLoanPane" layoutX="100.0" layoutY="60.0" prefHeight="380.0" prefWidth="850.0" style="-fx-background-color: white; -fx-border-color: black; -fx-border-radius: 10;" visible="false" managed="false">
          <children>
             <Text layoutX="20.0" layoutY="30.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Add New Loan">
                <font><Font name="System Bold" size="16.0" /></font>
             </Text>
-            <Button fx:id="cancelLoanButton" layoutX="600.0" layoutY="400.0" mnemonicParsing="false" onAction="#handleCancelLoan" text="Cancel" />
-            <Button fx:id="submitLoanButton" layoutX="700.0" layoutY="400.0" mnemonicParsing="false" onAction="#handleSubmitLoan" text="Submit Loan" />
+
+            <Label layoutX="20.0" layoutY="48.0" text="Loan Type" />
+            <ComboBox fx:id="loanTypeCombo" layoutX="20.0" layoutY="68.0" prefWidth="200.0" />
+
+            <Label layoutX="20.0" layoutY="108.0" text="Amount ($)" />
+            <TextField fx:id="amountField" layoutX="20.0" layoutY="128.0" prefWidth="200.0" promptText="e.g. 63000000" />
+            <Label layoutX="300.0" layoutY="108.0" text="Loan term (years)" />
+            <TextField fx:id="termField" layoutX="300.0" layoutY="128.0" prefWidth="200.0" promptText="e.g. 10" />
+            <Label layoutX="580.0" layoutY="108.0" text="Compound Type" />
+            <ComboBox fx:id="compoundCombo" layoutX="580.0" layoutY="128.0" prefWidth="200.0" />
+
+            <Label layoutX="20.0" layoutY="170.0" text="Rate (%)" />
+            <TextField fx:id="rateField" layoutX="20.0" layoutY="190.0" prefWidth="200.0" promptText="e.g. 6" />
+            <Label layoutX="300.0" layoutY="170.0" text="Payment Frequency" />
+            <ComboBox fx:id="paymentFrequencyCombo" layoutX="300.0" layoutY="190.0" prefWidth="200.0" />
+            <CheckBox fx:id="interestOnlyCheck" layoutX="580.0" layoutY="194.0" mnemonicParsing="false" text="Interest Only" />
+
+            <Button fx:id="coborrowersButton" layoutX="20.0" layoutY="243.0" mnemonicParsing="false" onAction="#handleCoborrowers" text="Co-borrowers" />
+
+            <Label fx:id="addLoanErrorLabel" layoutX="20.0" layoutY="288.0" prefHeight="20.0" prefWidth="810.0" textFill="#b00020" wrapText="true" />
+
+            <Button fx:id="cancelLoanButton" layoutX="640.0" layoutY="335.0" mnemonicParsing="false" onAction="#handleCancelLoan" text="Cancel" />
+            <Button fx:id="submitLoanButton" layoutX="720.0" layoutY="335.0" mnemonicParsing="false" onAction="#handleSubmitLoan" text="Submit Loan" />
          </children>
       </Pane>
    </children>
