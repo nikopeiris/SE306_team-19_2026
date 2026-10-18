@@ -64,6 +64,18 @@ class PaymentTest {
     }
 
     @Test
+    void listPaymentsSendsTrimmedLoanNumberAndReturnsItems() throws Exception {
+        when(adapter.send(any(mainframe.client.messages.loanPayment.List.class)))
+                .thenReturn(new Status(1L));
+
+        mainframe.client.messages.loanPayment.List.Item[] result =
+                payment.listPayments(" L123 ", 1L, 25L);
+
+        assertEquals(0, result.length);
+        verify(adapter).send(any(mainframe.client.messages.loanPayment.List.class));
+    }
+
+    @Test
     void addPaymentRejectsInvalidFields() {
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> payment.addPayment(Double.NaN, "not-a-date", " "));
@@ -86,6 +98,20 @@ class PaymentTest {
                 exception.getResult().getError("id"));
         assertEquals("Loan number cannot be null or empty",
                 exception.getResult().getError("loanNumber"));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void listPaymentsRejectsInvalidFields() {
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> payment.listPayments(" ", 0L, null));
+
+        assertEquals("Loan number cannot be null or empty",
+                exception.getResult().getError("loanNumber"));
+        assertEquals("Page must be a positive integer",
+                exception.getResult().getError("page"));
+        assertEquals("Size cannot be empty",
+                exception.getResult().getError("size"));
         verifyNoInteractions(adapter);
     }
 

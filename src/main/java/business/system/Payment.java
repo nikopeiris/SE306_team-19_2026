@@ -12,6 +12,7 @@ import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Status;
 import mainframe.client.messages.loan.AddPayment;
 import mainframe.client.messages.loan.DeletePayment;
+import mainframe.client.messages.loanPayment.List;
 
 /**
  * Business service for adding and deleting loan payments.
@@ -70,6 +71,27 @@ public class Payment {
         return deletePaymentMessage;
     }
 
+    /**
+     * Retrieves a paginated list of payments recorded against a loan.
+     *
+     * @param loanNumber loan identifier
+     * @param page one-based page number
+     * @param size maximum number of payments to retrieve
+     * @return the payments returned for the requested page
+     * @throws ValidationException if the loan number, page, or size is invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public List.Item[] listPayments(String loanNumber, Long page, Long size)
+            throws IOException, LavsException {
+        validateListPaymentsDetails(loanNumber, page, size);
+
+        List listMessage = new List(loanNumber.trim(), page, size);
+        Status status = paymentAdapter.send(listMessage);
+        Main.isValidStatus(status);
+        return listMessage.getItems();
+    }
+
     public void validateAddPaymentDetails(double amountPaid, String date, String loanNumber)
             throws ValidationException {
         ValidationResult result = new ValidationResult()
@@ -88,6 +110,15 @@ public class Payment {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("loanNumber", loanNumber, "Loan number cannot be null or empty")
                 .requirePositive("id", id, "Payment id");
+        result.throwIfInvalid();
+    }
+
+    public void validateListPaymentsDetails(String loanNumber, Long page, Long size)
+            throws ValidationException {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("loanNumber", loanNumber, "Loan number cannot be null or empty")
+                .requirePositive("page", page, "Page")
+                .requirePositive("size", size, "Size");
         result.throwIfInvalid();
     }
 
