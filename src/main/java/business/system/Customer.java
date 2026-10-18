@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import business.Main;
@@ -12,6 +13,7 @@ import business.system.customer.CustomerAddressService;
 import business.system.customer.CustomerEmailService;
 import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
+import business.system.dto.CustomerDetails;
 import business.system.dto.CustomerSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -20,12 +22,14 @@ import mainframe.client.Status;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customer.Update;
 
 /**
  * Business service for adding customers through the mainframe adapter.
  */
 public class Customer {
     private final MainframeAdapter customerAdapter;
+    private final CustomerDetailsService detailsService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
     
@@ -43,6 +47,7 @@ public class Customer {
             throw new IllegalArgumentException("Customer adapter cannot be null");
         }
         this.customerAdapter = customerAdapter;
+        this.detailsService = new CustomerDetailsService(this, customerAdapter);
     }
 
     /**
@@ -239,5 +244,73 @@ public class Customer {
      */
     public Retrieve getCustomerDetails(String number) throws IOException, LavsException {
         return retrieveCustomer(number);
+    }
+
+    /**
+     * Updates an existing customer's personal details after validating them.
+     *
+     * @return the mainframe message containing the updated customer's details
+     * @throws ValidationException if a field is null, blank, or invalid
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public Update updateCustomer(
+            String number,
+            String dateOfBirth,
+            String familyName,
+            String firstName,
+            String nationality,
+            String title) throws IOException, LavsException {
+        if (number == null || number.isBlank()) {
+            throw new IllegalArgumentException("Customer number cannot be null or empty");
+        }
+        // The organisation is only set when a customer is created, so any valid value will do here.
+        validateCustomerDetails(
+                dateOfBirth, familyName, firstName, nationality, 1L, title);
+
+        Update updateMessage = new Update(
+                dateOfBirth.trim(),
+                familyName.trim(),
+                firstName.trim(),
+                nationality.trim(),
+                number.trim(),
+                title.trim());
+        Status status = customerAdapter.send(updateMessage);
+        Main.isValidStatus(status);
+        return updateMessage;
+    }
+
+    /** Loads a customer's personal details, addresses, phones, emails and employers. */
+    public CustomerDetails loadCustomerDetails(String number) throws IOException, LavsException {
+        return detailsService.load(number);
+    }
+
+    /**
+     * Creates the customer (if {@code original} is null) or updates it, and saves all
+     * contact and employer changes. See {@link CustomerDetailsService#save}.
+     */
+    public CustomerDetails.SaveResult saveCustomer(CustomerDetails original, CustomerDetails edited)
+            throws IOException, LavsException {
+        return detailsService.save(original, edited);
+    }
+
+    public void validatePersonalDetails(CustomerDetails.Personal personal) throws ValidationException {
+        detailsService.validatePersonal(personal);
+    }
+
+    public void validateAddresses(List<CustomerDetails.Address> addresses) throws ValidationException {
+        detailsService.validateAddresses(addresses);
+    }
+
+    public void validatePhones(List<CustomerDetails.Phone> phones) throws ValidationException {
+        detailsService.validatePhones(phones);
+    }
+
+    public void validateEmails(List<CustomerDetails.Email> emails) throws ValidationException {
+        detailsService.validateEmails(emails);
+    }
+
+    public void validateEmployers(List<CustomerDetails.Employer> employers) throws ValidationException {
+        detailsService.validateEmployers(employers);
     }
 }
