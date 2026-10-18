@@ -62,8 +62,8 @@ public class CustomerContext {
 
     /** The customer's number, or null while the customer has not been saved yet. */
     public String getCustomerNumber() {
-        // ASSUMPTION: CustomerDetails.Personal has a number() accessor. Adjust to match the record.
-        return original == null ? null : original.personal().number();
+        return original == null || original.personal().isNew()
+                ? null : original.personal().number();
     }
 
     public LoginService getLoginService() { return loginService; }

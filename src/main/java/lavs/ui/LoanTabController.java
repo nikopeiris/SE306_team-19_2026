@@ -6,7 +6,6 @@ import java.util.List;
 import business.system.LoanDetailsService;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanRow;
-import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -96,13 +95,9 @@ public class LoanTabController {
 
     /** Called by the customer screen once the shared context is ready. */
     public void init(CustomerContext context) {
+        // The services are not set on the context yet while the customer screen is still
+        // loading, so nothing here may use them (the dropdowns are filled in handleAddLoan).
         this.context = context;
-
-        LoanDetailsService details = details();
-        loanTypeCombo.setItems(FXCollections.observableArrayList(details.loanTypeOptions()));
-        compoundCombo.setItems(FXCollections.observableArrayList(details.compoundTypeOptions()));
-        paymentFrequencyCombo.setItems(FXCollections.observableArrayList(details.paymentFrequencyOptions()));
-        resetForm();
 
         loanTabRoot.sceneProperty().addListener((o, was, scene) -> {
             if (scene == null) {
@@ -126,6 +121,11 @@ public class LoanTabController {
      */
     public void refresh() {
         loadedFor = null;
+        refreshIfNeeded();
+    }
+
+    /** Called by the customer screen each time this tab is opened. */
+    public void onShown() {
         refreshIfNeeded();
     }
 
@@ -210,6 +210,7 @@ public class LoanTabController {
 
     @FXML
     private void handleAddLoan(ActionEvent event) {
+        fillChoicesOnce();
         addLoanErrorLabel.setText("");
         if (addLoanPane != null) {
             addLoanPane.setVisible(true);
@@ -267,6 +268,18 @@ public class LoanTabController {
         addLoanPane.setVisible(false);
         addLoanPane.setManaged(false);
         addLoanErrorLabel.setText("");
+    }
+
+    /** Fills the dropdowns from the business layer the first time the form is opened. */
+    private void fillChoicesOnce() {
+        if (!loanTypeCombo.getItems().isEmpty()) {
+            return;
+        }
+        LoanDetailsService details = details();
+        loanTypeCombo.setItems(FXCollections.observableArrayList(details.loanTypeOptions()));
+        compoundCombo.setItems(FXCollections.observableArrayList(details.compoundTypeOptions()));
+        paymentFrequencyCombo.setItems(FXCollections.observableArrayList(details.paymentFrequencyOptions()));
+        resetForm();
     }
 
     /** Puts the form back to a blank state. */

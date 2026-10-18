@@ -108,6 +108,8 @@ public class CustomerController {
 
     private void showLoanTab() {
         show(loanPane);
+        if (loanTabController != null)
+            loanTabController.onShown();
     }
 
     private void show(Pane tab) {
@@ -138,6 +140,8 @@ public class CustomerController {
             context.load(details);
             personalInfoTabController.populate(details);
             contactInfoTabController.refresh();
+            if (loanTabController != null)
+                loanTabController.refresh();
         });
 
         task.setOnFailed(e -> showError("Load Error", "Failed to load customer details",

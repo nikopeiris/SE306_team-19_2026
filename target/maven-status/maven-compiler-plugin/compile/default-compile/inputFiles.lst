@@ -4,6 +4,7 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Customer.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/CustomerDetailsService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Loan.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoanDetailsService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoanSearchService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoanStatusService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoginService.java
@@ -17,8 +18,12 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerDetails.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerDocument.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerSummary.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanApplication.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanDetail.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanListResult.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanRow.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanSummary.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/RepaymentRow.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/LoanValidation.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/ValidationException.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/ValidationResult.java
@@ -31,7 +36,9 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerDocumentsDialog.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/DashboardController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/DocumentRowController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanFormat.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanStatusDialog.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanSummaryController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanTabController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoginController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/PersonalInfoController.java
