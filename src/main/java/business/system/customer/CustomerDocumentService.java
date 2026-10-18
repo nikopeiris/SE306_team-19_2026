@@ -17,6 +17,11 @@ import mainframe.client.messages.customerDocument.Retrieve;
 public class CustomerDocumentService {
   private final MainframeAdapter adapter;
 
+  /**
+   * Constructs a new CustomerDocumentService with the specified mainframe adapter.
+   *
+   * @param adapter the mainframe adapter used to communicate with the backend
+   */
   public CustomerDocumentService(MainframeAdapter adapter) {
     if (adapter == null) {
       throw new IllegalArgumentException("Document adpater cannot be null");
@@ -24,15 +29,38 @@ public class CustomerDocumentService {
     this.adapter = adapter;
   }
 
-
+  /**
+   * Adds a document to an existing customer after validating the document fields.
+   *
+   * @param customer the customer number or identifier
+   * @param fileName the name of the file
+   * @param fileType the type/extension of the file
+   * @param size the size of the file in bytes
+   * @param type the document type classification
+   * @return the mainframe message containing the created document details
+   * @throws ValidationException if a required field or field length is invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
   public AddDocument addDocument(String customer, String fileName, String fileType, long size, String type)
       throws IOException, LavsException {
+    validateDocumentIdDetails(type, fileName, fileType, size);
     AddDocument addDocument = new AddDocument(customer.trim(), fileName.trim(), fileType.trim(), size,
         type.trim());
     send(addDocument);
     return addDocument;
   }
 
+  /**
+   * Updates an existing customer document by creating a new version and removing the old one.
+   *
+   * @param customer the customer number or identifier
+   * @param documentId the ID of the document to update
+   * @return the mainframe message containing the newly created document details
+   * @throws ValidationException if the document validation fails during re-addition
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
   public AddDocument updateDocument(String customer, long documentId) throws IOException, LavsException {
     Retrieve customerDocument = retrieveCustomerDocument(customer, documentId);
     String fileName = customerDocument.getFileName();
@@ -45,22 +73,50 @@ public class CustomerDocumentService {
     return updatedDocument;
   }
 
+  /**
+   * Deletes a specific document associated with a customer.
+   *
+   * @param customer the customer number or identifier
+   * @param id the ID of the document to delete
+   * @return the mainframe message containing the deleted document details
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
   public DeleteDocument deleteDocument(String customer, long id) throws IOException, LavsException {
     DeleteDocument deleteDocument = new DeleteDocument(customer.trim(), id);
     send(deleteDocument);
     return deleteDocument;
   }
   
-
+  /**
+   * Retrieves a paginated list of documents for a specified customer.
+   *
+   * @param customerNumber the customer number or identifier
+   * @param page the page number to retrieve
+   * @param size the number of items per page
+   * @return an array of document items for the requested page
+   * @throws ValidationException if the customer number or pagination parameters are invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
   public List.Item[] listDocuments(String customerNumber, Long page, Long size) throws IOException, LavsException {
     requireCustomerNumber(new ValidationResult(), customerNumber).requirePositive("page", page, "Page")
         .requirePositive("size", size, "Size").throwIfInvalid();
     List listMessage = new List(customerNumber.trim(), page, size);
     send(listMessage);
     return listMessage.getItems();
-
   }
   
+  /**
+   * Retrieves a single customer document by its identifiers.
+   *
+   * @param customerNumber the customer number or identifier
+   * @param documentId the ID of the document to retrieve
+   * @return the mainframe message containing the document details
+   * @throws ValidationException if the identifiers are invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
   public Retrieve retrieveCustomerDocument(String customerNumber, Long documentId) throws IOException, LavsException {
     validateDocumentIdentifiers(customerNumber, documentId);
     Retrieve retrieveMessage = new Retrieve(documentId, customerNumber.trim());
@@ -68,11 +124,28 @@ public class CustomerDocumentService {
     return retrieveMessage;
   }
 
-
+  /**
+   * Validates document details including required fields and maximum character lengths.
+   *
+   * @param type the document type classification
+   * @param filename the name of the file
+   * @param fileType the type/extension of the file
+   * @param size the size of the file in bytes
+   * @throws ValidationException if any document field fails validation rules
+   */
   public static void validateDocumentIdDetails(String type, String filename, String fileType, long size) throws ValidationException {
     buildDocumentValidation(type, filename, fileType, size).throwIfInvalid();
   }
-
+  
+  /**
+   * Builds and returns a ValidationResult containing validation checks for document fields.
+   *
+   * @param type the document type classification
+   * @param filename the name of the file
+   * @param fileType the type/extension of the file
+   * @param size the size of the file in bytes
+   * @return a ValidationResult detailing any validation errors found
+   */
   public static ValidationResult buildDocumentValidation(String type, String filename, String fileType, long size) {
     ValidationResult result = new ValidationResult()
         .requireNotBlank("type", type, "Type cannot be empty")
@@ -95,7 +168,13 @@ public class CustomerDocumentService {
     return result;
   }
 
-
+  /**
+   * Validates the customer number and document ID identifiers.
+   *
+   * @param customerNumber the customer number to validate
+   * @param documentId the document ID to validate
+   * @throws ValidationException if the customer number is blank or document ID is invalid
+   */
   private void validateDocumentIdentifiers(String customerNumber, Long documentId)
             throws ValidationException {
     requireCustomerNumber(new ValidationResult(), customerNumber)
@@ -103,18 +182,28 @@ public class CustomerDocumentService {
             .throwIfInvalid();
   }
 
-
-
+  /**
+   * Sends a mainframe message and verifies its response status.
+   *
+   * @param message the mainframe message to send
+   * @throws IOException if the mainframe cannot be reached
+   * @throws LavsException if the response status is invalid
+   */
   private void send(Message message) throws IOException, LavsException {
     Status status = adapter.send(message);
     Main.isValidStatus(status);
   }
 
+  /**
+   * Ensures that the provided customer number is present and not blank.
+   *
+   * @param result the validation result object to append errors to
+   * @param customerNumber the customer number to check
+   * @return the updated ValidationResult
+   */
   private static ValidationResult requireCustomerNumber(
             ValidationResult result, String customerNumber) {
     return result.requireNotBlank("customerNumber", customerNumber,
             "Customer number cannot be null or empty");
   }
-    
-
 }

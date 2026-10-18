@@ -165,17 +165,50 @@ public class CustomerDocumentService {
       result.addError("size", "Size must not exceed 15 characters");
     }
 
-    return result;
-  }
+    /**
+     * Validates the fields of a phone number without sending it to the mainframe.
+     * Static so the UI can check a form before a customer (and their number) exists.
+     *
+     * @throws ValidationException if a required field or the phone type is invalid
+     */
+    public static void validatePhoneNumberDetails(
+            String countryCode,
+            String customer,
+            String number,
+            String otherType,
+            String type) throws ValidationException {
+        buildPhoneNumberValidation(countryCode, customer, number, otherType, type)
+                .throwIfInvalid();
+    }
 
-  /**
-   * Validates the customer number and document ID identifiers.
-   *
-   * @param customerNumber the customer number to validate
-   * @param documentId the document ID to validate
-   * @throws ValidationException if the customer number is blank or document ID is invalid
-   */
-  private void validateDocumentIdentifiers(String customerNumber, Long documentId)
+    // validates whether phone number is correct
+    private static ValidationResult buildPhoneNumberValidation(
+            String countryCode,
+            String customer,
+            String number,
+            String otherType,
+            String type) {
+        ValidationResult result = new ValidationResult()
+                .requireNotBlank("countryCode", countryCode, "Country code cannot be empty")
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("number", number, "Phone number cannot be empty")
+                .requireNotBlank("type", type, "Phone type cannot be empty");
+
+        if (type != null && !type.isBlank()
+                && !type.equals(AddPhoneNumber.TYPE_HOME)
+                && !type.equals(AddPhoneNumber.TYPE_MOBILE)
+                && !type.equals(AddPhoneNumber.TYPE_WORK)
+                && !type.equals(AddPhoneNumber.TYPE_OTHER)) {
+            result.addError("type", "Phone type is invalid");
+        }
+        if (AddPhoneNumber.TYPE_OTHER.equals(type)
+                && (otherType == null || otherType.isBlank())) {
+            result.addError("otherType", "Other phone type cannot be empty");
+        }
+        return result;
+    }
+
+    private void validatePhoneNumberIdentifiers(String customerNumber, Long phoneNumberId)
             throws ValidationException {
     requireCustomerNumber(new ValidationResult(), customerNumber)
             .requirePositive("document id", documentId, "Document id")
