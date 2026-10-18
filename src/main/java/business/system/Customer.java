@@ -35,6 +35,7 @@ public class Customer {
     private final MainframeAdapter customerAdapter;
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
+    private final LoanStatusService loanStatusService;
     private final CustomerDocumentService documentService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
@@ -55,6 +56,7 @@ public class Customer {
         this.customerAdapter = customerAdapter;
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
+        this.loanStatusService = new LoanStatusService(customerAdapter);
         this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
@@ -290,6 +292,24 @@ public class Customer {
     public LoanListResult listLoansFor(List<CustomerSummary> customers,
             LoanSearchService.ProgressListener listener) throws IOException {
         return loanSearchService.listLoansFor(customers, listener);
+    }
+
+    /** The statuses a loan with this status can be changed to (empty if none). */
+    public List<String> allowedLoanStatuses(String currentStatus) {
+        return loanStatusService.allowedStatuses(currentStatus);
+    }
+
+    /**
+     * Changes a loan's status. Sending a loan for checking (Pending) first makes sure the
+     * loan and all its borrowers are ready; see {@link LoanStatusService#changeStatus}.
+     *
+     * @throws ValidationException if the change is not allowed or a borrower is not ready
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public void changeLoanStatus(String loanNumber, String newStatus)
+            throws IOException, LavsException {
+        loanStatusService.changeStatus(loanNumber, newStatus);
     }
 
     /** Narrows a loan list by loan number; a blank query returns the whole list. */

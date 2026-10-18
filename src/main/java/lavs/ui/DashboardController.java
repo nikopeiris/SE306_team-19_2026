@@ -62,6 +62,7 @@ public class DashboardController {
     @FXML private TableColumn<LoanSummary, String> loanIdColumn;
     @FXML private TableColumn<LoanSummary, String> loanCustomerColumn;
     @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
+    @FXML private Button changeStatusButton;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -149,7 +150,30 @@ public class DashboardController {
 
         // typing narrows the loans straight away; an empty box shows every loan
         loanSearchField.textProperty().addListener((obs, oldText, newText) -> showLoans());
+
+        // a loan has to be picked before its status can be changed
+        changeStatusButton.disableProperty().bind(
+                loanTable.getSelectionModel().selectedItemProperty().isNull());
         updateLoanStatusLabel();
+    }
+
+    @FXML
+    private void handleChangeStatus(ActionEvent event) {
+        LoanSummary selected = loanTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        LoanStatusDialog.show(loanTable.getScene().getWindow(), customerService, selected,
+                newStatus -> showNewStatus(selected, newStatus));
+    }
+
+    /** Shows the changed status without reloading every customer's loans. */
+    private void showNewStatus(LoanSummary loan, String newStatus) {
+        int index = allLoans.indexOf(loan);
+        if (index >= 0) {
+            allLoans.set(index, loan.withStatus(newStatus));
+        }
+        showLoans();
     }
 
     // add custoemr button
