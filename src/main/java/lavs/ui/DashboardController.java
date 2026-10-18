@@ -113,13 +113,18 @@ public class DashboardController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
             Parent root = loader.load();
+
+            // Pass the services and initialize an empty context for a new customer
+            CustomerController controller = loader.getController();
+            controller.setServices(loginService, customerService, emailService);
+
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             Scene scene = new Scene(root);
             stage.setScene(scene);
             stage.show();
         } catch (Exception e) {
+            e.printStackTrace();
         }
-
     }
 
     /** Called by LoginController when it opens the dashboard. */
@@ -326,7 +331,7 @@ public class DashboardController {
             Parent root = loader.load();
 
             CustomerController controller = loader.getController();
-            controller.setServices(loginService, customerService);
+            controller.setServices(loginService, customerService, emailService);
             controller.loadCustomer(customer.getNumber());
 
             Stage stage = (Stage) customerListView.getScene().getWindow();

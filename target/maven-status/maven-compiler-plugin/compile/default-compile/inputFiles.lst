@@ -2,13 +2,16 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/lavsexceptions/LavsException.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Coborrower.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Customer.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/CustomerDetailsService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/Loan.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoginService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/SignupService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerAddressService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerEmailService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerEmployerService.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerOptions.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerPhoneNumberService.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerDetails.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerSummary.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/LoanValidation.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/validation/ValidationException.java

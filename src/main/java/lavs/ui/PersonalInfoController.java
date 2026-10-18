@@ -1,6 +1,12 @@
 package lavs.ui;
 
-import business.system.customer.CustomerEmployerService;
+import java.util.ArrayList;
+import java.util.List;
+
+import business.system.customer.CustomerOptions;
+import business.system.dto.CustomerDetails;
+import business.system.dto.CustomerDetails.Employer;
+import business.system.dto.CustomerDetails.Personal;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
@@ -9,317 +15,206 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
-import mainframe.client.messages.customer.Retrieve;
 
+/**
+ * The personal details tab. It only reads and writes form fields; every rule
+ * (what is required, what is valid) is checked by the business layer.
+ */
 public class PersonalInfoController {
 
-    @FXML
-    private TextField firstNameField;
-    @FXML
-    private TextField lastNameField;
-    @FXML
-    private DatePicker dateOfBirthField;
-    @FXML
-    private ComboBox<String> employerField;
-    @FXML
-    private ComboBox<String> nationalityField;
-    @FXML
-    private ComboBox<String> titleField; // New Title field
-    @FXML
-    private ComboBox<String> statusField;
-    @FXML
-    private TextField customerIdField;
+    private static final String EMPLOYED = "Employed";
+    private static final String NOT_EMPLOYED = "None";
+    private static final String ASSIGNED_ON_SAVE = "Assigned on save";
 
-    @FXML
-    private TextField jobTitleField;
-    @FXML
-    private TextField companyField;
-    @FXML
-    private DatePicker startDateField;
-    @FXML
-    private TextField salaryField;
-    @FXML
-    private Button addSecondaryEmploymentButton;
+    @FXML private TextField customerIdField;
+    @FXML private TextField statusField;
+    @FXML private ComboBox<String> titleField;
+    @FXML private TextField firstNameField;
+    @FXML private TextField lastNameField;
+    @FXML private DatePicker dateOfBirthField;
+    @FXML private ComboBox<String> nationalityField;
+    @FXML private ComboBox<String> employerField;
 
-    @FXML
-    private Pane secondaryEmploymentPane;
-    @FXML
-    private TextField secondaryJobTitleField;
-    @FXML
-    private TextField secondaryCompanyField;
-    @FXML
-    private DatePicker secondaryStartDateField;
-    @FXML
-    private TextField secondarySalaryField;
-    @FXML
-    private Button removeSecondaryEmploymentButton;
+    @FXML private TextField jobTitleField;
+    @FXML private TextField companyField;
+    @FXML private TextField salaryField;
+    @FXML private Button addSecondaryEmploymentButton;
+
+    @FXML private Pane secondaryEmploymentPane;
+    @FXML private TextField secondaryJobTitleField;
+    @FXML private TextField secondaryCompanyField;
+    @FXML private TextField secondarySalaryField;
 
     private CustomerContext context;
 
+    // ids of the employers as loaded, so saving updates them instead of adding duplicates
+    private Long primaryEmployerId;
+    private Long secondaryEmployerId;
+
     @FXML
     private void initialize() {
-        // Populate Title ComboBox
-        if (titleField != null) {
-            titleField.getItems().addAll("Mr", "Ms", "Mrs", "Miss", "Dr", "Prof");
-            titleField.setEditable(true);
-        }
+        titleField.getItems().addAll(CustomerOptions.TITLES);
+        titleField.setEditable(true);
+        nationalityField.getItems().addAll(CustomerOptions.NATIONALITIES);
+        nationalityField.setEditable(true);
 
-        // Populate Nationality ComboBox
-        if (nationalityField != null) {
-            nationalityField.getItems().addAll("New Zealand", "British", "Australian", "American", "Other");
-            nationalityField.setEditable(true);
-        }
+        customerIdField.setEditable(false);
+        statusField.setEditable(false);
+        customerIdField.setText(ASSIGNED_ON_SAVE);
+        statusField.setText(ASSIGNED_ON_SAVE);
 
-        // Populate Status ComboBox
-        if (statusField != null) {
-            statusField.getItems().addAll("Active", "Reactive");
-            statusField.setEditable(true);
-        }
+        employerField.getItems().addAll(NOT_EMPLOYED, EMPLOYED);
+        employerField.valueProperty().addListener(
+                (obs, oldValue, newValue) -> setEmploymentEnabled(EMPLOYED.equals(newValue)));
+        employerField.setValue(NOT_EMPLOYED);
+        setEmploymentEnabled(false);
 
-        // Populate Employer ComboBox & Setup Toggle Listeners
-        if (employerField != null) {
-            employerField.getItems().addAll("Employed", "None");
-            employerField.setValue("None");
-
-            employerField.valueProperty().addListener((obs, oldValue, newValue) -> {
-                boolean isEmployed = "Employed".equals(newValue);
-
-                if (jobTitleField != null)
-                    jobTitleField.setDisable(!isEmployed);
-                if (companyField != null)
-                    companyField.setDisable(!isEmployed);
-                if (startDateField != null)
-                    startDateField.setDisable(!isEmployed);
-                if (salaryField != null)
-                    salaryField.setDisable(!isEmployed);
-
-                if (!isEmployed) {
-                    if (jobTitleField != null)
-                        jobTitleField.clear();
-                    if (companyField != null)
-                        companyField.clear();
-                    if (startDateField != null)
-                        startDateField.setValue(null);
-                    if (salaryField != null)
-                        salaryField.clear();
-                }
-            });
-        }
-
-        // Salary validation listener
-        if (salaryField != null) {
-            salaryField.textProperty().addListener((observable, oldValue, newValue) -> {
-                if (!newValue.matches("\\d*(\\.\\d*)?")) {
-                    salaryField.setText(oldValue);
-                }
-            });
-        }
+        numbersOnly(salaryField);
+        numbersOnly(secondarySalaryField);
     }
 
     public void init(CustomerContext context) {
         this.context = context;
     }
 
+    // ------------------------------------------------------------------
+    // Reading the form
+    // ------------------------------------------------------------------
+
+    public Personal readPersonal() {
+        CustomerDetails original = context.getOriginal();
+        Personal loaded = original == null ? null : original.personal();
+        return new Personal(
+                loaded == null ? "" : loaded.number(),
+                text(titleField),
+                firstNameField.getText(),
+                lastNameField.getText(),
+                dateOfBirthField.getValue() == null ? "" : dateOfBirthField.getValue().toString(),
+                text(nationalityField),
+                loaded == null ? null : loaded.organisation(),
+                loaded == null ? "" : loaded.status());
+    }
+
+    public List<Employer> readEmployers() {
+        List<Employer> employers = new ArrayList<>();
+        if (EMPLOYED.equals(employerField.getValue())) {
+            employers.add(new Employer(primaryEmployerId, CustomerOptions.EMPLOYER_PRIMARY,
+                    companyField.getText(), jobTitleField.getText(),
+                    parseSalary(salaryField.getText())));
+            if (secondaryEmploymentPane.isVisible()) {
+                employers.add(new Employer(secondaryEmployerId, CustomerOptions.EMPLOYER_SECONDARY,
+                        secondaryCompanyField.getText(), secondaryJobTitleField.getText(),
+                        parseSalary(secondarySalaryField.getText())));
+            }
+        }
+        return employers;
+    }
+
+    /** Asks the business layer whether this tab is OK; shows its message if not. */
     public boolean validate() {
         try {
-            String dob = (dateOfBirthField != null && dateOfBirthField.getValue() != null)
-                    ? dateOfBirthField.getValue().toString()
-                    : "";
-            String familyName = lastNameField != null ? lastNameField.getText() : "";
-            String firstName = firstNameField != null ? firstNameField.getText() : "";
-
-            String nationality = "";
-            if (nationalityField != null) {
-                if (nationalityField.getSelectionModel().getSelectedItem() != null) {
-                    nationality = nationalityField.getSelectionModel().getSelectedItem().toString();
-                } else if (nationalityField.getEditor() != null) {
-                    nationality = nationalityField.getEditor().getText();
-                }
-            }
-
-            // Extract Title value
-            String title = "";
-            if (titleField != null) {
-                if (titleField.getSelectionModel().getSelectedItem() != null) {
-                    title = titleField.getSelectionModel().getSelectedItem().toString();
-                } else if (titleField.getEditor() != null) {
-                    title = titleField.getEditor().getText();
-                }
-            }
-
-            // Extract Status value
-            String status = "";
-            if (statusField != null) {
-                if (statusField.getSelectionModel().getSelectedItem() != null) {
-                    status = statusField.getSelectionModel().getSelectedItem().toString();
-                } else if (statusField.getEditor() != null) {
-                    status = statusField.getEditor().getText();
-                }
-            }
-
-            String employmentStatus = (employerField != null && employerField.getValue() != null)
-                    ? employerField.getValue().toString()
-                    : "";
-
-            if ("Employed".equals(employmentStatus)) {
-                String jobTitle = jobTitleField != null ? jobTitleField.getText() : "";
-                String company = companyField != null ? companyField.getText() : "";
-                String salary = salaryField != null ? salaryField.getText() : "";
-                var startDate = startDateField != null ? startDateField.getValue() : null;
-
-                CustomerEmployerService.validateEmployerDetails(
-                        "TEMP", company, jobTitle, parseSalary(salary), CustomerEmployerService.TYPE_PRIMARY);
-                if (startDate == null) {
-                    throw new IllegalArgumentException("Start date is required when employed.");
-                }
-            }
-
-            if (secondaryEmploymentPane != null && secondaryEmploymentPane.isVisible()) {
-                String secJobTitle = secondaryJobTitleField != null ? secondaryJobTitleField.getText() : "";
-                String secCompany = secondaryCompanyField != null ? secondaryCompanyField.getText() : "";
-                String secSalary = secondarySalaryField != null ? secondarySalaryField.getText() : "";
-                var secStartDate = secondaryStartDateField != null ? secondaryStartDateField.getValue() : null;
-
-                CustomerEmployerService.validateEmployerDetails(
-                        "TEMP", secCompany, secJobTitle, parseSalary(secSalary),
-                        CustomerEmployerService.TYPE_SECONDARY);
-                if (secStartDate == null) {
-                    throw new IllegalArgumentException("Start date is required for secondary employment.");
-                }
-            }
-
-            // Validate mandatory fields locally before backend validation call
-            if (title.isBlank()) {
-                throw new IllegalArgumentException("Title is required.");
-            }
-            if (status.isBlank()) {
-                throw new IllegalArgumentException("Status is required.");
-            }
-
-            if (context != null && context.getCustomerService() != null) {
-                context.getCustomerService().validateCustomerDetails(dob, familyName, firstName, nationality, 1L,
-                        title);
-            } else {
-                if (dob.isBlank() || familyName.isBlank() || firstName.isBlank() || nationality.isBlank()
-                        || title.isBlank() || status.isBlank()) {
-                    throw new IllegalArgumentException("All personal details fields are required.");
-                }
-            }
+            context.getCustomerService().validatePersonalDetails(readPersonal());
+            context.getCustomerService().validateEmployers(readEmployers());
             return true;
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Validation Error");
-            alert.setHeaderText("Cannot proceed to next tab");
-            alert.setContentText(
-                    e.getMessage() != null ? e.getMessage() : "Please fill out all required personal info fields.");
+            alert.setHeaderText("Please fix the personal details");
+            alert.setContentText(e.getMessage() != null
+                    ? e.getMessage() : "Please fill out all required personal info fields.");
             alert.showAndWait();
             return false;
         }
     }
 
-    public void populateEmployerData(Object[] employers) {
-        // First, clear and reset everything to defaults
-        if (employerField != null) {
-            employerField.setValue("None"); // This triggers your listener to clear & disable fields
-        }
-        if (secondaryEmploymentPane != null) {
-            secondaryEmploymentPane.setVisible(false);
-            secondaryEmploymentPane.setManaged(false);
-        }
-        if (addSecondaryEmploymentButton != null) {
-            addSecondaryEmploymentButton.setVisible(true);
-            addSecondaryEmploymentButton.setManaged(true);
-        }
-        if (secondaryJobTitleField != null)
-            secondaryJobTitleField.clear();
-        if (secondaryCompanyField != null)
-            secondaryCompanyField.clear();
-        if (secondarySalaryField != null)
-            secondarySalaryField.clear();
-        if (secondaryStartDateField != null)
-            secondaryStartDateField.setValue(null);
+    // ------------------------------------------------------------------
+    // Filling the form from a loaded customer
+    // ------------------------------------------------------------------
 
-        if (employers == null || employers.length == 0) {
-            return;
+    public void populate(CustomerDetails details) {
+        Personal p = details.personal();
+        customerIdField.setText(p.isNew() ? ASSIGNED_ON_SAVE : p.number());
+        statusField.setText(p.status().isEmpty() ? ASSIGNED_ON_SAVE : p.status());
+        titleField.setValue(p.title());
+        firstNameField.setText(p.firstName());
+        lastNameField.setText(p.familyName());
+        nationalityField.setValue(p.nationality());
+        try {
+            dateOfBirthField.setValue(p.dateOfBirth().isEmpty()
+                    ? null : java.time.LocalDate.parse(p.dateOfBirth()));
+        } catch (java.time.format.DateTimeParseException e) {
+            dateOfBirthField.setValue(null);
         }
+        populateEmployers(details.employers());
+    }
 
-        // If there are employers, set to Employed (which enables fields)
-        if (employerField != null) {
-            employerField.setValue("Employed");
-        }
-
-        for (var emp : employers) {
-            String type = readEmployerValue(emp, "getType", "getTypeName");
-            String position = readEmployerValue(emp, "getPosition", "getJobTitle", "getRole");
-            String name = readEmployerValue(emp, "getName", "getCompanyName", "getCompany");
-            String salary = readEmployerValue(emp, "getSalary", "getAmount");
-
-            if (CustomerEmployerService.TYPE_PRIMARY.equals(type)) {
-                if (jobTitleField != null)
-                    jobTitleField.setText(position);
-                if (companyField != null)
-                    companyField.setText(name);
-                if (salaryField != null)
-                    salaryField.setText(salary);
-            } else if (CustomerEmployerService.TYPE_SECONDARY.equals(type)) {
-                if (secondaryEmploymentPane != null) {
-                    secondaryEmploymentPane.setVisible(true);
-                    secondaryEmploymentPane.setManaged(true);
-                    if (addSecondaryEmploymentButton != null) {
-                        addSecondaryEmploymentButton.setVisible(false);
-                        addSecondaryEmploymentButton.setManaged(false);
-                    }
-                }
-                if (secondaryJobTitleField != null)
-                    secondaryJobTitleField.setText(position);
-                if (secondaryCompanyField != null)
-                    secondaryCompanyField.setText(name);
-                if (secondarySalaryField != null)
-                    secondarySalaryField.setText(salary);
+    private void populateEmployers(List<Employer> employers) {
+        primaryEmployerId = null;
+        secondaryEmployerId = null;
+        Employer primary = null;
+        Employer secondary = null;
+        for (Employer e : employers) {
+            if (CustomerOptions.EMPLOYER_PRIMARY.equals(e.type())) {
+                primary = e;
+            } else if (CustomerOptions.EMPLOYER_SECONDARY.equals(e.type())) {
+                secondary = e;
             }
+        }
+
+        boolean employed = primary != null || secondary != null;
+        employerField.setValue(employed ? EMPLOYED : NOT_EMPLOYED);
+        setEmploymentEnabled(employed);
+
+        if (primary != null) {
+            primaryEmployerId = primary.id();
+            jobTitleField.setText(primary.position());
+            companyField.setText(primary.name());
+            salaryField.setText(formatSalary(primary.salary()));
+        }
+        if (secondary != null) {
+            secondaryEmployerId = secondary.id();
+            secondaryJobTitleField.setText(secondary.position());
+            secondaryCompanyField.setText(secondary.name());
+            secondarySalaryField.setText(formatSalary(secondary.salary()));
+            showSecondary(true);
         }
     }
 
-    private static String readEmployerValue(Object employer, String... getters) {
-        for (String getter : getters) {
-            try {
-                java.lang.reflect.Method m = employer.getClass().getMethod(getter);
-                Object val = m.invoke(employer);
-                if (val != null)
-                    return val.toString().trim();
-            } catch (Exception ignored) {
-            }
+    // ------------------------------------------------------------------
+    // Employment form behaviour
+    // ------------------------------------------------------------------
+
+    private void setEmploymentEnabled(boolean employed) {
+        jobTitleField.setDisable(!employed);
+        companyField.setDisable(!employed);
+        salaryField.setDisable(!employed);
+        addSecondaryEmploymentButton.setDisable(!employed);
+        if (!employed) {
+            jobTitleField.clear();
+            companyField.clear();
+            salaryField.clear();
+            clearSecondary();
+            showSecondary(false);
         }
-        return "";
     }
 
-    public void populateCustomerData(Retrieve retrieve) {
-        javafx.application.Platform.runLater(() -> {
-            if (firstNameField != null) {
-                firstNameField.setText(retrieve.getFirstName());
-            }
-            if (lastNameField != null) {
-                lastNameField.setText(retrieve.getFamilyName());
-            }
-            if (customerIdField != null) {
-                customerIdField.setText(retrieve.getNumber());
-            }
-            if (dateOfBirthField != null && retrieve.getDateOfBirth() != null && !retrieve.getDateOfBirth().isBlank()) {
-                try {
-                    dateOfBirthField.setValue(java.time.LocalDate.parse(retrieve.getDateOfBirth().trim()));
-                } catch (Exception ignored) {
-                }
-            }
-            if (nationalityField != null && retrieve.getNationality() != null) {
-                nationalityField.setValue(retrieve.getNationality());
-            }
-            if (titleField != null && retrieve.getTitle() != null) {
-                titleField.setValue(retrieve.getTitle());
-            }
-            if (statusField != null && retrieve.getStatus() != null) {
-                statusField.setValue(retrieve.getStatus());
-            } else if (statusField != null) {
-                statusField.setValue("Active"); // Default fallback
+    private void showSecondary(boolean visible) {
+        secondaryEmploymentPane.setVisible(visible);
+        secondaryEmploymentPane.setManaged(visible);
+        addSecondaryEmploymentButton.setVisible(!visible);
+        addSecondaryEmploymentButton.setManaged(!visible);
+    }
+
+    private void clearSecondary() {
+        secondaryJobTitleField.clear();
+        secondaryCompanyField.clear();
+        secondarySalaryField.clear();
+    }
+
+    private static void numbersOnly(TextField field) {
+        field.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null && !newValue.matches("\\d*(\\.\\d*)?")) {
+                field.setText(oldValue);
             }
         });
     }
@@ -332,72 +227,45 @@ public class PersonalInfoController {
         }
     }
 
+    private static String formatSalary(Double salary) {
+        if (salary == null) {
+            return "";
+        }
+        return salary == Math.rint(salary) ? String.valueOf(salary.longValue()) : salary.toString();
+    }
+
+    /** Text of an editable combo box, whether it was picked or typed. */
+    private static String text(ComboBox<String> box) {
+        return box.getEditor().getText();
+    }
+
+    // ------------------------------------------------------------------
+    // Buttons
+    // ------------------------------------------------------------------
+
     @FXML
     private void handleAddSecondaryEmployment(ActionEvent event) {
-        if (secondaryEmploymentPane != null) {
-            secondaryEmploymentPane.setVisible(true);
-            secondaryEmploymentPane.setManaged(true);
-            addSecondaryEmploymentButton.setVisible(false);
-            addSecondaryEmploymentButton.setManaged(false);
-        }
+        showSecondary(true);
     }
 
     @FXML
     private void handleRemoveSecondaryEmployment(ActionEvent event) {
-        if (secondaryEmploymentPane != null) {
-            secondaryEmploymentPane.setVisible(false);
-            secondaryEmploymentPane.setManaged(false);
-            if (secondaryJobTitleField != null)
-                secondaryJobTitleField.clear();
-            if (secondaryStartDateField != null)
-                secondaryStartDateField.setValue(null);
-            if (secondarySalaryField != null)
-                secondarySalaryField.clear();
-            addSecondaryEmploymentButton.setVisible(true);
-            addSecondaryEmploymentButton.setManaged(true);
-        }
+        clearSecondary();
+        showSecondary(false);
     }
 
     @FXML
     private void handlePersonalInfoNext(ActionEvent event) {
-        if (validate()) {
-            Pane personalPane = (Pane) customerIdField.getScene().lookup("#personalInfoPane");
-            Pane contactPane = (Pane) customerIdField.getScene().lookup("#contactInfoPane");
+        context.getNavigation().showContactInfo();
+    }
 
-            if (personalPane != null && contactPane != null) {
-                personalPane.setVisible(false);
-                personalPane.setManaged(false);
-                contactPane.setVisible(true);
-                contactPane.setManaged(true);
-            }
-        }
+    @FXML
+    private void handlePersonalInfoSave(ActionEvent event) {
+        context.getNavigation().save();
     }
 
     @FXML
     private void handlePersonalInfoCancel(ActionEvent event) {
-        try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("dashboard.fxml"));
-            javafx.scene.Parent root = loader.load();
-
-            // Pass existing services back to DashboardController safely via context
-            DashboardController dashboardController = loader.getController();
-            if (context != null && dashboardController != null) {
-        
-            }
-
-            javafx.stage.Stage stage = (javafx.stage.Stage) ((javafx.scene.Node) event.getSource()).getScene()
-                    .getWindow();
-            javafx.scene.Scene scene = new javafx.scene.Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Mainframe Interface - Dashboard");
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Navigation Error");
-            alert.setHeaderText("Could not return to dashboard");
-            alert.setContentText(e.getMessage());
-            alert.showAndWait();
-        }
+        context.getNavigation().cancel();
     }
 }
