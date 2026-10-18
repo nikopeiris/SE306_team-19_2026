@@ -170,6 +170,7 @@ public class CustomerPhoneNumberService {
                 .throwIfInvalid();
     }
 
+    // validates whether phone number is correct
     private static ValidationResult buildPhoneNumberValidation(
             String countryCode,
             String customer,
