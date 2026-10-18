@@ -2,6 +2,8 @@ package lavs.ui;
 
 import java.io.IOException;
 import java.net.URL;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,9 +17,11 @@ import business.system.Customer;
 import business.system.LoginService;
 import business.system.customer.CustomerEmailService;
 import business.system.dto.CustomerSummary;
+import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -35,6 +39,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -48,6 +54,15 @@ public class DashboardController {
     @FXML
     private ListView<CustomerSummary> customerListView;
     @FXML private Button addCustomerButton;
+
+    // Loan search (right-hand "Search for Loan" box filters the loans table)
+    @FXML private TextField loanSearchField;
+    @FXML private TableView<LoanSummary> loanTable;
+    @FXML private TableColumn<LoanSummary, String> loanIdColumn;
+    @FXML private TableColumn<LoanSummary, String> loanCustomerColumn;
+    @FXML private TableColumn<LoanSummary, String> loanPrincipalColumn;
+    @FXML private TableColumn<LoanSummary, String> loanStartColumn;
+    @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -77,6 +92,13 @@ public class DashboardController {
     private boolean loadingCustomers = false;
     private String customerLoadError = null;
 
+    // ---- Loan list data ----
+    private List<LoanSummary> allLoans = List.of();
+    private final ObservableList<LoanSummary> visibleLoans = FXCollections.observableArrayList();
+    private final Label loanPlaceholder = new Label("Loading loans...");
+    private boolean loadingLoans = false;
+    private String loanLoadError = null;
+
     // primary email per customer number ("" means the customer has no primary email)
     private final Map<String, String> emailCache = new ConcurrentHashMap<>();
     private final Set<String> emailFailed = ConcurrentHashMap.newKeySet();
@@ -105,6 +127,27 @@ public class DashboardController {
             applyFilter();
             customerListView.refresh();
         });
+
+        setupLoanTable();
+    }
+
+    private void setupLoanTable() {
+        loanPlaceholder.setStyle("-fx-text-fill: #726e97; -fx-font-size: 13;");
+        loanTable.setItems(visibleLoans);
+        loanTable.setPlaceholder(loanPlaceholder);
+
+        loanIdColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getLoanNumber()));
+        loanCustomerColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCustomerName()));
+        loanPrincipalColumn.setCellValueFactory(c -> {
+            Double principal = c.getValue().getPrincipal();
+            return new ReadOnlyStringWrapper(principal == null
+                    ? "-" : NumberFormat.getCurrencyInstance().format(principal));
+        });
+        loanStartColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStartDate()));
+        loanStatusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
+
+        // typing narrows the loans straight away; an empty box shows every loan
+        loanSearchField.textProperty().addListener((obs, oldText, newText) -> showLoans());
     }
 
     // add custoemr button
@@ -159,6 +202,7 @@ public class DashboardController {
             if (PREFETCH_EMAILS) {
                 prefetchEmails();
             }
+            loadLoans();
         });
 
         loadTask.setOnFailed(e -> {
@@ -209,7 +253,60 @@ public class DashboardController {
             return "Could not connect to the server.";
         }
         error.printStackTrace();
-        return "Something went wrong loading customers.";
+        return "Something went wrong loading data.";
+    }
+
+    // ------------------------------------------------------------------
+    // Loading and filtering loans (all matching rules live in the business layer)
+    // ------------------------------------------------------------------
+
+    private void loadLoans() {
+        List<CustomerSummary> customers = new ArrayList<>(allCustomers); // snapshot on the FX thread
+        loadingLoans = true;
+        loanLoadError = null;
+        allLoans = List.of();
+        visibleLoans.clear();
+        updateLoanPlaceholder();
+
+        Task<List<LoanSummary>> loadTask = new Task<>() {
+            @Override
+            protected List<LoanSummary> call() throws Exception {
+                return customerService.listLoansFor(customers);
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            loadingLoans = false;
+            allLoans = loadTask.getValue();
+            showLoans();   // applies whatever is already typed in the search box
+        });
+
+        loadTask.setOnFailed(e -> {
+            loadingLoans = false;
+            loanLoadError = describe(loadTask.getException());
+            updateLoanPlaceholder();
+        });
+
+        Thread thread = new Thread(loadTask, "load-loans");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void showLoans() {
+        visibleLoans.setAll(customerService.filterLoansByNumber(allLoans, loanSearchField.getText()));
+        updateLoanPlaceholder();
+    }
+
+    private void updateLoanPlaceholder() {
+        if (loadingLoans) {
+            loanPlaceholder.setText("Loading loans...");
+        } else if (loanLoadError != null) {
+            loanPlaceholder.setText(loanLoadError);
+        } else if (allLoans.isEmpty()) {
+            loanPlaceholder.setText("There are no loans yet.");
+        } else {
+            loanPlaceholder.setText("No loans match your search.");
+        }
     }
 
     // ------------------------------------------------------------------

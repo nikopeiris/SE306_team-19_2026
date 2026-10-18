@@ -15,6 +15,7 @@ import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.system.dto.CustomerDetails;
 import business.system.dto.CustomerSummary;
+import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
@@ -30,6 +31,7 @@ import mainframe.client.messages.customer.Update;
 public class Customer {
     private final MainframeAdapter customerAdapter;
     private final CustomerDetailsService detailsService;
+    private final LoanSearchService loanSearchService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
     
@@ -48,6 +50,7 @@ public class Customer {
         }
         this.customerAdapter = customerAdapter;
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
+        this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
     }
 
     /**
@@ -278,6 +281,23 @@ public class Customer {
         Status status = customerAdapter.send(updateMessage);
         Main.isValidStatus(status);
         return updateMessage;
+    }
+
+    /**
+     * Returns every loan (all pages) belonging to the given customers. The mainframe only
+     * lists loans per customer, so this makes at least one request per customer.
+     *
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public List<LoanSummary> listLoansFor(List<CustomerSummary> customers)
+            throws IOException, LavsException {
+        return loanSearchService.listLoansFor(customers);
+    }
+
+    /** Narrows a loan list by loan number; a blank query returns the whole list. */
+    public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
+        return loanSearchService.filterByLoanNumber(loans, query);
     }
 
     /** Loads a customer's personal details, addresses, phones, emails and employers. */
