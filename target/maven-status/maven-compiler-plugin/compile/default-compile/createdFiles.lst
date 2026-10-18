@@ -55,6 +55,7 @@ lavs/ui/CustomerController$3.class
 mainframe/client/messages/organisation/List$Item.class
 mainframe/client/messages/customerPhoneNumber/List$Item.class
 business/system/customer/CustomerEmailService.class
+lavs/ui/CustomerDocumentsDialog$1.class
 mainframe/client/messages/loan/List$Item.class
 lavs/ui/CustomerController$4.class
 mainframe/client/messages/user/Create.class
@@ -106,6 +107,7 @@ lavs/ui/LoginController.class
 mainframe/client/messages/customerAddress/List$Item.class
 mainframe/client/messages/loanRepaymentSchedule/List.class
 mainframe/client/messages/loan/AddPayment.class
+business/system/dto/CustomerDocument.class
 mainframe/client/messages/constantItem/List$Item.class
 mainframe/client/messages/customer/DeleteEmail.class
 business/system/dto/LoanSummary.class
@@ -115,11 +117,13 @@ lavs/ui/CustomerController$2.class
 mainframe/client/messages/customerNote/Retrieve.class
 mainframe/client/Status.class
 mainframe/client/messages/constantCategory/List$Item.class
+lavs/ui/CustomerDocumentsDialog$2.class
 lavs/ui/DashboardController.class
 lavs/ui/PersonalInfoController.class
 business/validation/ValidationResult.class
 mainframe/client/messages/loanNote/Retrieve.class
 business/system/LoanSearchService$ProgressListener.class
+lavs/ui/CustomerDocumentsDialog.class
 business/system/Coborrower.class
 mainframe/client/messages/constantCategory/Update.class
 mainframe/client/MessageResponse.class
@@ -129,6 +133,7 @@ business/system/Loan.class
 mainframe/client/messages/loanCoborrower/List$Item.class
 mainframe/client/messages/customerAddress/Retrieve.class
 mainframe/client/messages/customer/UpdateAddress.class
+lavs/ui/CustomerDocumentsDialog$3.class
 mainframe/client/messages/constantCategory/AddItem.class
 mainframe/client/messages/loan/DeleteCoborrower.class
 business/system/dto/CustomerSummary.class

@@ -84,6 +84,17 @@
                         <Button mnemonicParsing="false" onAction="#handleRemoveSecondaryEmployment" style="-fx-text-fill: red;" text="Remove" />
                      </children>
                   </HBox>
+
+                  <Label style="-fx-font-size: 16; -fx-font-weight: bold;" text="Documents" />
+
+                  <HBox alignment="CENTER_LEFT" spacing="16.0">
+                     <children>
+                        <Button fx:id="documentsButton" mnemonicParsing="false" onAction="#handleDocuments" prefHeight="36.0" prefWidth="170.0" text="View Documents">
+                           <cursor><Cursor fx:constant="HAND" /></cursor>
+                        </Button>
+                        <Label fx:id="documentsHintLabel" style="-fx-text-fill: #726e97;" text="Save the customer first to manage their documents." />
+                     </children>
+                  </HBox>
                </children>
             </VBox>
          </content>

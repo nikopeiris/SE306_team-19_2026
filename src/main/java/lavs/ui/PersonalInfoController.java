@@ -13,6 +13,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 
@@ -45,6 +46,9 @@ public class PersonalInfoController {
     @FXML private TextField secondaryCompanyField;
     @FXML private TextField secondarySalaryField;
 
+    @FXML private Button documentsButton;
+    @FXML private Label documentsHintLabel;
+
     private CustomerContext context;
 
     // ids of the employers as loaded, so saving updates them instead of adding duplicates
@@ -71,6 +75,8 @@ public class PersonalInfoController {
 
         numbersOnly(salaryField);
         numbersOnly(secondarySalaryField);
+
+        setDocumentsAvailable(false);
     }
 
     public void init(CustomerContext context) {
@@ -146,6 +152,7 @@ public class PersonalInfoController {
             dateOfBirthField.setValue(null);
         }
         populateEmployers(details.employers());
+        setDocumentsAvailable(!p.isNew());
     }
 
     private void populateEmployers(List<Employer> employers) {
@@ -211,6 +218,17 @@ public class PersonalInfoController {
         secondarySalaryField.clear();
     }
 
+    // ------------------------------------------------------------------
+    // Documents
+    // ------------------------------------------------------------------
+
+    /** Documents belong to a saved customer, so the button waits until one exists. */
+    private void setDocumentsAvailable(boolean available) {
+        documentsButton.setDisable(!available);
+        documentsHintLabel.setVisible(!available);
+        documentsHintLabel.setManaged(!available);
+    }
+
     private static void numbersOnly(TextField field) {
         field.textProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue != null && !newValue.matches("\\d*(\\.\\d*)?")) {
@@ -242,6 +260,16 @@ public class PersonalInfoController {
     // ------------------------------------------------------------------
     // Buttons
     // ------------------------------------------------------------------
+
+    @FXML
+    private void handleDocuments(ActionEvent event) {
+        CustomerDetails original = context.getOriginal();
+        if (original == null || original.personal().isNew()) {
+            return;
+        }
+        new CustomerDocumentsDialog(context, original.personal().number())
+                .show(documentsButton.getScene().getWindow());
+    }
 
     @FXML
     private void handleAddSecondaryEmployment(ActionEvent event) {

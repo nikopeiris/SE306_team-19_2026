@@ -14,6 +14,7 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerOptions.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerPhoneNumberService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerDetails.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerDocument.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/CustomerSummary.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanListResult.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/dto/LoanSummary.java
@@ -25,6 +26,7 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/ContactInfoController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerContext.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerController.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/CustomerDocumentsDialog.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/DashboardController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoanTabController.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/lavs/ui/LoginController.java

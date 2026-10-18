@@ -10,10 +10,12 @@ import java.util.Map;
 import business.Main;
 import business.lavsexceptions.LavsException;
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerDocumentService;
 import business.system.customer.CustomerEmailService;
 import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.system.dto.CustomerDetails;
+import business.system.dto.CustomerDocument;
 import business.system.dto.CustomerSummary;
 import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
@@ -33,6 +35,7 @@ public class Customer {
     private final MainframeAdapter customerAdapter;
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
+    private final CustomerDocumentService documentService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
     
@@ -52,6 +55,7 @@ public class Customer {
         this.customerAdapter = customerAdapter;
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
+        this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
     /**
@@ -291,6 +295,40 @@ public class Customer {
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
     public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
         return loanSearchService.filterByLoanNumber(loans, query);
+    }
+
+    /** Lists a customer's documents (the first 100). */
+    public List<CustomerDocument> listCustomerDocuments(String number)
+            throws IOException, LavsException {
+        mainframe.client.messages.customerDocument.List.Item[] items =
+                documentService.listDocuments(number, 1L, 100L);
+        List<CustomerDocument> documents = new ArrayList<>();
+        if (items != null) {
+            for (mainframe.client.messages.customerDocument.List.Item item : items) {
+                documents.add(new CustomerDocument(
+                        item.getId(),
+                        item.getType(),
+                        item.getFileName()));
+            }
+        }
+        return documents;
+    }
+
+    /**
+     * Adds a document to an existing customer. The type, file name and size are required;
+     * the file type is optional.
+     *
+     * @throws ValidationException if a required field is missing or a field is too long
+     */
+    public void addCustomerDocument(String number, String type, String fileName,
+            String fileType, Long size) throws IOException, LavsException {
+        documentService.addDocument(number, fileName, fileType, size, type);
+    }
+
+    /** Removes a document from a customer. */
+    public void deleteCustomerDocument(String number, Long documentId)
+            throws IOException, LavsException {
+        documentService.deleteDocument(number, documentId);
     }
 
     /** Loads a customer's personal details, addresses, phones, emails and employers. */
