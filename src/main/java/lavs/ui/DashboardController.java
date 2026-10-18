@@ -375,7 +375,7 @@ public class DashboardController {
     }
 
     // ------------------------------------------------------------------
-    // Primary emails (one request per customer, loaded in the background)
+    // Primary emails (one request per customer, loaded in the background) using async
     // ------------------------------------------------------------------
 
     private void prefetchEmails() {
