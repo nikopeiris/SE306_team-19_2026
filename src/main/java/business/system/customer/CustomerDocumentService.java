@@ -40,8 +40,8 @@ public class CustomerDocumentService {
     Long size = customerDocument.getSize();
     String type = customerDocument.getType();
 
-    deleteDocument(customer, documentId);
     AddDocument updatedDocument = addDocument(customer, fileName, fileType, size, type);
+    deleteDocument(customer, documentId);
     return updatedDocument;
   }
 
@@ -61,23 +61,36 @@ public class CustomerDocumentService {
 
   }
   
-  public Retrieve retrieveCustomerDocument(String CustomerNumber, Long documentId) throws IOException, LavsException {
-    validateDocumentIdentifiers(CustomerNumber, documentId);
-    Retrieve retrieveMessage = new Retrieve(documentId, CustomerNumber.trim());
+  public Retrieve retrieveCustomerDocument(String customerNumber, Long documentId) throws IOException, LavsException {
+    validateDocumentIdentifiers(customerNumber, documentId);
+    Retrieve retrieveMessage = new Retrieve(documentId, customerNumber.trim());
     send(retrieveMessage);
     return retrieveMessage;
   }
 
 
-  public static void validateDocumentIdDetails(String type, String filename, String file, String size) throws ValidationException {
-    buildDocumentValidation(type, filename, size).throwIfInvalid();
+  public static void validateDocumentIdDetails(String type, String filename, String fileType, long size) throws ValidationException {
+    buildDocumentValidation(type, filename, fileType, size).throwIfInvalid();
   }
-  
-  public static ValidationResult buildDocumentValidation(String type, String filename, String size) {
+
+  public static ValidationResult buildDocumentValidation(String type, String filename, String fileType, long size) {
     ValidationResult result = new ValidationResult()
         .requireNotBlank("type", type, "Type cannot be empty")
-        .requireNotBlank("filename", filename, "File Name cannot be empty")
-        .requireNotBlank("size", size, "Size cannot be empty");
+        .requireNotBlank("filename", filename, "File Name cannot be empty");
+
+    // Enforce max length constraints
+    if (type != null && type.length() > 20) {
+      result.addError("type", "Type must not exceed 20 characters");
+    }
+    if (filename != null && filename.length() > 50) {
+      result.addError("filename", "Filename must not exceed 50 characters");
+    }
+    if (fileType != null && fileType.length() > 50) {
+      result.addError("fileType", "File type must not exceed 50 characters");
+    }
+    if (String.valueOf(size).length() > 15) {
+      result.addError("size", "Size must not exceed 15 characters");
+    }
 
     return result;
   }
@@ -86,7 +99,7 @@ public class CustomerDocumentService {
   private void validateDocumentIdentifiers(String customerNumber, Long documentId)
             throws ValidationException {
     requireCustomerNumber(new ValidationResult(), customerNumber)
-            .requirePositive("phoneNumberId", documentId, "Phone number id")
+            .requirePositive("document id", documentId, "Document id")
             .throwIfInvalid();
   }
 
