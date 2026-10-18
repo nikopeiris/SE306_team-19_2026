@@ -157,6 +157,7 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
             Parent root = loader.load();
 
+            stopLoanLoading();   // don't compete with the next screen for the mainframe
             // Pass the services and initialize an empty context for a new customer
             CustomerController controller = loader.getController();
             controller.setServices(loginService, customerService, emailService);
@@ -427,6 +428,7 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
             Parent root = loader.load();
 
+            stopLoanLoading();   // don't compete with the customer screen for the mainframe
             CustomerController controller = loader.getController();
             controller.setServices(loginService, customerService, emailService);
             controller.loadCustomer(customer.getNumber());
@@ -499,6 +501,7 @@ public class DashboardController {
 
     // stops any email lookups still running when the user leaves the dashboard
     private void stopBackgroundWork() {
+        stopLoanLoading();
         rowEmailExecutor.shutdownNow();
         prefetchEmailExecutor.shutdownNow();
         refreshDelay.stop();

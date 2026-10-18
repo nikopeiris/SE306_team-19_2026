@@ -17,6 +17,7 @@ mainframe/client/messages/customerPhoneNumber/Retrieve.class
 mainframe/client/messages/loanCoborrower/Retrieve.class
 mainframe/client/messages/customerAddress/List.class
 mainframe/client/messages/customer/DeletePhoneNumber.class
+business/system/dto/LoanListResult.class
 business/system/CustomerDetailsService.class
 mainframe/client/messages/customer/Retrieve.class
 mainframe/client/messages/customer/AddDocument.class
@@ -117,6 +118,7 @@ lavs/ui/DashboardController.class
 lavs/ui/PersonalInfoController.class
 business/validation/ValidationResult.class
 mainframe/client/messages/loanNote/Retrieve.class
+business/system/LoanSearchService$ProgressListener.class
 business/system/Coborrower.class
 mainframe/client/messages/constantCategory/Update.class
 mainframe/client/MessageResponse.class
