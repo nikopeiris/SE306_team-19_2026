@@ -55,10 +55,10 @@ public class Customer {
     }
 
     /**
-     * Adds a customer after validating all customer fields.
+     * Adds a customer after validating all customer fields. Only the first name is required.
      *
      * @return the mainframe message containing the created customer's details
-     * @throws ValidationException if a field is null, blank, or invalid
+     * @throws ValidationException if the first name is null or blank
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -73,12 +73,12 @@ public class Customer {
                 dateOfBirth, familyName, firstName, nationality, organisation, title);
 
         Create createMessage = new Create(
-                dateOfBirth.trim(),
-                familyName.trim(),
+                trimOrNull(dateOfBirth),
+                trimOrNull(familyName),
                 firstName.trim(),
-                nationality.trim(),
+                trimOrNull(nationality),
                 organisation,
-                title.trim());
+                trimOrNull(title));
         Status status = customerAdapter.send(createMessage);
         Main.isValidStatus(status);
         return createMessage;
@@ -140,6 +140,11 @@ public class Customer {
         }
     }
 
+    /**
+     * Validates the customer's personal fields. Only the first name is required;
+     * the other parameters are accepted for compatibility with existing callers
+     * but are not checked.
+     */
     public void validateCustomerDetails(
             String dateOfBirth,
             String familyName,
@@ -147,27 +152,9 @@ public class Customer {
             String nationality,
             Long organisation,
             String title) throws ValidationException {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("dateOfBirth", dateOfBirth,
-                        "Date of birth cannot be empty")
-                .requireNotBlank("familyName", familyName,
-                        "Family name cannot be empty")
-                .requireNotBlank("firstName", firstName,
-                        "First name cannot be empty")
-                .requireNotBlank("nationality", nationality,
-                        "Nationality cannot be empty")
-                .requireNotBlank("title", title,
-                        "Title cannot be empty");
-
-        if (organisation == null) {
-            result.addError("organisation", "Organisation cannot be empty");
-        } else if (organisation < 1) {
-            result.addError("organisation", "Organisation must be a positive integer");
-        }
-
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
+        new ValidationResult()
+                .requireNotBlank("firstName", firstName, "First name cannot be empty")
+                .throwIfInvalid();
     }
 
     /**
@@ -252,9 +239,10 @@ public class Customer {
 
     /**
      * Updates an existing customer's personal details after validating them.
+     * Only the first name is required.
      *
      * @return the mainframe message containing the updated customer's details
-     * @throws ValidationException if a field is null, blank, or invalid
+     * @throws ValidationException if the first name is null or blank
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -273,15 +261,19 @@ public class Customer {
                 dateOfBirth, familyName, firstName, nationality, 1L, title);
 
         Update updateMessage = new Update(
-                dateOfBirth.trim(),
-                familyName.trim(),
+                trimOrNull(dateOfBirth),
+                trimOrNull(familyName),
                 firstName.trim(),
-                nationality.trim(),
+                trimOrNull(nationality),
                 number.trim(),
-                title.trim());
+                trimOrNull(title));
         Status status = customerAdapter.send(updateMessage);
         Main.isValidStatus(status);
         return updateMessage;
+    }
+
+    private static String trimOrNull(String value) {
+        return value == null ? null : value.trim();
     }
 
     /**

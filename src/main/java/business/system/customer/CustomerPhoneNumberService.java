@@ -17,6 +17,7 @@ import mainframe.client.messages.customerPhoneNumber.Retrieve;
 
 /**
  * Business service for managing a customer's phone numbers through the mainframe adapter.
+ * A phone number only requires a type, a country code and the number itself.
  */
 public class CustomerPhoneNumberService {
     private final MainframeAdapter adapter;
@@ -44,7 +45,9 @@ public class CustomerPhoneNumberService {
             String number,
             String otherType,
             String type) throws IOException, LavsException {
-        validatePhoneNumberDetails(countryCode, customer, number, otherType, type);
+        buildPhoneNumberValidation(countryCode, number, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .throwIfInvalid();
 
         AddPhoneNumber addMessage = new AddPhoneNumber(
                 canTxt,
@@ -75,7 +78,8 @@ public class CustomerPhoneNumberService {
             String number,
             String otherType,
             String type) throws IOException, LavsException {
-        buildPhoneNumberValidation(countryCode, customer, number, otherType, type)
+        buildPhoneNumberValidation(countryCode, number, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requirePositive("phoneNumberId", id, "Phone number id")
                 .throwIfInvalid();
 
@@ -157,6 +161,8 @@ public class CustomerPhoneNumberService {
     /**
      * Validates the fields of a phone number without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
+     * Only the type, country code and number are required; the customer parameter is
+     * accepted for compatibility with existing callers but is not checked.
      *
      * @throws ValidationException if a required field or the phone type is invalid
      */
@@ -166,20 +172,18 @@ public class CustomerPhoneNumberService {
             String number,
             String otherType,
             String type) throws ValidationException {
-        buildPhoneNumberValidation(countryCode, customer, number, otherType, type)
+        buildPhoneNumberValidation(countryCode, number, otherType, type)
                 .throwIfInvalid();
     }
 
     // validates whether phone number is correct
     private static ValidationResult buildPhoneNumberValidation(
             String countryCode,
-            String customer,
             String number,
             String otherType,
             String type) {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("countryCode", countryCode, "Country code cannot be empty")
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requireNotBlank("number", number, "Phone number cannot be empty")
                 .requireNotBlank("type", type, "Phone type cannot be empty");
 
