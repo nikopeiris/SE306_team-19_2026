@@ -57,6 +57,20 @@ public class CustomerDocumentService {
   }
 
 
+  public static void validateDocumentIdDetails(String type, String filename, String file, String size) throws ValidationException {
+    buildDocumentValidation(type, filename, size).throwIfInvalid();
+  }
+  
+  public static ValidationResult buildDocumentValidation(String type, String filename, String size) {
+    ValidationResult result = new ValidationResult()
+        .requireNotBlank("type", type, "Type cannot be empty")
+        .requireNotBlank("filename", filename, "File Name cannot be empty")
+        .requireNotBlank("size", size, "Size cannot be empty");
+
+    return result;
+  }
+
+
   private void validateDocumentIdentifiers(String customerNumber, Long documentId)
             throws ValidationException {
     requireCustomerNumber(new ValidationResult(), customerNumber)
