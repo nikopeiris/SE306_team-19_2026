@@ -11,6 +11,7 @@ import business.system.Coborrower;
 import business.system.Customer;
 import business.system.Loan;
 import business.system.LoginService;
+import business.system.Payment;
 import business.system.SignupService;
 import business.system.customer.CustomerAddressService;
 import business.system.customer.CustomerEmailService;
@@ -664,6 +665,23 @@ public class Main {
     removeCoborrower(coborrowerId);
     addCoborrower(customerNumber, type);
     return true;
+  }
+
+  public boolean addPayment(double amountPaid, String date) throws IOException, LavsException {
+    Payment paymentService = new Payment(adapter);
+    paymentService.addPayment(amountPaid, date, currentLoanId);
+    return true;
+  }
+
+  public boolean deletePayment(long paymentId) throws IOException, LavsException {
+    Payment paymentService = new Payment(adapter);
+    paymentService.deletePayment(paymentId, currentLoanId);
+    return true;
+  }
+
+  public mainframe.client.messages.loanPayment.List.Item[] listPayments(int page, int size) throws IOException, LavsException {
+    Payment paymentService = new Payment(adapter);
+    return paymentService.listPayments(currentLoanId, (long) page, (long) size);
   }
 
   /**
