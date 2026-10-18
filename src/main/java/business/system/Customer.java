@@ -15,7 +15,6 @@ import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.system.dto.CustomerDetails;
 import business.system.dto.CustomerSummary;
-import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -285,15 +284,15 @@ public class Customer {
     }
 
     /**
-     * Reads the loans of the given customers (the mainframe only lists loans per customer,
-     * so this is at least one request per customer). The listener, if given, hears about
-     * each customer's loans as they arrive and can return false to stop early.
+     * Returns every loan (all pages) belonging to the given customers. The mainframe only
+     * lists loans per customer, so this makes at least one request per customer.
      *
+     * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
-    public LoanListResult listLoansFor(List<CustomerSummary> customers,
-            LoanSearchService.ProgressListener listener) throws IOException {
-        return loanSearchService.listLoansFor(customers, listener);
+    public List<LoanSummary> listLoansFor(List<CustomerSummary> customers)
+            throws IOException, LavsException {
+        return loanSearchService.listLoansFor(customers);
     }
 
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
