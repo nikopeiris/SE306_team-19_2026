@@ -36,6 +36,7 @@ public class Customer {
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
     private final LoanStatusService loanStatusService;
+    private final LoanDetailsService loanDetailsService;
     private final CustomerDocumentService documentService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
@@ -57,6 +58,7 @@ public class Customer {
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
         this.loanStatusService = new LoanStatusService(customerAdapter);
+        this.loanDetailsService = new LoanDetailsService(customerAdapter);
         this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
@@ -315,6 +317,11 @@ public class Customer {
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
     public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
         return loanSearchService.filterByLoanNumber(loans, query);
+    }
+
+    /** The loan tab's business service: form choices, adding a loan, and reading loan details. */
+    public LoanDetailsService loanDetails() {
+        return loanDetailsService;
     }
 
     /** Lists a customer's documents (the first 100). */
