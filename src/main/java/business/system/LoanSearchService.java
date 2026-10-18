@@ -8,6 +8,7 @@ import java.util.Map;
 
 import business.lavsexceptions.LavsException;
 import business.system.dto.CustomerSummary;
+import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
 
 /**
@@ -24,6 +25,18 @@ public class LoanSearchService {
     /** Safety stop so a misbehaving server can never keep us paging forever. */
     private static final int MAX_PAGES = 500;
 
+    /** Told about each customer's loans as soon as they have been read. */
+    @FunctionalInterface
+    public interface ProgressListener {
+        /**
+         * @param newLoans loans just read for one customer (may be empty)
+         * @param customersDone how many customers have been processed so far
+         * @param customersTotal how many customers there are in total
+         * @return true to keep going, false to stop early
+         */
+        boolean onCustomerDone(List<LoanSummary> newLoans, int customersDone, int customersTotal);
+    }
+
     private final Loan loanService;
 
     public LoanSearchService(Loan loanService) {
@@ -34,18 +47,36 @@ public class LoanSearchService {
     }
 
     /**
-     * Every loan (all pages) for the given customers, de-duplicated by loan number.
+     * Reads every loan (all pages) for the given customers, one customer at a time.
+     * If the mainframe refuses one customer's request, that customer is skipped and
+     * counted in the result so one bad customer cannot block everyone else's loans.
      *
-     * @throws LavsException if the mainframe rejects a request
+     * @param listener optional; told after each customer so a screen can show loans as they arrive
      * @throws IOException if the mainframe cannot be reached
      */
-    public List<LoanSummary> listLoansFor(List<CustomerSummary> customers)
-            throws IOException, LavsException {
+    public LoanListResult listLoansFor(List<CustomerSummary> customers, ProgressListener listener)
+            throws IOException {
         Map<String, LoanSummary> byNumber = new LinkedHashMap<>();
+        int failed = 0;
+        String firstError = null;
+        int done = 0;
+
         for (CustomerSummary customer : customers) {
-            collectLoans(customer, byNumber);
+            List<LoanSummary> fresh = new ArrayList<>();
+            try {
+                collectLoans(customer, byNumber, fresh);
+            } catch (LavsException e) {
+                failed++;
+                if (firstError == null) {
+                    firstError = e.getMessage() == null ? "The mainframe rejected the request" : e.getMessage();
+                }
+            }
+            done++;
+            if (listener != null && !listener.onCustomerDone(fresh, done, customers.size())) {
+                break;
+            }
         }
-        return new ArrayList<>(byNumber.values());
+        return new LoanListResult(new ArrayList<>(byNumber.values()), failed, firstError);
     }
 
     /**
@@ -66,9 +97,9 @@ public class LoanSearchService {
         return matches;
     }
 
-    /** Pages through one customer's loans and adds them to the map. */
-    private void collectLoans(CustomerSummary customer, Map<String, LoanSummary> into)
-            throws IOException, LavsException {
+    /** Pages through one customer's loans; new ones go into both {@code seen} and {@code fresh}. */
+    private void collectLoans(CustomerSummary customer, Map<String, LoanSummary> seen,
+                              List<LoanSummary> fresh) throws IOException, LavsException {
         long page = FIRST_PAGE;
         for (int i = 0; i < MAX_PAGES; i++) {
             mainframe.client.messages.loan.List.Item[] items =
@@ -77,13 +108,18 @@ public class LoanSearchService {
                 break;
             }
             for (mainframe.client.messages.loan.List.Item item : items) {
-                into.putIfAbsent(item.getLoanNumber(), new LoanSummary(
+                if (seen.containsKey(item.getLoanNumber())) {
+                    continue;
+                }
+                LoanSummary loan = new LoanSummary(
                         item.getLoanNumber(),
                         customer.getNumber(),
                         customer.getFullName(),
                         parseAmount(item.getPrincipal()),
                         item.getStartDate(),
-                        item.getStatus()));
+                        item.getStatus());
+                seen.put(item.getLoanNumber(), loan);
+                fresh.add(loan);
             }
             if (items.length < PAGE_SIZE) {
                 break;   // last page
