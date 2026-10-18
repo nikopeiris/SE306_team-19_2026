@@ -17,6 +17,7 @@ import mainframe.client.messages.customerEmployer.Retrieve;
 
 /**
  * Business service for managing a customer's employers through the mainframe adapter.
+ * No employer field is required; a salary or type, if given, must still be valid.
  */
 public class CustomerEmployerService {
     /** Employer types, re-exported so the UI does not depend on mainframe messages. */
@@ -36,7 +37,7 @@ public class CustomerEmployerService {
      * Adds an employer to an existing customer after validating the employer fields.
      *
      * @return the mainframe message containing the created employer details
-     * @throws ValidationException if a required field, the salary or the employer type is invalid
+     * @throws ValidationException if the salary or the employer type is invalid
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -46,14 +47,16 @@ public class CustomerEmployerService {
             String position,
             Double salary,
             String type) throws IOException, LavsException {
-        validateEmployerDetails(customer, name, position, salary, type);
+        buildEmployerValidation(salary, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .throwIfInvalid();
 
         AddEmployer addMessage = new AddEmployer(
                 customer.trim(),
-                name.trim(),
-                position.trim(),
+                trimOrNull(name),
+                trimOrNull(position),
                 salary,
-                type.trim());
+                trimOrNull(type));
         send(addMessage);
         return addMessage;
     }
@@ -62,8 +65,7 @@ public class CustomerEmployerService {
      * Updates an existing employer of a customer after validating the employer fields.
      *
      * @return the mainframe message containing the updated employer details
-     * @throws ValidationException if the employer id, a required field, the salary
-     *         or the employer type is invalid
+     * @throws ValidationException if the employer id, the salary or the employer type is invalid
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -74,17 +76,18 @@ public class CustomerEmployerService {
             String position,
             Double salary,
             String type) throws IOException, LavsException {
-        buildEmployerValidation(customer, name, position, salary, type)
+        buildEmployerValidation(salary, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requirePositive("employerId", id, "Employer id")
                 .throwIfInvalid();
 
         UpdateEmployer updateMessage = new UpdateEmployer(
                 customer.trim(),
                 id,
-                name.trim(),
-                position.trim(),
+                trimOrNull(name),
+                trimOrNull(position),
                 salary,
-                type.trim());
+                trimOrNull(type));
         send(updateMessage);
         return updateMessage;
     }
@@ -153,8 +156,11 @@ public class CustomerEmployerService {
     /**
      * Validates the fields of an employer without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
+     * Nothing is required; a salary or type, if given, must be valid. The customer,
+     * name and position parameters are accepted for compatibility with existing
+     * callers but are not checked.
      *
-     * @throws ValidationException if a required field, the salary or the employer type is invalid
+     * @throws ValidationException if the salary or the employer type is invalid
      */
     public static void validateEmployerDetails(
             String customer,
@@ -162,24 +168,13 @@ public class CustomerEmployerService {
             String position,
             Double salary,
             String type) throws ValidationException {
-        buildEmployerValidation(customer, name, position, salary, type).throwIfInvalid();
+        buildEmployerValidation(salary, type).throwIfInvalid();
     }
 
-    private static ValidationResult buildEmployerValidation(
-            String customer,
-            String name,
-            String position,
-            Double salary,
-            String type) {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
-                .requireNotBlank("name", name, "Employer name cannot be empty")
-                .requireNotBlank("position", position, "Position cannot be empty")
-                .requireNotBlank("type", type, "Employer type cannot be empty");
+    private static ValidationResult buildEmployerValidation(Double salary, String type) {
+        ValidationResult result = new ValidationResult();
 
-        if (salary == null) {
-            result.addError("salary", "Salary cannot be empty");
-        } else if (!Double.isFinite(salary) || salary < 0) {
+        if (salary != null && (!Double.isFinite(salary) || salary < 0)) {
             result.addError("salary", "Salary must be a non-negative number");
         }
         if (type != null && !type.isBlank()
@@ -201,6 +196,10 @@ public class CustomerEmployerService {
             ValidationResult result, String customerNumber) {
         return result.requireNotBlank("customerNumber", customerNumber,
                 "Customer number cannot be null or empty");
+    }
+
+    private static String trimOrNull(String value) {
+        return value == null ? null : value.trim();
     }
 
     private void send(Message message) throws IOException, LavsException {

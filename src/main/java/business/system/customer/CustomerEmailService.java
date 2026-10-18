@@ -18,6 +18,7 @@ import mainframe.client.messages.customerEmail.Retrieve;
 
 /**
  * Business service for managing a customer's email addresses through the mainframe adapter.
+ * An email only requires a type and an address.
  */
 public class CustomerEmailService {
     private static final long PRIMARY_EMAIL_SEARCH_SIZE = 100L;
@@ -48,7 +49,9 @@ public class CustomerEmailService {
             boolean isPrimary,
             String otherType,
             String type) throws IOException, LavsException {
-        validateEmailDetails(address, customer, otherType, type);
+        buildEmailValidation(address, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .throwIfInvalid();
 
         AddEmail addMessage = new AddEmail(
                 address.trim(),
@@ -76,7 +79,8 @@ public class CustomerEmailService {
             boolean isPrimary,
             String otherType,
             String type) throws IOException, LavsException {
-        buildEmailValidation(address, customer, otherType, type)
+        buildEmailValidation(address, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requirePositive("emailId", id, "Email id")
                 .throwIfInvalid();
 
@@ -175,6 +179,8 @@ public class CustomerEmailService {
     /**
      * Validates the fields of an email address without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
+     * Only the type and address are required; the customer parameter is accepted for
+     * compatibility with existing callers but is not checked.
      *
      * @throws ValidationException if a required field, the address format or the email type is invalid
      */
@@ -183,17 +189,15 @@ public class CustomerEmailService {
             String customer,
             String otherType,
             String type) throws ValidationException {
-        buildEmailValidation(address, customer, otherType, type).throwIfInvalid();
+        buildEmailValidation(address, otherType, type).throwIfInvalid();
     }
 
     private static ValidationResult buildEmailValidation(
             String address,
-            String customer,
             String otherType,
             String type) {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("address", address, "Email address cannot be empty")
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requireNotBlank("type", type, "Email type cannot be empty");
 
         if (address != null && !address.isBlank()

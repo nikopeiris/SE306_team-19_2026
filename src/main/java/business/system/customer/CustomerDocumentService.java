@@ -14,6 +14,10 @@ import mainframe.client.messages.customer.DeleteDocument;
 import mainframe.client.messages.customerDocument.List;
 import mainframe.client.messages.customerDocument.Retrieve;
 
+/**
+ * Business service for managing a customer's documents through the mainframe adapter.
+ * A document only requires a type, a file name and a size.
+ */
 public class CustomerDocumentService {
   private final MainframeAdapter adapter;
 
@@ -34,7 +38,7 @@ public class CustomerDocumentService {
    *
    * @param customer the customer number or identifier
    * @param fileName the name of the file
-   * @param fileType the type/extension of the file
+   * @param fileType the type/extension of the file (optional)
    * @param size the size of the file in bytes
    * @param type the document type classification
    * @return the mainframe message containing the created document details
@@ -42,10 +46,12 @@ public class CustomerDocumentService {
    * @throws LavsException if the mainframe rejects the request
    * @throws IOException if the mainframe cannot be reached
    */
-  public AddDocument addDocument(String customer, String fileName, String fileType, long size, String type)
+  public AddDocument addDocument(String customer, String fileName, String fileType, Long size, String type)
       throws IOException, LavsException {
-    validateDocumentIdDetails(type, fileName, fileType, size);
-    AddDocument addDocument = new AddDocument(customer.trim(), fileName.trim(), fileType.trim(), size,
+    buildDocumentValidation(type, fileName, fileType, size)
+        .requireNotBlank("customer", customer, "Customer cannot be empty")
+        .throwIfInvalid();
+    AddDocument addDocument = new AddDocument(customer.trim(), fileName.trim(), trimOrNull(fileType), size,
         type.trim());
     send(addDocument);
     return addDocument;
@@ -79,10 +85,12 @@ public class CustomerDocumentService {
    * @param customer the customer number or identifier
    * @param id the ID of the document to delete
    * @return the mainframe message containing the deleted document details
+   * @throws ValidationException if the customer number or document id is missing or invalid
    * @throws LavsException if the mainframe rejects the request
    * @throws IOException if the mainframe cannot be reached
    */
-  public DeleteDocument deleteDocument(String customer, long id) throws IOException, LavsException {
+  public DeleteDocument deleteDocument(String customer, Long id) throws IOException, LavsException {
+    validateDocumentIdentifiers(customer, id);
     DeleteDocument deleteDocument = new DeleteDocument(customer.trim(), id);
     send(deleteDocument);
     return deleteDocument;
@@ -125,15 +133,16 @@ public class CustomerDocumentService {
   }
 
   /**
-   * Validates document details including required fields and maximum character lengths.
+   * Validates document details. The type, file name and size are required, and each
+   * field has a maximum length.
    *
    * @param type the document type classification
    * @param filename the name of the file
-   * @param fileType the type/extension of the file
+   * @param fileType the type/extension of the file (optional)
    * @param size the size of the file in bytes
    * @throws ValidationException if any document field fails validation rules
    */
-  public static void validateDocumentIdDetails(String type, String filename, String fileType, long size) throws ValidationException {
+  public static void validateDocumentIdDetails(String type, String filename, String fileType, Long size) throws ValidationException {
     buildDocumentValidation(type, filename, fileType, size).throwIfInvalid();
   }
   
@@ -142,14 +151,15 @@ public class CustomerDocumentService {
    *
    * @param type the document type classification
    * @param filename the name of the file
-   * @param fileType the type/extension of the file
+   * @param fileType the type/extension of the file (optional)
    * @param size the size of the file in bytes
    * @return a ValidationResult detailing any validation errors found
    */
-  public static ValidationResult buildDocumentValidation(String type, String filename, String fileType, long size) {
+  public static ValidationResult buildDocumentValidation(String type, String filename, String fileType, Long size) {
     ValidationResult result = new ValidationResult()
         .requireNotBlank("type", type, "Type cannot be empty")
-        .requireNotBlank("filename", filename, "File Name cannot be empty");
+        .requireNotBlank("filename", filename, "File Name cannot be empty")
+        .requirePositive("size", size, "Size");
 
     // Enforce max length constraints
     if (type != null && type.length() > 20) {
@@ -161,7 +171,7 @@ public class CustomerDocumentService {
     if (fileType != null && fileType.length() > 50) {
       result.addError("fileType", "File type must not exceed 50 characters");
     }
-    if (String.valueOf(size).length() > 15) {
+    if (size != null && String.valueOf(size).length() > 15) {
       result.addError("size", "Size must not exceed 15 characters");
     }
 
@@ -205,5 +215,9 @@ public class CustomerDocumentService {
             ValidationResult result, String customerNumber) {
     return result.requireNotBlank("customerNumber", customerNumber,
             "Customer number cannot be null or empty");
+  }
+
+  private static String trimOrNull(String value) {
+    return value == null ? null : value.trim();
   }
 }

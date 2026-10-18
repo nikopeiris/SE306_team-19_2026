@@ -17,6 +17,7 @@ import mainframe.client.messages.customerAddress.Retrieve;
 
 /**
  * Business service for managing a customer's addresses through the mainframe adapter.
+ * An address only requires a type, line 1 and a country.
  */
 public class CustomerAddressService {
     private static final long MAILING_ADDRESS_SEARCH_SIZE = 100L;
@@ -50,11 +51,12 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-        validateAddressDetails(
-                city, country, customer, line1, otherType, postCode, suburb, type);
+        buildAddressValidation(country, line1, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .throwIfInvalid();
 
         AddAddress addMessage = new AddAddress(
-                city.trim(),
+                trimOrNull(city),
                 country.trim(),
                 customer.trim(),
                 isMailing,
@@ -62,8 +64,8 @@ public class CustomerAddressService {
                 line1.trim(),
                 trimOrNull(line2),
                 trimOrNull(otherType),
-                postCode.trim(),
-                suburb.trim(),
+                trimOrNull(postCode),
+                trimOrNull(suburb),
                 type.trim());
         send(addMessage);
         return addMessage;
@@ -90,12 +92,13 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-        buildAddressValidation(city, country, customer, line1, otherType, postCode, suburb, type)
+        buildAddressValidation(country, line1, otherType, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requirePositive("addressId", id, "Address id")
                 .throwIfInvalid();
 
         UpdateAddress updateMessage = new UpdateAddress(
-                city.trim(),
+                trimOrNull(city),
                 country.trim(),
                 customer.trim(),
                 id,
@@ -104,8 +107,8 @@ public class CustomerAddressService {
                 line1.trim(),
                 trimOrNull(line2),
                 trimOrNull(otherType),
-                postCode.trim(),
-                suburb.trim(),
+                trimOrNull(postCode),
+                trimOrNull(suburb),
                 type.trim());
         send(updateMessage);
         return updateMessage;
@@ -196,6 +199,8 @@ public class CustomerAddressService {
     /**
      * Validates the fields of an address without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
+     * Only the type, line 1 and country are required; the other parameters are
+     * accepted for compatibility with existing callers but are not checked.
      *
      * @throws ValidationException if a required field or the address type is invalid
      */
@@ -208,26 +213,17 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws ValidationException {
-        buildAddressValidation(city, country, customer, line1, otherType, postCode, suburb, type)
-                .throwIfInvalid();
+        buildAddressValidation(country, line1, otherType, type).throwIfInvalid();
     }
 
     private static ValidationResult buildAddressValidation(
-            String city,
             String country,
-            String customer,
             String line1,
             String otherType,
-            String postCode,
-            String suburb,
             String type) {
         ValidationResult result = new ValidationResult()
-                .requireNotBlank("city", city, "City cannot be empty")
                 .requireNotBlank("country", country, "Country cannot be empty")
-                .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requireNotBlank("line1", line1, "Address line 1 cannot be empty")
-                .requireNotBlank("postCode", postCode, "Post code cannot be empty")
-                .requireNotBlank("suburb", suburb, "Suburb cannot be empty")
                 .requireNotBlank("type", type, "Address type cannot be empty");
 
         if (type != null && !type.isBlank()

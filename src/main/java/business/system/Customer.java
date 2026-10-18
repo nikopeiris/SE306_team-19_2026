@@ -10,10 +10,12 @@ import java.util.Map;
 import business.Main;
 import business.lavsexceptions.LavsException;
 import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerDocumentService;
 import business.system.customer.CustomerEmailService;
 import business.system.customer.CustomerEmployerService;
 import business.system.customer.CustomerPhoneNumberService;
 import business.system.dto.CustomerDetails;
+import business.system.dto.CustomerDocument;
 import business.system.dto.CustomerSummary;
 import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
@@ -33,6 +35,7 @@ public class Customer {
     private final MainframeAdapter customerAdapter;
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
+    private final CustomerDocumentService documentService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
     
@@ -52,13 +55,14 @@ public class Customer {
         this.customerAdapter = customerAdapter;
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
+        this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
     /**
-     * Adds a customer after validating all customer fields.
+     * Adds a customer after validating all customer fields. Only the first name is required.
      *
      * @return the mainframe message containing the created customer's details
-     * @throws ValidationException if a field is null, blank, or invalid
+     * @throws ValidationException if the first name is null or blank
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -73,12 +77,12 @@ public class Customer {
                 dateOfBirth, familyName, firstName, nationality, organisation, title);
 
         Create createMessage = new Create(
-                dateOfBirth.trim(),
-                familyName.trim(),
+                trimOrNull(dateOfBirth),
+                trimOrNull(familyName),
                 firstName.trim(),
-                nationality.trim(),
+                trimOrNull(nationality),
                 organisation,
-                title.trim());
+                trimOrNull(title));
         Status status = customerAdapter.send(createMessage);
         Main.isValidStatus(status);
         return createMessage;
@@ -140,6 +144,11 @@ public class Customer {
         }
     }
 
+    /**
+     * Validates the customer's personal fields. Only the first name is required;
+     * the other parameters are accepted for compatibility with existing callers
+     * but are not checked.
+     */
     public void validateCustomerDetails(
             String dateOfBirth,
             String familyName,
@@ -147,27 +156,9 @@ public class Customer {
             String nationality,
             Long organisation,
             String title) throws ValidationException {
-        ValidationResult result = new ValidationResult()
-                .requireNotBlank("dateOfBirth", dateOfBirth,
-                        "Date of birth cannot be empty")
-                .requireNotBlank("familyName", familyName,
-                        "Family name cannot be empty")
-                .requireNotBlank("firstName", firstName,
-                        "First name cannot be empty")
-                .requireNotBlank("nationality", nationality,
-                        "Nationality cannot be empty")
-                .requireNotBlank("title", title,
-                        "Title cannot be empty");
-
-        if (organisation == null) {
-            result.addError("organisation", "Organisation cannot be empty");
-        } else if (organisation < 1) {
-            result.addError("organisation", "Organisation must be a positive integer");
-        }
-
-        if (!result.isValid()) {
-            throw new ValidationException(result);
-        }
+        new ValidationResult()
+                .requireNotBlank("firstName", firstName, "First name cannot be empty")
+                .throwIfInvalid();
     }
 
     /**
@@ -252,9 +243,10 @@ public class Customer {
 
     /**
      * Updates an existing customer's personal details after validating them.
+     * Only the first name is required.
      *
      * @return the mainframe message containing the updated customer's details
-     * @throws ValidationException if a field is null, blank, or invalid
+     * @throws ValidationException if the first name is null or blank
      * @throws LavsException if the mainframe rejects the request
      * @throws IOException if the mainframe cannot be reached
      */
@@ -273,15 +265,19 @@ public class Customer {
                 dateOfBirth, familyName, firstName, nationality, 1L, title);
 
         Update updateMessage = new Update(
-                dateOfBirth.trim(),
-                familyName.trim(),
+                trimOrNull(dateOfBirth),
+                trimOrNull(familyName),
                 firstName.trim(),
-                nationality.trim(),
+                trimOrNull(nationality),
                 number.trim(),
-                title.trim());
+                trimOrNull(title));
         Status status = customerAdapter.send(updateMessage);
         Main.isValidStatus(status);
         return updateMessage;
+    }
+
+    private static String trimOrNull(String value) {
+        return value == null ? null : value.trim();
     }
 
     /**
@@ -299,6 +295,40 @@ public class Customer {
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
     public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
         return loanSearchService.filterByLoanNumber(loans, query);
+    }
+
+    /** Lists a customer's documents (the first 100). */
+    public List<CustomerDocument> listCustomerDocuments(String number)
+            throws IOException, LavsException {
+        mainframe.client.messages.customerDocument.List.Item[] items =
+                documentService.listDocuments(number, 1L, 100L);
+        List<CustomerDocument> documents = new ArrayList<>();
+        if (items != null) {
+            for (mainframe.client.messages.customerDocument.List.Item item : items) {
+                documents.add(new CustomerDocument(
+                        item.getId(),
+                        item.getType(),
+                        item.getFileName()));
+            }
+        }
+        return documents;
+    }
+
+    /**
+     * Adds a document to an existing customer. The type, file name and size are required;
+     * the file type is optional.
+     *
+     * @throws ValidationException if a required field is missing or a field is too long
+     */
+    public void addCustomerDocument(String number, String type, String fileName,
+            String fileType, Long size) throws IOException, LavsException {
+        documentService.addDocument(number, fileName, fileType, size, type);
+    }
+
+    /** Removes a document from a customer. */
+    public void deleteCustomerDocument(String number, Long documentId)
+            throws IOException, LavsException {
+        documentService.deleteDocument(number, documentId);
     }
 
     /** Loads a customer's personal details, addresses, phones, emails and employers. */
