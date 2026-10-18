@@ -8,6 +8,7 @@
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/LoginService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/SignupService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerAddressService.java
+/Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerDocumentService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerEmailService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerEmployerService.java
 /Users/Kelvin/Documents/Code/306-Project2/SE306_team-19_2026/src/main/java/business/system/customer/CustomerOptions.java

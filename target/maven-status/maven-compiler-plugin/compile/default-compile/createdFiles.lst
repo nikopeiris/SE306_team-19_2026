@@ -65,6 +65,7 @@ mainframe/client/messages/customer/DeleteDocument.class
 mainframe/client/messages/customerDocument/List.class
 mainframe/client/messages/Login.class
 mainframe/client/messages/loanPayment/Retrieve.class
+business/system/customer/CustomerDocumentService.class
 mainframe/client/messages/constantCategory/DeleteItem.class
 mainframe/client/messages/organisation/Retrieve.class
 business/validation/LoanValidation.class

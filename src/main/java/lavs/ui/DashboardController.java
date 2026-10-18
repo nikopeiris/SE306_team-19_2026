@@ -2,7 +2,6 @@ package lavs.ui;
 
 import java.io.IOException;
 import java.net.URL;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import business.system.Customer;
 import business.system.LoginService;
 import business.system.customer.CustomerEmailService;
 import business.system.dto.CustomerSummary;
+import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import javafx.animation.PauseTransition;
@@ -55,13 +55,12 @@ public class DashboardController {
     private ListView<CustomerSummary> customerListView;
     @FXML private Button addCustomerButton;
 
-    // Loan search (right-hand "Search for Loan" box filters the loans table)
+    // Bottom-right "Search for Loan" box: the search field filters the loans table under it
     @FXML private TextField loanSearchField;
+    @FXML private Label loanStatusLabel;
     @FXML private TableView<LoanSummary> loanTable;
     @FXML private TableColumn<LoanSummary, String> loanIdColumn;
     @FXML private TableColumn<LoanSummary, String> loanCustomerColumn;
-    @FXML private TableColumn<LoanSummary, String> loanPrincipalColumn;
-    @FXML private TableColumn<LoanSummary, String> loanStartColumn;
     @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
 
     // Business layer: the UI never talks to the mainframe adapter directly
@@ -92,12 +91,18 @@ public class DashboardController {
     private boolean loadingCustomers = false;
     private String customerLoadError = null;
 
-    // ---- Loan list data ----
-    private List<LoanSummary> allLoans = List.of();
+    // ---- Loan list data (loaded in the background, filtered as you type) ----
+    private List<LoanSummary> allLoans = new ArrayList<>();
     private final ObservableList<LoanSummary> visibleLoans = FXCollections.observableArrayList();
     private final Label loanPlaceholder = new Label("Loading loans...");
     private boolean loadingLoans = false;
     private String loanLoadError = null;
+    private int loansDone = 0;
+    private int loansTotal = 0;
+    private int failedCustomers = 0;
+    private Task<LoanListResult> loanTask = null;
+    /** Bumped whenever a load starts or is abandoned, so late results from an old load are ignored. */
+    private volatile int loanLoadGeneration = 0;
 
     // primary email per customer number ("" means the customer has no primary email)
     private final Map<String, String> emailCache = new ConcurrentHashMap<>();
@@ -132,22 +137,19 @@ public class DashboardController {
     }
 
     private void setupLoanTable() {
-        loanPlaceholder.setStyle("-fx-text-fill: #726e97; -fx-font-size: 13;");
+        loanPlaceholder.setStyle("-fx-text-fill: #726e97; -fx-font-size: 12;");
+        loanPlaceholder.setWrapText(true);
+        loanPlaceholder.setMaxWidth(180);
         loanTable.setItems(visibleLoans);
         loanTable.setPlaceholder(loanPlaceholder);
 
         loanIdColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getLoanNumber()));
         loanCustomerColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCustomerName()));
-        loanPrincipalColumn.setCellValueFactory(c -> {
-            Double principal = c.getValue().getPrincipal();
-            return new ReadOnlyStringWrapper(principal == null
-                    ? "-" : NumberFormat.getCurrencyInstance().format(principal));
-        });
-        loanStartColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStartDate()));
         loanStatusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
 
         // typing narrows the loans straight away; an empty box shows every loan
         loanSearchField.textProperty().addListener((obs, oldText, newText) -> showLoans());
+        updateLoanStatusLabel();
     }
 
     // add custoemr button
@@ -258,44 +260,88 @@ public class DashboardController {
     }
 
     // ------------------------------------------------------------------
-    // Loading and filtering loans (all matching rules live in the business layer)
+    // Loans (all matching rules live in the business layer)
     // ------------------------------------------------------------------
 
     private void loadLoans() {
-        List<CustomerSummary> customers = new ArrayList<>(allCustomers); // snapshot on the FX thread
+        stopLoanLoading();
+        final int generation = loanLoadGeneration;
+        List<CustomerSummary> customers = new ArrayList<>(allCustomers);   // snapshot on the FX thread
+
         loadingLoans = true;
         loanLoadError = null;
-        allLoans = List.of();
+        loansDone = 0;
+        loansTotal = customers.size();
+        failedCustomers = 0;
+        allLoans = new ArrayList<>();
         visibleLoans.clear();
         updateLoanPlaceholder();
+        updateLoanStatusLabel();
 
-        Task<List<LoanSummary>> loadTask = new Task<>() {
+        Task<LoanListResult> task = new Task<>() {
             @Override
-            protected List<LoanSummary> call() throws Exception {
-                return customerService.listLoansFor(customers);
+            protected LoanListResult call() throws Exception {
+                // each customer's loans are handed to the screen as soon as they are read
+                return customerService.listLoansFor(customers, (newLoans, done, total) -> {
+                    Platform.runLater(() -> {
+                        if (generation != loanLoadGeneration) {
+                            return;
+                        }
+                        allLoans.addAll(newLoans);
+                        loansDone = done;
+                        showLoans();
+                    });
+                    return generation == loanLoadGeneration;   // false = stop early
+                });
             }
         };
 
-        loadTask.setOnSucceeded(e -> {
+        task.setOnSucceeded(e -> {
+            if (generation != loanLoadGeneration) {
+                return;
+            }
+            LoanListResult result = task.getValue();
             loadingLoans = false;
-            allLoans = loadTask.getValue();
-            showLoans();   // applies whatever is already typed in the search box
+            failedCustomers = result.getFailedCustomers();
+            if (failedCustomers > 0) {
+                System.err.println("Loan load: " + failedCustomers + " of " + customers.size()
+                        + " customers could not be read. First error: " + result.getFirstError());
+                if (result.getLoans().isEmpty()) {
+                    loanLoadError = result.getFirstError();
+                }
+            }
+            showLoans();
         });
 
-        loadTask.setOnFailed(e -> {
+        task.setOnFailed(e -> {
+            if (generation != loanLoadGeneration) {
+                return;
+            }
             loadingLoans = false;
-            loanLoadError = describe(loadTask.getException());
-            updateLoanPlaceholder();
+            loanLoadError = describe(task.getException());
+            showLoans();
         });
 
-        Thread thread = new Thread(loadTask, "load-loans");
+        loanTask = task;
+        Thread thread = new Thread(task, "load-loans");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /** Abandons any loan load still running (results from it are ignored from now on). */
+    private void stopLoanLoading() {
+        loanLoadGeneration++;
+        if (loanTask != null) {
+            loanTask.cancel(true);
+            loanTask = null;
+        }
+        loadingLoans = false;
     }
 
     private void showLoans() {
         visibleLoans.setAll(customerService.filterLoansByNumber(allLoans, loanSearchField.getText()));
         updateLoanPlaceholder();
+        updateLoanStatusLabel();
     }
 
     private void updateLoanPlaceholder() {
@@ -308,6 +354,24 @@ public class DashboardController {
         } else {
             loanPlaceholder.setText("No loans match your search.");
         }
+    }
+
+    private void updateLoanStatusLabel() {
+        String text;
+        if (loadingLoans) {
+            text = "Loading loans... " + loansDone + "/" + loansTotal + " customers";
+        } else if (loanLoadError != null) {
+            text = allLoans.isEmpty() ? "Could not load loans" : "Loading stopped early";
+        } else {
+            int all = allLoans.size();
+            int shown = visibleLoans.size();
+            String noun = all == 1 ? " loan" : " loans";
+            text = shown == all ? all + noun : shown + " of " + all + noun;
+            if (failedCustomers > 0) {
+                text += " (" + failedCustomers + " customer" + (failedCustomers == 1 ? "" : "s") + " skipped)";
+            }
+        }
+        loanStatusLabel.setText(text);
     }
 
     // ------------------------------------------------------------------
