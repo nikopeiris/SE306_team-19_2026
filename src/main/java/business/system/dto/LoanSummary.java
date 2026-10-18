@@ -19,6 +19,12 @@ public final class LoanSummary {
         this.status = status;
     }
 
+    /** The same loan with a different status after the status has been changed. */
+    public LoanSummary withStatus(String newStatus) {
+        return new LoanSummary(loanNumber, customerNumber, customerName, principal,
+                startDate, newStatus);
+    }
+
     public String getLoanNumber()     { return loanNumber; }
     public String getCustomerNumber() { return customerNumber; }
     public String getCustomerName()   { return customerName; }
