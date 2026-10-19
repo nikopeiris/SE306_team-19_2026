@@ -17,6 +17,7 @@ import business.system.customer.CustomerPhoneNumberService;
 import business.system.dto.CustomerDetails;
 import business.system.dto.CustomerDocument;
 import business.system.dto.CustomerSummary;
+import business.system.dto.LoanCoborrower;
 import business.system.dto.LoanListResult;
 import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
@@ -36,7 +37,9 @@ public class Customer {
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
     private final LoanStatusService loanStatusService;
-    private final LoanDetailsService loanDetailsService;
+
+    /** Created on first use: it builds a Coborrower, which is itself a Customer. */
+    private LoanCoborrowerService loanCoborrowerService;
     private final CustomerDocumentService documentService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
@@ -58,7 +61,6 @@ public class Customer {
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
         this.loanStatusService = new LoanStatusService(customerAdapter);
-        this.loanDetailsService = new LoanDetailsService(customerAdapter);
         this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
@@ -314,14 +316,40 @@ public class Customer {
         loanStatusService.changeStatus(loanNumber, newStatus);
     }
 
+    private synchronized LoanCoborrowerService coborrowers() {
+        if (loanCoborrowerService == null) {
+            loanCoborrowerService = new LoanCoborrowerService(customerAdapter);
+        }
+        return loanCoborrowerService;
+    }
+
+    /** Lists the co-borrowers and guarantors of a loan. */
+    public List<LoanCoborrower> listLoanCoborrowers(String loanNumber)
+            throws IOException, LavsException {
+        return coborrowers().listCoborrowers(loanNumber);
+    }
+
+    /** Adds an existing customer to a loan; see {@link LoanCoborrowerService#addCoborrower}. */
+    public void addLoanCoborrower(String loanNumber, String customerNumber, String type)
+            throws IOException, LavsException {
+        coborrowers().addCoborrower(loanNumber, customerNumber, type);
+    }
+
+    /** Changes a co-borrower to a guarantor or back; see {@link LoanCoborrowerService}. */
+    public void changeLoanCoborrowerType(String loanNumber, LoanCoborrower existing,
+            String newType) throws IOException, LavsException {
+        coborrowers().changeType(loanNumber, existing, newType);
+    }
+
+    /** Removes a co-borrower or guarantor from a loan. */
+    public void removeLoanCoborrower(String loanNumber, LoanCoborrower existing)
+            throws IOException, LavsException {
+        coborrowers().removeCoborrower(loanNumber, existing);
+    }
+
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
     public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
         return loanSearchService.filterByLoanNumber(loans, query);
-    }
-
-    /** The loan tab's business service: form choices, adding a loan, and reading loan details. */
-    public LoanDetailsService loanDetails() {
-        return loanDetailsService;
     }
 
     /** Lists a customer's documents (the first 100). */
