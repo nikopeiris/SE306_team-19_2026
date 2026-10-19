@@ -352,6 +352,11 @@ public class Customer {
         return loanSearchService.filterByLoanNumber(loans, query);
     }
 
+    /** The loan tab's business service: form choices, adding a loan, and reading loan details. */
+    public LoanDetailsService loanDetails() {
+        return loanDetailsService;
+    }
+    
     /** Lists a customer's documents (the first 100). */
     public List<CustomerDocument> listCustomerDocuments(String number)
             throws IOException, LavsException {
