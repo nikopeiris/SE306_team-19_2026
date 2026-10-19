@@ -148,11 +148,7 @@ public class Customer {
         }
     }
 
-    /**
-     * Validates the customer's personal fields. Only the first name is required;
-     * the other parameters are accepted for compatibility with existing callers
-     * but are not checked.
-     */
+    /** Validates the customer's required personal and organisation fields. */
     public void validateCustomerDetails(
             String dateOfBirth,
             String familyName,
@@ -162,6 +158,7 @@ public class Customer {
             String title) throws ValidationException {
         new ValidationResult()
                 .requireNotBlank("firstName", firstName, "First name cannot be empty")
+                .requirePositive("organisation", organisation, "Organisation")
                 .throwIfInvalid();
     }
 

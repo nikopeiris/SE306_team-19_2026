@@ -51,7 +51,7 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-        buildAddressValidation(country, line1, otherType, type)
+        buildAddressValidation(city, country, line1, postCode, suburb, otherType, type)
                 .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .throwIfInvalid();
 
@@ -92,7 +92,7 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws IOException, LavsException {
-        buildAddressValidation(country, line1, otherType, type)
+        buildAddressValidation(city, country, line1, postCode, suburb, otherType, type)
                 .requireNotBlank("customer", customer, "Customer cannot be empty")
                 .requirePositive("addressId", id, "Address id")
                 .throwIfInvalid();
@@ -199,8 +199,8 @@ public class CustomerAddressService {
     /**
      * Validates the fields of an address without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
-     * Only the type, line 1 and country are required; the other parameters are
-     * accepted for compatibility with existing callers but are not checked.
+     * City, country, line 1, postcode, suburb and type are required. Line 2 and
+     * the custom type are only required when applicable.
      *
      * @throws ValidationException if a required field or the address type is invalid
      */
@@ -213,17 +213,24 @@ public class CustomerAddressService {
             String postCode,
             String suburb,
             String type) throws ValidationException {
-        buildAddressValidation(country, line1, otherType, type).throwIfInvalid();
+        buildAddressValidation(city, country, line1, postCode, suburb, otherType, type)
+                .throwIfInvalid();
     }
 
     private static ValidationResult buildAddressValidation(
+            String city,
             String country,
             String line1,
+            String postCode,
+            String suburb,
             String otherType,
             String type) {
         ValidationResult result = new ValidationResult()
+                .requireNotBlank("city", city, "City cannot be empty")
                 .requireNotBlank("country", country, "Country cannot be empty")
                 .requireNotBlank("line1", line1, "Address line 1 cannot be empty")
+                .requireNotBlank("postCode", postCode, "Post code cannot be empty")
+                .requireNotBlank("suburb", suburb, "Suburb cannot be empty")
                 .requireNotBlank("type", type, "Address type cannot be empty");
 
         if (type != null && !type.isBlank()
