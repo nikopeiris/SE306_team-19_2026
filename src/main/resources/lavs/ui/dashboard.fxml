@@ -139,12 +139,13 @@
 </Text>
 <TextField fx:id="loanSearchField" layoutX="812.0" layoutY="448.0" prefWidth="209.0" promptText="Type Loan ID" />
 <Label fx:id="loanStatusLabel" layoutX="813.0" layoutY="482.0" prefWidth="209.0" textFill="#011936" />
-<TableView fx:id="loanTable" layoutX="806.0" layoutY="508.0" prefHeight="214.0" prefWidth="225.0">
+<TableView fx:id="loanTable" layoutX="806.0" layoutY="508.0" prefHeight="176.0" prefWidth="225.0">
 <columns>
 <TableColumn fx:id="loanIdColumn" prefWidth="72.0" text="Loan ID" />
 <TableColumn fx:id="loanCustomerColumn" prefWidth="80.0" text="Customer" />
 <TableColumn fx:id="loanStatusColumn" prefWidth="52.0" text="Status" />
 </columns>
 </TableView>
+<Button fx:id="changeStatusButton" layoutX="806.0" layoutY="694.0" mnemonicParsing="false" onAction="#handleChangeStatus" prefHeight="28.0" prefWidth="225.0" text="Change Status" />
 </children>
 </Pane>

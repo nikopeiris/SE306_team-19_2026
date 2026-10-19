@@ -212,6 +212,26 @@ public class Loan {
             String rateType,
             String renewalDate,
             String startDate) throws IOException, LavsException {
+        return updateLoan(customerNumber, loanNumber, paymentAmount, paymentFrequency, principal,
+                rateAmount, rateFrequency, rateType, renewalDate, startDate, null);
+    }
+
+    /**
+     * Same as above; {@code originalStartDate} is the loan's existing start date, which is
+     * allowed to be in the past when the start date is left unchanged.
+     */
+    public Update updateLoan(
+            String customerNumber,
+            String loanNumber,
+            double paymentAmount,
+            String paymentFrequency,
+            double principal,
+            double rateAmount,
+            String rateFrequency,
+            String rateType,
+            String renewalDate,
+            String startDate,
+            String originalStartDate) throws IOException, LavsException {
         LoanValidation.validateUpdateLoanDetails(
                 customerNumber,
                 loanNumber,
@@ -222,7 +242,8 @@ public class Loan {
                 rateFrequency,
                 rateType,
                 renewalDate,
-                startDate);
+                startDate,
+                originalStartDate);
 
         Update updateMessage = new Update(
                 customerNumber.trim(),

@@ -60,6 +60,12 @@ public class CustomerContext {
 
     public CustomerDetails getOriginal() { return original; }
 
+    /** The customer's number, or null while the customer has not been saved yet. */
+    public String getCustomerNumber() {
+        return original == null || original.personal().isNew()
+                ? null : original.personal().number();
+    }
+
     public LoginService getLoginService() { return loginService; }
     public Customer getCustomerService() { return customerService; }
     public CustomerEmailService getEmailService() { return emailService; }
