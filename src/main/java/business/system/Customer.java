@@ -358,7 +358,7 @@ public class Customer {
     public LoanDetailsService loanDetails() {
         return loanDetailsService;
     }
-     
+    
     /** Lists a customer's documents (the first 100). */
     public List<CustomerDocument> listCustomerDocuments(String number)
             throws IOException, LavsException {
