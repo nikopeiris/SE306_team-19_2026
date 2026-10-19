@@ -204,6 +204,7 @@ public class LoanDetailsService {
         return new LoanDetail(
                 number,
                 loan.getCustomerName(),
+                loan.getCustomerNumber(),
                 typeLabel(rateType),
                 termText(years),
                 labelFor(COMPOUND_TYPES, loan.getRateFrequency()),

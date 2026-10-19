@@ -34,10 +34,16 @@
                   <ColumnConstraints percentWidth="33.4" />
                </columnConstraints>
                <children>
-                  <VBox spacing="2.0" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="0">
+                  <VBox spacing="2.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
                      <children>
                         <Label style="-fx-text-fill: #726e97; -fx-font-size: 11;" text="Name" />
                         <Label fx:id="nameLabel" style="-fx-font-size: 14;" wrapText="true" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                     <children>
+                        <Label style="-fx-text-fill: #726e97; -fx-font-size: 11;" text="Customer ID" />
+                        <Label fx:id="customerIdLabel" style="-fx-font-size: 14;" />
                      </children>
                   </VBox>
 

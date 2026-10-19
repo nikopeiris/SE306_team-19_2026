@@ -42,6 +42,7 @@ public class LoanSummaryController {
     @FXML private Label messageLabel;
     @FXML private GridPane detailsGrid;
     @FXML private Label nameLabel;
+    @FXML private Label customerIdLabel;
     @FXML private Label loanTypeLabel;
     @FXML private Label termLabel;
     @FXML private Label compoundLabel;
@@ -160,6 +161,7 @@ public class LoanSummaryController {
     private void showDetail(LoanDetail d) {
         current = d;
         nameLabel.setText(LoanFormat.text(d.borrowerName()));
+        customerIdLabel.setText(LoanFormat.text(d.customerNumber()));
         loanTypeLabel.setText(LoanFormat.text(d.loanType()));
         termLabel.setText(LoanFormat.text(d.term()));
         compoundLabel.setText(LoanFormat.text(d.compoundType()));

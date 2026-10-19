@@ -8,6 +8,7 @@ package business.system.dto;
 public record LoanDetail(
         String loanNumber,
         String borrowerName,
+        String customerNumber,
         String loanType,
         String term,
         String compoundType,
