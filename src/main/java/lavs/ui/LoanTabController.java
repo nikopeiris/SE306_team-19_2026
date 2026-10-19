@@ -135,7 +135,8 @@ public class LoanTabController {
 
     // ------------------------------------------------------------------
     // Loading the table
-    // ----------------------------------------------------------------
+    // ------------------------------------------------------------------
+
     private void refreshIfNeeded() {
         if (context == null) {
             return;
@@ -200,7 +201,7 @@ public class LoanTabController {
 
     private void openSummary(LoanRow loan) {
         LoanSummaryController.show(loanTabRoot.getScene().getWindow(),
-                context.getCustomerService(), loan.loanNumber());
+                context.getCustomerService(), loan.loanNumber(), this::refresh);
     }
 
     // ------------------------------------------------------------------
