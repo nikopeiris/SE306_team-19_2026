@@ -146,6 +146,7 @@
 <TableColumn fx:id="loanStatusColumn" prefWidth="52.0" text="Status" />
 </columns>
 </TableView>
-<Button fx:id="changeStatusButton" layoutX="806.0" layoutY="694.0" mnemonicParsing="false" onAction="#handleChangeStatus" prefHeight="28.0" prefWidth="225.0" text="Change Status" />
+<Button fx:id="changeStatusButton" layoutX="806.0" layoutY="694.0" mnemonicParsing="false" onAction="#handleChangeStatus" prefHeight="28.0" prefWidth="110.0" text="Change Status" />
+<Button fx:id="coborrowersButton" layoutX="921.0" layoutY="694.0" mnemonicParsing="false" onAction="#handleCoborrowers" prefHeight="28.0" prefWidth="110.0" text="Co-borrowers" />
 </children>
 </Pane>
