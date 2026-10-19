@@ -63,6 +63,7 @@ public class DashboardController {
     @FXML private TableColumn<LoanSummary, String> loanCustomerColumn;
     @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
     @FXML private Button changeStatusButton;
+    @FXML private Button coborrowersButton;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -154,6 +155,8 @@ public class DashboardController {
         // a loan has to be picked before its status can be changed
         changeStatusButton.disableProperty().bind(
                 loanTable.getSelectionModel().selectedItemProperty().isNull());
+        coborrowersButton.disableProperty().bind(
+                loanTable.getSelectionModel().selectedItemProperty().isNull());
         updateLoanStatusLabel();
     }
 
@@ -165,6 +168,15 @@ public class DashboardController {
         }
         LoanStatusDialog.show(loanTable.getScene().getWindow(), customerService, selected,
                 newStatus -> showNewStatus(selected, newStatus));
+    }
+
+    @FXML
+    private void handleCoborrowers(ActionEvent event) {
+        LoanSummary selected = loanTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            LoanCoborrowersDialog.show(loanTable.getScene().getWindow(), customerService,
+                    selected);
+        }
     }
 
     /** Shows the changed status without reloading every customer's loans. */
