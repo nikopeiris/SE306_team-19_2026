@@ -40,6 +40,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
@@ -145,6 +146,17 @@ public class DashboardController {
         loanTable.setItems(visibleLoans);
         loanTable.setPlaceholder(loanPlaceholder);
 
+        // double-clicking a loan opens its summary (a single click only selects it)
+        loanTable.setRowFactory(tv -> {
+            TableRow<LoanSummary> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty()) {
+                    openLoanSummary(row.getItem());
+                }
+            });
+            return row;
+        });
+
         loanIdColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getLoanNumber()));
         loanCustomerColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCustomerName()));
         loanStatusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
@@ -177,6 +189,11 @@ public class DashboardController {
             LoanCoborrowersDialog.show(loanTable.getScene().getWindow(), customerService,
                     selected);
         }
+    }
+  
+    private void openLoanSummary(LoanSummary loan) {
+        LoanSummaryController.show(loanTable.getScene().getWindow(), customerService,
+                loan.getLoanNumber(), null);
     }
 
     /** Shows the changed status without reloading every customer's loans. */

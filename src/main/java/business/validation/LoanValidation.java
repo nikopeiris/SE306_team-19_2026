@@ -108,6 +108,26 @@ public final class LoanValidation {
             String rateType,
             String renewalDate,
             String startDate) throws ValidationException {
+        validateUpdateLoanDetails(customerNumber, loanNumber, paymentAmount, paymentFrequency,
+                principal, rateAmount, rateFrequency, rateType, renewalDate, startDate, null);
+    }
+
+    /**
+     * Same checks as above, except a start date equal to {@code originalStartDate} (the
+     * loan's existing start date) may be in the past, since it is not being changed.
+     */
+    public static void validateUpdateLoanDetails(
+            String customerNumber,
+            String loanNumber,
+            double paymentAmount,
+            String paymentFrequency,
+            double principal,
+            double rateAmount,
+            String rateFrequency,
+            String rateType,
+            String renewalDate,
+            String startDate,
+            String originalStartDate) throws ValidationException {
         ValidationResult result = new ValidationResult()
                 .requireNotBlank("customerNumber", customerNumber,
                         "Customer number cannot be null or empty")
@@ -146,7 +166,9 @@ public final class LoanValidation {
             result.addError("rateFrequency", "Rate frequency must be a valid category code");
         }
 
-        validateDate(result, startDate, renewalDate);
+        boolean startUnchanged = startDate != null && originalStartDate != null
+                && startDate.trim().equals(originalStartDate.trim());
+        validateDate(result, startUnchanged ? null : startDate, renewalDate);
 
         if (!result.isValid()) {
             throw new ValidationException(result);
