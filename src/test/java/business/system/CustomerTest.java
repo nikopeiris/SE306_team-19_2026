@@ -2,6 +2,15 @@ package business.system;
 
 import business.lavsexceptions.LavsException;
 import business.system.dto.CustomerSummary;
+import business.system.dto.CustomerDetails;
+import business.system.dto.LoanSummary;
+import business.system.dto.LoanListResult;
+import business.system.customer.CustomerAddressService;
+import business.system.customer.CustomerDocumentService;
+import business.system.customer.CustomerEmailService;
+import business.system.customer.CustomerEmployerService;
+import business.system.customer.CustomerPhoneNumberService;
+import business.system.customer.CustomerOptions;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
@@ -9,6 +18,7 @@ import mainframe.client.Status;
 import mainframe.client.messages.customer.Create;
 import mainframe.client.messages.customer.Retrieve;
 import mainframe.client.messages.customer.Search;
+import mainframe.client.messages.customer.Update;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,15 +30,21 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerTest {
@@ -98,6 +114,94 @@ class CustomerTest {
                 () -> customer.retrieveCustomer("C123"));
 
         assertEquals("Customer not found", exception.getMessage());
+    }
+
+    @Test
+    void updateCustomerSendsTrimmedValues() throws Exception {
+        when(adapter.send(any(Update.class))).thenReturn(new Status(1));
+
+        Update result = customer.updateCustomer(" C1 ", " 2000-01-01 ",
+                " Smith ", " Jane ", " NZ ", " Ms ");
+
+        assertEquals("C1", result.getNumber());
+        assertEquals("Jane", result.getFirstName());
+        assertEquals("Smith", result.getFamilyName());
+        assertEquals("Ms", result.getTitle());
+        verify(adapter).send(result);
+    }
+
+    @Test
+    void updateCustomerRejectsMissingNumberOrFirstName() {
+        assertThrows(IllegalArgumentException.class,
+                () -> customer.updateCustomer(" ", "", "", "", "", ""));
+        assertThrows(ValidationException.class,
+                () -> customer.updateCustomer("C1", "", "", " ", "", ""));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void getCustomerDetailsDelegatesToRetrieve() throws Exception {
+        when(adapter.send(any(Retrieve.class))).thenReturn(new Status(1));
+
+        Retrieve result = customer.getCustomerDetails("C1");
+
+        assertEquals("C1", result.getNumber());
+        verify(adapter).send(result);
+    }
+
+    @Test
+    void customerFacadeDelegatesContactLoanAndDocumentOperations() throws Exception {
+        CustomerDocumentService documentService = mock(CustomerDocumentService.class);
+        CustomerDetailsService detailsService = mock(CustomerDetailsService.class);
+        LoanSearchService loanSearchService = mock(LoanSearchService.class);
+        LoanStatusService loanStatusService = mock(LoanStatusService.class);
+        LoanDetailsService loanDetailsService = mock(LoanDetailsService.class);
+        replace(customer, "documentService", documentService);
+        replace(customer, "detailsService", detailsService);
+        replace(customer, "loanSearchService", loanSearchService);
+        replace(customer, "loanStatusService", loanStatusService);
+        replace(customer, "loanDetailsService", loanDetailsService);
+
+        when(loanSearchService.filterByLoanNumber(any(), eq("L"))).thenReturn(List.of());
+        when(loanSearchService.listLoansFor(any(), isNull())).thenReturn(new LoanListResult(List.of(), 0, null));
+        when(loanStatusService.allowedStatuses("New")).thenReturn(List.of("Pending"));
+        CustomerDetails.SaveResult saveResult = new CustomerDetails.SaveResult("C1", List.of());
+        when(detailsService.save(any(), any())).thenReturn(saveResult);
+        when(detailsService.load("C1")).thenReturn(CustomerDetails.empty());
+
+        assertTrue(customer.listLoansFor(List.of(), null).getLoans().isEmpty());
+        assertEquals(List.of("Pending"), customer.allowedLoanStatuses("New"));
+        assertEquals(List.of(), customer.filterLoansByNumber(List.of(), "L"));
+        assertSame(loanDetailsService, customer.loanDetails());
+        assertEquals(List.of(), customer.listCustomerDocuments("C1"));
+        customer.addCustomerDocument("C1", "Passport", "a.pdf", "pdf", 1L);
+        customer.deleteCustomerDocument("C1", 2L);
+        assertEquals(CustomerDetails.empty(), customer.loadCustomerDetails("C1"));
+        assertEquals(saveResult, customer.saveCustomer(CustomerDetails.empty(), CustomerDetails.empty()));
+        customer.validatePersonalDetails(CustomerDetails.empty().personal());
+        customer.validateAddresses(List.of());
+        customer.validatePhones(List.of());
+        customer.validateEmails(List.of());
+        customer.validateEmployers(List.of());
+
+        verify(documentService).addDocument("C1", "a.pdf", "pdf", 1L, "Passport");
+        verify(documentService).deleteDocument("C1", 2L);
+    }
+
+    @Test
+    void customerOptionsExposeSupportedChoices() {
+        assertTrue(CustomerOptions.TITLES.contains("Mr"));
+        assertTrue(CustomerOptions.ADDRESS_TYPES.contains(CustomerOptions.ADDRESS_TYPE_OTHER));
+        assertTrue(CustomerOptions.PHONE_TYPES.contains(CustomerOptions.PHONE_TYPE_OTHER));
+        assertTrue(CustomerOptions.EMAIL_TYPES.contains(CustomerOptions.EMAIL_TYPE_OTHER));
+        assertEquals(2, List.of(CustomerOptions.EMPLOYER_PRIMARY,
+                CustomerOptions.EMPLOYER_SECONDARY).size());
+    }
+
+    private static void replace(Object target, String name, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(target, value);
     }
 
     // answers every customer search with the {number, firstName, familyName} rows

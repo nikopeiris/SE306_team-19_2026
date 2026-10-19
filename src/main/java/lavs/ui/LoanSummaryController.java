@@ -75,6 +75,7 @@ public class LoanSummaryController {
     @FXML private ComboBox<String> editPaymentFrequencyCombo;
 
     @FXML private Button scheduleButton;
+    @FXML private Button paymentsButton;
     @FXML private Button editButton;
     @FXML private Button saveEditButton;
     @FXML private Button cancelEditButton;
@@ -213,6 +214,7 @@ public class LoanSummaryController {
         if (scheduleRequested) {
             return;
         }
+
         scheduleRequested = true;
         schedulePlaceholder.setText("Loading payment schedule...");
 
@@ -232,6 +234,11 @@ public class LoanSummaryController {
             messageLabel.setText(message(task.getException()));
         });
         startDaemon(task, "loan-schedule");
+    }
+
+    @FXML
+    private void handlePayments(ActionEvent event) {
+        PaymentsDialog.show(details, loanNumber, paymentsButton.getScene().getWindow());
     }
 
     // ------------------------------------------------------------------
