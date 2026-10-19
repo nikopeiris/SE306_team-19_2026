@@ -1,6 +1,10 @@
 package business.system.dto;
 
-/** Everything shown on the loan summary screen. Fields are null when the mainframe has no value yet. */
+/**
+ * Everything shown on the loan summary screen. Fields are null when the mainframe has no value yet.
+ * {@code editable} says whether the loan may be edited; {@code editForm} is the loan as the
+ * edit form's text fields and choices would hold it.
+ */
 public record LoanDetail(
         String loanNumber,
         String borrowerName,
@@ -15,4 +19,6 @@ public record LoanDetail(
         String renewDate,
         Double totalInterestPaid,
         Double totalPrincipalPaid,
-        String status) {}
+        String status,
+        boolean editable,
+        LoanApplication editForm) {}
