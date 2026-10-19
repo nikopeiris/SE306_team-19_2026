@@ -37,6 +37,7 @@ public class Customer {
     private final CustomerDetailsService detailsService;
     private final LoanSearchService loanSearchService;
     private final LoanStatusService loanStatusService;
+    private final LoanDetailsService loanDetailsService;
 
     /** Created on first use: it builds a Coborrower, which is itself a Customer. */
     private LoanCoborrowerService loanCoborrowerService;
@@ -61,6 +62,7 @@ public class Customer {
         this.detailsService = new CustomerDetailsService(this, customerAdapter);
         this.loanSearchService = new LoanSearchService(new Loan(customerAdapter));
         this.loanStatusService = new LoanStatusService(customerAdapter);
+        this.loanDetailsService = new LoanDetailsService(customerAdapter);
         this.documentService = new CustomerDocumentService(customerAdapter);
     }
 
@@ -352,6 +354,11 @@ public class Customer {
         return loanSearchService.filterByLoanNumber(loans, query);
     }
 
+    /** The loan tab's business service: form choices, adding a loan, and reading loan details. */
+    public LoanDetailsService loanDetails() {
+        return loanDetailsService;
+    }
+     
     /** Lists a customer's documents (the first 100). */
     public List<CustomerDocument> listCustomerDocuments(String number)
             throws IOException, LavsException {
