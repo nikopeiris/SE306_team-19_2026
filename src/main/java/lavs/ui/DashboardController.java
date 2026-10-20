@@ -3,6 +3,7 @@ package lavs.ui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,16 @@ public class DashboardController {
     private boolean loadingCustomers = false;
     private String customerLoadError = null;
 
+    // ---- Searching the mainframe by name as you type ----
+    /** A customer number looks like 01-0001-0030590. */
+    private static final String CUSTOMER_NUMBER = "\\d{2}-\\d{4}-\\d{7}";
+    /** Wait for a pause in typing before asking the mainframe. */
+    private final PauseTransition searchDelay = new PauseTransition(Duration.millis(450));
+    /** Bumped on every search so a slow, older search cannot overwrite a newer one. */
+    private int searchGeneration = 0;
+    /** What to show in the empty list after a mainframe search (null = nothing special). */
+    private String searchMessage = null;
+
     // ---- Loan list data (loaded in the background, filtered as you type) ----
     private List<LoanSummary> allLoans = new ArrayList<>();
     private final ObservableList<LoanSummary> visibleLoans = FXCollections.observableArrayList();
@@ -172,7 +183,16 @@ public class DashboardController {
         customerListView.setCellFactory(lv -> new CustomerCell());
 
         // typing filters the list straight away (name, customer id or primary email)
-        customerSearchField.textProperty().addListener((obs, oldText, newText) -> applyFilter());
+        customerSearchField.textProperty().addListener((obs, oldText, newText) -> {
+            searchMessage = null;
+            applyFilter();
+            searchDelay.playFromStart();   // then also ask the mainframe (see searchMainframe)
+        });
+        searchDelay.setOnFinished(e -> searchMainframe(false));
+        customerSearchField.setOnAction(e -> {   // Enter searches straight away
+            searchDelay.stop();
+            searchMainframe(true);
+        });
 
         refreshDelay.setOnFinished(e -> {
             applyFilter();
@@ -357,6 +377,8 @@ public class DashboardController {
 
         // Add a close mechanism so the overlay can remove itself when Back/Save is clicked
         controller.setOnCloseAction(() -> dashboardRoot.getChildren().remove(customerOverlay));
+        // After a save, show the new / renamed customer in the list straight away
+        controller.setOnSavedAction(this::showSavedCustomer);
 
         // Overlap it on top of the dashboard root
         dashboardRoot.getChildren().add(customerOverlay);
@@ -451,9 +473,147 @@ public class DashboardController {
             placeholder.setText(customerLoadError);
         } else if (allCustomers.isEmpty()) {
             placeholder.setText("There are no customers yet.");
+        } else if (searchMessage != null) {
+            placeholder.setText(searchMessage);
         } else {
             placeholder.setText("No customers match your search.");
         }
+    }
+
+    /**
+     * Asks the mainframe for customers matching the typed text and adds them to the list.
+     *
+     * @param enterPressed true when the user pressed Enter (a customer number then opens the
+     *                     customer, and very short text is searched too)
+     */
+    private void searchMainframe(boolean enterPressed) {
+        if (customerService == null) {
+            return;
+        }
+        final String term = customerSearchField.getText() == null
+                ? "" : customerSearchField.getText().trim();
+        if (term.isEmpty()) {
+            return;
+        }
+        if (term.matches(CUSTOMER_NUMBER)) {
+            lookUpByNumber(term, enterPressed);
+            return;
+        }
+        // single characters are already covered by the list itself
+        if (term.length() < 2 && !enterPressed) {
+            return;
+        }
+
+        final int generation = ++searchGeneration;
+        searchMessage = "Searching...";
+        updatePlaceholder();
+
+        Task<List<CustomerSummary>> task = new Task<>() {
+            @Override
+            protected List<CustomerSummary> call() throws Exception {
+                return customerService.searchCustomers(term);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            if (generation != searchGeneration) {
+                return;   // the user has typed something newer since
+            }
+            List<CustomerSummary> found = task.getValue();
+            mergeIntoList(found);
+            searchMessage = found.isEmpty()
+                    ? "No customer found for \"" + term + "\". The search only matches whole "
+                            + "first or family names (e.g. \"jeff\", not \"jef\")."
+                    : null;
+            applyFilter();
+        });
+        task.setOnFailed(e -> {
+            if (generation != searchGeneration) {
+                return;
+            }
+            searchMessage = describe(task.getException());
+            applyFilter();
+        });
+        startDaemon(task, "search-customers");
+    }
+
+    /** Looks a customer up by number; opens them when asked, otherwise just lists them. */
+    private void lookUpByNumber(String number, boolean open) {
+        final int generation = ++searchGeneration;
+        Task<CustomerSummary> task = new Task<>() {
+            @Override
+            protected CustomerSummary call() throws Exception {
+                return customerService.findCustomerSummary(number);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            CustomerSummary found = task.getValue();
+            mergeIntoList(List.of(found));
+            if (open) {
+                showCustomerOverlay(found, number);
+            } else if (generation == searchGeneration) {
+                searchMessage = null;
+                applyFilter();
+            }
+        });
+        task.setOnFailed(e -> {
+            if (generation != searchGeneration) {
+                return;
+            }
+            searchMessage = "No customer found with number " + number + ".";
+            applyFilter();
+        });
+        startDaemon(task, "lookup-customer");
+    }
+
+    /** Adds new customers to the list (or refreshes ones already there) and keeps it sorted. */
+    private void mergeIntoList(List<CustomerSummary> customers) {
+        for (CustomerSummary c : customers) {
+            boolean replaced = false;
+            for (int i = 0; i < allCustomers.size(); i++) {
+                if (allCustomers.get(i).getNumber().equals(c.getNumber())) {
+                    allCustomers.set(i, c);
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                allCustomers.add(c);
+            }
+        }
+        FXCollections.sort(allCustomers, Comparator
+                .comparing((CustomerSummary c) -> nameKey(c.getFirstName()))
+                .thenComparing(c -> nameKey(c.getFamilyName())));
+    }
+
+    private static String nameKey(String name) {
+        return name == null ? "" : name.toLowerCase();
+    }
+
+    /** After a save: fetch the customer again so the list shows the new or changed name. */
+    private void showSavedCustomer(String number) {
+        if (number == null || number.isBlank() || customerService == null) {
+            return;
+        }
+        Task<CustomerSummary> task = new Task<>() {
+            @Override
+            protected CustomerSummary call() throws Exception {
+                return customerService.findCustomerSummary(number);
+            }
+        };
+        task.setOnSucceeded(e -> {
+            CustomerSummary saved = task.getValue();
+            mergeIntoList(List.of(saved));
+            remember(RECENT_CUSTOMERS, saved, CustomerSummary::getNumber);
+            applyFilter();
+        });
+        task.setOnFailed(e -> task.getException().printStackTrace());
+        startDaemon(task, "refresh-saved-customer");
+    }
+
+    private static void startDaemon(Task<?> task, String name) {
+        Thread thread = new Thread(task, name);
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private String describe(Throwable error) {

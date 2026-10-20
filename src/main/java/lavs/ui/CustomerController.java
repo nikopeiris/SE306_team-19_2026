@@ -2,6 +2,7 @@ package lavs.ui;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.function.Consumer;
 
 import business.lavsexceptions.LavsException;
 import business.system.Customer;
@@ -29,6 +30,8 @@ public class CustomerController {
     @FXML
     private Pane loanPane;
     private Runnable onCloseAction;
+    /** Told the customer number after every successful save, so the dashboard can show it. */
+    private Consumer<String> onSavedAction;
 
     // Sub-controllers injected via JavaFX fx:id naming conventions
     // (matches fx:id of the fx:include tag + "Controller")
@@ -70,6 +73,10 @@ public class CustomerController {
 
     public void setOnCloseAction(Runnable onCloseAction) {
         this.onCloseAction = onCloseAction;
+    }
+
+    public void setOnSavedAction(Consumer<String> onSavedAction) {
+        this.onSavedAction = onSavedAction;
     }
 
     // ------------------------------------------------------------------
@@ -196,6 +203,9 @@ public class CustomerController {
                 alert.setHeaderText(null);
                 alert.setContentText("Customer " + result.customerNumber() + " saved.");
                 alert.showAndWait();
+            }
+            if (onSavedAction != null) {
+                onSavedAction.accept(result.customerNumber());
             }
             // Reload so the screen shows exactly what is in the mainframe
             // (and a new customer becomes an existing one for the next save)

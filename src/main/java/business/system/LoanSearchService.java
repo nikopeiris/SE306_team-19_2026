@@ -103,14 +103,16 @@ public class LoanSearchService {
         long page = FIRST_PAGE;
         for (int i = 0; i < MAX_PAGES; i++) {
             mainframe.client.messages.loan.List.Item[] items =
-                    loanService.retrieveLoans(customer.getNumber(), page, PAGE_SIZE);
+                    retrieveWithRetry(customer.getNumber(), page);
             if (items == null || items.length == 0) {
                 break;
             }
+            boolean anyNew = false;
             for (mainframe.client.messages.loan.List.Item item : items) {
                 if (seen.containsKey(item.getLoanNumber())) {
                     continue;
                 }
+                anyNew = true;
                 LoanSummary loan = new LoanSummary(
                         item.getLoanNumber(),
                         customer.getNumber(),
@@ -121,11 +123,37 @@ public class LoanSearchService {
                 seen.put(item.getLoanNumber(), loan);
                 fresh.add(loan);
             }
-            if (items.length < PAGE_SIZE) {
-                break;   // last page
+            // The mainframe may return fewer items per page than requested, so a short
+            // page is not necessarily the last one; stop when a page adds nothing new.
+            if (!anyNew) {
+                break;
             }
             page++;
         }
+    }
+
+    /** The mainframe sometimes answers "currently unavailable"; try a few times before giving up. */
+    private mainframe.client.messages.loan.List.Item[] retrieveWithRetry(String number, long page)
+            throws IOException, LavsException {
+        LavsException last = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                return loanService.retrieveLoans(number, page, PAGE_SIZE);
+            } catch (LavsException e) {
+                last = e;
+                String msg = e.getMessage() == null ? "" : e.getMessage();
+                if (!msg.contains("currently unavailable")) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(300L * (attempt + 1));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
+        throw last;
     }
 
     /** The mainframe sends the principal as text; null if it is missing or not a number. */
