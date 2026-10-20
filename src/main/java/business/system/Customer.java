@@ -332,9 +332,14 @@ public class Customer {
         return loanStatsService.statusesIn(loans);
     }
 
-    /** Totals, awaiting-verification and incomplete counts, and counts per status. */
+    /** Totals, awaiting-verification count, total principal, and counts per status. */
     public LoanStats summariseLoans(List<LoanSummary> loans) {
         return loanStatsService.summarise(loans);
+    }
+
+    /** True when a loan with this status is waiting to be checked. */
+    public boolean isAwaitingVerification(String status) {
+        return loanStatsService.isAwaitingVerification(status);
     }
 
     /** The loan tab's business service: form choices, adding a loan, and reading loan details. */

@@ -19,30 +19,28 @@ public class LoanStatsService {
 
     private static final String UNKNOWN_STATUS = "Unknown";
 
-    /** Totals, loans awaiting verification, loans with incomplete information, and counts per status. */
+    /** Totals, loans awaiting verification, total principal, and counts per status. */
     public LoanStats summarise(List<LoanSummary> loans) {
         int awaiting = 0;
-        int incomplete = 0;
+        double principal = 0;
         Map<String, Integer> byStatus = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         for (LoanSummary loan : loans) {
             String status = statusOf(loan);
             byStatus.merge(status, 1, Integer::sum);
-            if (AWAITING_VERIFICATION_STATUS.equalsIgnoreCase(status)) {
+            if (isAwaitingVerification(status)) {
                 awaiting++;
             }
-            if (isIncomplete(loan)) {
-                incomplete++;
+            if (loan.getPrincipal() != null) {
+                principal += loan.getPrincipal();
             }
         }
-        return new LoanStats(loans.size(), awaiting, incomplete, byStatus);
+        return new LoanStats(loans.size(), awaiting, principal, byStatus);
     }
 
-    /** A loan is incomplete when the mainframe gave no usable principal or no start date. */
-    static boolean isIncomplete(LoanSummary loan) {
-        return loan.getPrincipal() == null
-                || loan.getStartDate() == null
-                || loan.getStartDate().isBlank();
+    /** True when a loan with this status is waiting to be checked. */
+    public boolean isAwaitingVerification(String status) {
+        return status != null && AWAITING_VERIFICATION_STATUS.equalsIgnoreCase(status.trim());
     }
 
     /** Keeps only the loans with this status; a null or blank status returns the whole list. */

@@ -3,6 +3,7 @@ package lavs.ui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,14 +45,19 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -79,10 +85,10 @@ public class DashboardController {
     // Bottom strip
     @FXML private ListView<CustomerSummary> recentCustomersList;
     @FXML private ListView<LoanSummary> recentLoansList;
-    @FXML private Label summaryTotalLabel;
-    @FXML private Label summaryAwaitingLabel;
-    @FXML private Label summaryIncompleteLabel;
-    @FXML private Label summaryStatusLabel;
+    @FXML private Label summaryTotalsLabel;
+    @FXML private Pane summaryBubblePane;
+    @FXML private Label summaryProgressLabel;
+    @FXML private ProgressBar summaryProgressBar;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -90,9 +96,9 @@ public class DashboardController {
     private CustomerEmailService emailService;
 
     // ---- Customer list layout (the header labels in dashboard.fxml use the same widths) ----
-    private static final double ROW_HEIGHT = 34.0;
+    private static final double ROW_HEIGHT = 40.0;
     private static final double NAME_WIDTH = 140.0;
-    private static final double ID_WIDTH = 100.0;
+    private static final double ID_WIDTH = 95.0;
 
     // ---- Recent lists layout ----
     private static final double RECENT_ROW_HEIGHT = 40.0;
@@ -103,12 +109,19 @@ public class DashboardController {
     /** Load every customer's primary email in the background so email search is complete. */
     private static final boolean PREFETCH_EMAILS = true;
 
-    private static final String ROW_STYLE =
-            "-fx-background-color: white; -fx-padding: 0;"
-            + " -fx-border-color: transparent transparent #ECEAF3 transparent;";
-    private static final String ROW_HOVER_STYLE =
-            "-fx-background-color: #FDE7C7; -fx-padding: 0;"
-            + " -fx-border-color: transparent transparent #ECEAF3 transparent;";
+    // ---- Loan Summary bubbles ----
+    private static final double BUBBLE_AREA_WIDTH = 432.0;
+    private static final double BUBBLE_AREA_HEIGHT = 120.0;
+    private static final double BUBBLE_MAX = 116.0;
+    private static final double BUBBLE_MIN = 38.0;
+    private static final double BUBBLE_OVERLAP = 6.0;
+
+    /** Colours handed out to statuses (the awaiting-verification status is always orange). */
+    private static final String[] STATUS_COLORS = {
+        "navy", "lavender", "crimson", "navy-soft", "lavender-soft", "crimson-soft"
+    };
+    /** Each status keeps the same colour for the whole session, in the table and in the bubbles. */
+    private static final Map<String, Integer> STATUS_COLOR_INDEX = new LinkedHashMap<>();
 
     // ---- Recently opened items. Static so they survive the dashboard being rebuilt when the
     // user comes back from a customer screen; cleared on sign out. ----
@@ -150,7 +163,7 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
-        placeholder.setStyle("-fx-text-fill: #726E97; -fx-font-size: 13;");
+        placeholder.getStyleClass().add("empty-note");
 
         customerListView.setItems(visibleCustomers);
         customerListView.setPlaceholder(placeholder);
@@ -171,7 +184,7 @@ public class DashboardController {
     }
 
     private void setupLoanTable() {
-        loanPlaceholder.setStyle("-fx-text-fill: #726E97; -fx-font-size: 12;");
+        loanPlaceholder.getStyleClass().add("empty-note");
         loanPlaceholder.setWrapText(true);
         loanPlaceholder.setMaxWidth(300);
         loanTable.setItems(visibleLoans);
@@ -192,14 +205,38 @@ public class DashboardController {
         loanCustomerColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCustomerName()));
         loanStatusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
 
+        // status shown as a coloured dot followed by the status text
+        loanStatusColumn.setCellFactory(col -> new TableCell<>() {
+            private final Circle dot = new Circle(4);
+            private final Label text = new Label();
+            private final HBox box = new HBox(8, dot, text);
+            {
+                box.setAlignment(Pos.CENTER_LEFT);
+                text.getStyleClass().add("cell-body");
+            }
+
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null || status.isBlank()) {
+                    setText(null);
+                    setGraphic(null);
+                    return;
+                }
+                dot.getStyleClass().setAll("color-" + statusColor(status));
+                text.setText(status);
+                setText(null);
+                setGraphic(box);
+            }
+        });
+
         // principal can be missing (the mainframe sent nothing usable), so show a dash
         loanPrincipalColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getPrincipal()));
         loanPrincipalColumn.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty) {
                 super.updateItem(value, empty);
-                setText(empty ? null : value == null ? "-" : String.format("%,.2f", value));
-                setAlignment(Pos.CENTER_RIGHT);
+                setText(empty ? null : value == null ? "-" : String.format("$%,.2f", value));
             }
         });
         // dates are shown as the mainframe sends them, so they sort correctly if they are yyyy-MM-dd
@@ -242,7 +279,7 @@ public class DashboardController {
 
     private Label emptyNote(String text) {
         Label note = new Label(text);
-        note.setStyle("-fx-text-fill: #726E97; -fx-font-size: 12;");
+        note.getStyleClass().add("empty-note");
         return note;
     }
 
@@ -533,25 +570,128 @@ public class DashboardController {
     /** Fills the Loan Summary card; the figures come from the business layer. */
     private void updateSummary() {
         if (customerService == null) {   // dashboard is built before the services are handed over
-            summaryTotalLabel.setText("-");
-            summaryAwaitingLabel.setText("-");
-            summaryIncompleteLabel.setText("-");
-            summaryStatusLabel.setText("-");
+            summaryTotalsLabel.setText("-");
+            summaryBubblePane.getChildren().clear();
+            summaryProgressBar.setProgress(0);
+            summaryProgressLabel.setText("-");
             return;
         }
         LoanStats stats = customerService.summariseLoans(allLoans);
-        summaryTotalLabel.setText(String.valueOf(stats.getTotal()));
-        summaryAwaitingLabel.setText(String.valueOf(stats.getAwaitingVerification()));
-        summaryIncompleteLabel.setText(String.valueOf(stats.getIncompleteInformation()));
+        int total = stats.getTotal();
+        summaryTotalsLabel.setText(total == 0 ? "-"
+                : total + (total == 1 ? " loan" : " loans")
+                        + "  |  $" + compactAmount(stats.getTotalPrincipal()) + " total");
 
-        StringBuilder byStatus = new StringBuilder();
-        for (Map.Entry<String, Integer> entry : stats.getByStatus().entrySet()) {
-            if (byStatus.length() > 0) {
-                byStatus.append("   |   ");
-            }
-            byStatus.append(entry.getKey()).append(' ').append(entry.getValue());
+        renderBubbles(stats);
+
+        double progress = stats.getVerificationProgress();
+        summaryProgressBar.setProgress(progress);
+        summaryProgressLabel.setText(total == 0 ? "-" : Math.round(progress * 100) + "% complete");
+    }
+
+    /** Draws one bubble per status, sized by its share of all loans (area follows the share). */
+    private void renderBubbles(LoanStats stats) {
+        summaryBubblePane.getChildren().clear();
+        List<LoanStats.StatusShare> shares = stats.getShares();
+        if (shares.isEmpty()) {
+            Label none = new Label("No loans to show yet");
+            none.getStyleClass().add("empty-note");
+            none.setPrefWidth(BUBBLE_AREA_WIDTH);
+            none.setAlignment(Pos.CENTER);
+            none.setLayoutY(50);
+            summaryBubblePane.getChildren().add(none);
+            return;
         }
-        summaryStatusLabel.setText(byStatus.length() == 0 ? "-" : byStatus.toString());
+
+        int n = shares.size();
+        double biggest = shares.get(0).getPercent();
+        double[] size = new double[n];
+        double sum = 0;
+        for (int i = 0; i < n; i++) {
+            size[i] = Math.max(BUBBLE_MIN, BUBBLE_MAX * Math.sqrt(shares.get(i).getPercent() / biggest));
+            sum += size[i];
+        }
+        double overlaps = BUBBLE_OVERLAP * (n - 1);
+        double total = sum - overlaps;
+        if (total > BUBBLE_AREA_WIDTH) {   // lots of statuses: shrink everything to fit
+            double scale = (BUBBLE_AREA_WIDTH + overlaps) / sum;
+            for (int i = 0; i < n; i++) {
+                size[i] *= scale;
+            }
+            total = BUBBLE_AREA_WIDTH;
+        }
+
+        // biggest bubble in the middle, the rest alternate bottom / top so they cluster together
+        double x = (BUBBLE_AREA_WIDTH - total) / 2;
+        for (int i = 0; i < n; i++) {
+            double d = size[i];
+            double y = i == 0 ? (BUBBLE_AREA_HEIGHT - d) / 2
+                    : i % 2 == 1 ? BUBBLE_AREA_HEIGHT - d : 0;
+            summaryBubblePane.getChildren().add(bubble(shares.get(i), d, x, y));
+            x += d - BUBBLE_OVERLAP;
+        }
+    }
+
+    private StackPane bubble(LoanStats.StatusShare share, double diameter, double x, double y) {
+        String color = statusColor(share.getStatus());
+        String textClass = "orange".equals(color) ? "bubble-dark-text" : "bubble-light-text";
+
+        Circle circle = new Circle(diameter / 2);
+        circle.getStyleClass().addAll("bubble", "color-" + color);
+
+        Label percent = new Label(formatPercent(share.getPercent()));
+        percent.getStyleClass().addAll("bubble-percent", textClass);
+        percent.setStyle(String.format("-fx-font-size: %.0fpx;",
+                Math.max(11, Math.min(26, diameter * 0.26))));
+
+        VBox text = new VBox(0, percent);
+        text.setAlignment(Pos.CENTER);
+        text.setMouseTransparent(true);
+        if (diameter >= 72) {   // small bubbles only have room for the percentage
+            Label name = new Label(share.getStatus());
+            name.getStyleClass().addAll("bubble-name", textClass);
+            name.setMaxWidth(diameter - 16);
+            text.getChildren().add(name);
+        }
+
+        StackPane bubble = new StackPane(circle, text);
+        bubble.setLayoutX(x);
+        bubble.setLayoutY(y);
+        int count = share.getCount();
+        Tooltip.install(bubble, new Tooltip(share.getStatus() + ": " + count
+                + (count == 1 ? " loan" : " loans") + " (" + formatPercent(share.getPercent()) + ")"));
+        return bubble;
+    }
+
+    private static String formatPercent(double percent) {
+        return percent > 0 && percent < 1 ? "<1%" : Math.round(percent) + "%";
+    }
+
+    /** Colour name for a status; the same status always gets the same colour. */
+    private String statusColor(String status) {
+        if (customerService != null && customerService.isAwaitingVerification(status)) {
+            return "orange";
+        }
+        String key = status.trim().toLowerCase();
+        Integer index = STATUS_COLOR_INDEX.get(key);
+        if (index == null) {
+            index = STATUS_COLOR_INDEX.size();
+            STATUS_COLOR_INDEX.put(key, index);
+        }
+        return STATUS_COLORS[index % STATUS_COLORS.length];
+    }
+
+    /** 1234567 becomes "1.2M" so big totals still fit in the tile. */
+    private static String compactAmount(double amount) {
+        double abs = Math.abs(amount);
+        if (abs >= 1_000_000_000) {
+            return String.format("%.1fB", amount / 1_000_000_000);
+        } else if (abs >= 1_000_000) {
+            return String.format("%.1fM", amount / 1_000_000);
+        } else if (abs >= 10_000) {
+            return String.format("%.0fK", amount / 1_000);
+        }
+        return String.format("%,.0f", amount);
     }
 
     // ------------------------------------------------------------------
@@ -605,7 +745,7 @@ public class DashboardController {
     // ------------------------------------------------------------------
 
     private class CustomerCell extends ListCell<CustomerSummary> {
-        private final HBox row = new HBox();
+        private final HBox row = new HBox(10);
         private final Label nameLabel = new Label();
         private final Label idLabel = new Label();
         private final Label emailLabel = new Label();
@@ -620,22 +760,15 @@ public class DashboardController {
             emailLabel.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(emailLabel, Priority.ALWAYS);
 
-            nameLabel.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto Bold'; -fx-font-size: 13;");
-            idLabel.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto'; -fx-font-size: 13;");
-            emailLabel.setStyle("-fx-text-fill: #726E97; -fx-font-family: 'Roboto'; -fx-font-size: 13;");
+            nameLabel.getStyleClass().add("cell-primary");
+            idLabel.getStyleClass().add("cell-body");
+            emailLabel.getStyleClass().add("cell-secondary");
 
             row.setAlignment(Pos.CENTER_LEFT);
             row.setPadding(new Insets(0, 10, 0, 10));
             row.setPrefHeight(ROW_HEIGHT);
             row.getChildren().addAll(nameLabel, idLabel, emailLabel);
 
-            setStyle(ROW_STYLE);
-            setOnMouseEntered(e -> {
-                if (!isEmpty()) {
-                    setStyle(ROW_HOVER_STYLE);
-                }
-            });
-            setOnMouseExited(e -> setStyle(ROW_STYLE));
             setOnMouseClicked(e -> {
                 CustomerSummary customer = getItem();
                 if (!isEmpty() && customer != null) {
@@ -664,33 +797,27 @@ public class DashboardController {
     }
 
     // ------------------------------------------------------------------
-    // One row in the Recent Customers / Recent Loans lists (two lines: title + detail)
+    // One row in the Recent Customers / Recent Loans lists (title + detail)
     // ------------------------------------------------------------------
 
     private static class RecentCell<T> extends ListCell<T> {
-        private final VBox box = new VBox(2);
+        private final VBox texts = new VBox(2);
         private final Label primary = new Label();
         private final Label secondary = new Label();
         private final Function<T, String> primaryText;
         private final Function<T, String> secondaryText;
 
-        RecentCell(Function<T, String> primaryText, Function<T, String> secondaryText, Consumer<T> onClick) {
+        RecentCell(Function<T, String> primaryText, Function<T, String> secondaryText,
+                Consumer<T> onClick) {
             this.primaryText = primaryText;
             this.secondaryText = secondaryText;
 
-            primary.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto Bold'; -fx-font-size: 13;");
-            secondary.setStyle("-fx-text-fill: #726E97; -fx-font-family: 'Roboto'; -fx-font-size: 11;");
-            box.setAlignment(Pos.CENTER_LEFT);
-            box.setPadding(new Insets(0, 10, 0, 10));
-            box.getChildren().addAll(primary, secondary);
+            primary.getStyleClass().add("cell-primary");
+            secondary.getStyleClass().add("cell-secondary");
+            texts.setAlignment(Pos.CENTER_LEFT);
+            texts.setPadding(new Insets(0, 10, 0, 10));
+            texts.getChildren().addAll(primary, secondary);
 
-            setStyle(ROW_STYLE);
-            setOnMouseEntered(e -> {
-                if (!isEmpty()) {
-                    setStyle(ROW_HOVER_STYLE);
-                }
-            });
-            setOnMouseExited(e -> setStyle(ROW_STYLE));
             setOnMouseClicked(e -> {
                 T item = getItem();
                 if (!isEmpty() && item != null) {
@@ -712,7 +839,7 @@ public class DashboardController {
             primary.setText(primaryText.apply(item));
             secondary.setText(secondaryText.apply(item));
             setText(null);
-            setGraphic(box);
+            setGraphic(texts);
             setCursor(Cursor.HAND);
         }
     }
