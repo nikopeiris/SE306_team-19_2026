@@ -3,9 +3,11 @@ package business.system;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
@@ -189,26 +191,70 @@ public class Customer {
 
         java.util.List<CustomerSummary> all = new ArrayList<>(byNumber.values());
         all.sort(Comparator
-                .comparing((CustomerSummary c) -> c.getFirstName().toLowerCase())
-                .thenComparing(c -> c.getFamilyName().toLowerCase()));
+                .comparing((CustomerSummary c) -> lower(c.getFirstName()))
+                .thenComparing(c -> lower(c.getFamilyName())));
         return all;
     }
 
-    /** Pages through every result of one search and adds the customers to the map. */
+    /**
+     * Searches the mainframe for customers by name. The mainframe only matches WHOLE
+     * words: a first name, a family name, or both ("jeff bib"). Partial words such as
+     * "jef", wildcards and customer numbers find nothing.
+     *
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public List<CustomerSummary> searchCustomers(String term) throws IOException, LavsException {
+        if (term == null || term.isBlank()) {
+            return new ArrayList<>();
+        }
+        Map<String, CustomerSummary> found = new LinkedHashMap<>();
+        collectCustomers(term.trim(), found);
+        List<CustomerSummary> result = new ArrayList<>(found.values());
+        result.sort(Comparator
+                .comparing((CustomerSummary c) -> lower(c.getFirstName()))
+                .thenComparing(c -> lower(c.getFamilyName())));
+        return result;
+    }
+
+    /** Looks one customer up by number and returns the name details the list needs. */
+    public CustomerSummary findCustomerSummary(String number) throws IOException, LavsException {
+        Retrieve r = retrieveCustomer(number);
+        return new CustomerSummary(
+                number.trim(),
+                r.getFirstName() == null ? "" : r.getFirstName(),
+                r.getFamilyName() == null ? "" : r.getFamilyName());
+    }
+
+    /** Null-safe lower-casing, so a customer without a name cannot break sorting. */
+    private static String lower(String s) {
+        return s == null ? "" : s.toLowerCase();
+    }
+
+    /**
+     * Pages through every result of one search and adds the customers to the map.
+     * The mainframe returns fewer items per page than we ask for (50, not 100), so a short
+     * page does NOT mean "last page". We keep going until a page adds nothing new.
+     */
     private void collectCustomers(String search, Map<String, CustomerSummary> into)
             throws IOException, LavsException {
+        Set<String> seenThisSearch = new HashSet<>();
         long page = 1;
         while (page <= MAX_LIST_PAGES) {
             Search.Item[] items = listCustomers(page, search, LIST_PAGE_SIZE);
             if (items == null || items.length == 0) {
                 break;
             }
+            boolean anyNew = false;
             for (Search.Item item : items) {
                 CustomerSummary summary = toSummary(item);
+                if (seenThisSearch.add(summary.getNumber())) {
+                    anyNew = true;
+                }
                 into.putIfAbsent(summary.getNumber(), summary);
             }
-            if (items.length < LIST_PAGE_SIZE) {
-                break;   // last page
+            if (!anyNew) {
+                break;   // the server repeated a page, so there is nothing more
             }
             page++;
         }
