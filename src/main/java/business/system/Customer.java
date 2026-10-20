@@ -19,6 +19,7 @@ import business.system.dto.CustomerDocument;
 import business.system.dto.CustomerSummary;
 import business.system.dto.LoanCoborrower;
 import business.system.dto.LoanListResult;
+import business.system.dto.LoanStats;
 import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -42,6 +43,7 @@ public class Customer {
     /** Created on first use: it builds a Coborrower, which is itself a Customer. */
     private LoanCoborrowerService loanCoborrowerService;
     private final CustomerDocumentService documentService;
+    private final LoanStatsService loanStatsService;
     /** How many customers to ask the mainframe for per request. */
     private static final long LIST_PAGE_SIZE = 100L;
     
@@ -64,6 +66,7 @@ public class Customer {
         this.loanStatusService = new LoanStatusService(customerAdapter);
         this.loanDetailsService = new LoanDetailsService(customerAdapter);
         this.documentService = new CustomerDocumentService(customerAdapter);
+        this.loanStatsService = new LoanStatsService();
     }
 
     /**
@@ -349,6 +352,29 @@ public class Customer {
     /** Narrows a loan list by loan number; a blank query returns the whole list. */
     public List<LoanSummary> filterLoansByNumber(List<LoanSummary> loans, String query) {
         return loanSearchService.filterByLoanNumber(loans, query);
+    }
+
+    /**
+     * Narrows a loan list by loan number and by status. A blank number query and a
+     * null/blank status each mean "no filter".
+     */
+    public List<LoanSummary> filterLoans(List<LoanSummary> loans, String numberQuery, String status) {
+        return loanStatsService.filterByStatus(filterLoansByNumber(loans, numberQuery), status);
+    }
+
+    /** The distinct statuses present in the given loans, for the dashboard's status filter. */
+    public List<String> loanStatusesIn(List<LoanSummary> loans) {
+        return loanStatsService.statusesIn(loans);
+    }
+
+    /** Totals, awaiting-verification count, total principal, and counts per status. */
+    public LoanStats summariseLoans(List<LoanSummary> loans) {
+        return loanStatsService.summarise(loans);
+    }
+
+    /** True when a loan with this status is waiting to be checked. */
+    public boolean isAwaitingVerification(String status) {
+        return loanStatsService.isAwaitingVerification(status);
     }
 
     /** The loan tab's business service: form choices, adding a loan, and reading loan details. */

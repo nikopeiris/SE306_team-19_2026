@@ -28,6 +28,7 @@ public class CustomerController {
     private Pane contactInfoPane;
     @FXML
     private Pane loanPane;
+    private Runnable onCloseAction;
 
     // Sub-controllers injected via JavaFX fx:id naming conventions
     // (matches fx:id of the fx:include tag + "Controller")
@@ -65,6 +66,10 @@ public class CustomerController {
     public void setServices(LoginService loginService, Customer customerService,
             CustomerEmailService emailService) {
         context.setServices(loginService, customerService, emailService);
+    }
+
+    public void setOnCloseAction(Runnable onCloseAction) {
+        this.onCloseAction = onCloseAction;
     }
 
     // ------------------------------------------------------------------
@@ -210,17 +215,8 @@ public class CustomerController {
     // ------------------------------------------------------------------
 
     private void goToDashboard() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/lavs/ui/dashboard.fxml"));
-            Parent root = loader.load();
-
-            DashboardController dashboard = loader.getController();
-            dashboard.setServices(context.getLoginService(), context.getCustomerService(),
-                    context.getEmailService());
-
-            switchScene(root, "Mainframe Interface - Dashboard");
-        } catch (Exception ex) {
-            showError("Navigation Error", "Could not return to dashboard", ex);
+        if (onCloseAction != null) {
+            onCloseAction.run();
         }
     }
 
