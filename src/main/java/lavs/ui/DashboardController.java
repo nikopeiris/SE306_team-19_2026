@@ -10,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import business.lavsexceptions.LavsException;
 import business.system.Customer;
@@ -17,10 +19,12 @@ import business.system.LoginService;
 import business.system.customer.CustomerEmailService;
 import business.system.dto.CustomerSummary;
 import business.system.dto.LoanListResult;
+import business.system.dto.LoanStats;
 import business.system.dto.LoanSummary;
 import business.validation.ValidationException;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -36,15 +40,18 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -55,15 +62,27 @@ public class DashboardController {
     @FXML
     private ListView<CustomerSummary> customerListView;
     @FXML private Button addCustomerButton;
+    @FXML private Button reloadCustomersButton;
 
-    // Bottom-right "Search for Loan" box: the search field filters the loans table under it
+    // Loans card: the search box and type filter narrow the table under them
     @FXML private TextField loanSearchField;
+    @FXML private ComboBox<String> loanStatusFilter;
     @FXML private Label loanStatusLabel;
     @FXML private TableView<LoanSummary> loanTable;
     @FXML private TableColumn<LoanSummary, String> loanIdColumn;
     @FXML private TableColumn<LoanSummary, String> loanCustomerColumn;
+    @FXML private TableColumn<LoanSummary, Double> loanPrincipalColumn;
+    @FXML private TableColumn<LoanSummary, String> loanDateColumn;
     @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
     @FXML private Button changeStatusButton;
+
+    // Bottom strip
+    @FXML private ListView<CustomerSummary> recentCustomersList;
+    @FXML private ListView<LoanSummary> recentLoansList;
+    @FXML private Label summaryTotalLabel;
+    @FXML private Label summaryAwaitingLabel;
+    @FXML private Label summaryIncompleteLabel;
+    @FXML private Label summaryStatusLabel;
 
     // Business layer: the UI never talks to the mainframe adapter directly
     private LoginService loginService;
@@ -72,18 +91,29 @@ public class DashboardController {
 
     // ---- Customer list layout (the header labels in dashboard.fxml use the same widths) ----
     private static final double ROW_HEIGHT = 34.0;
-    private static final double NAME_WIDTH = 290.0;
-    private static final double ID_WIDTH = 170.0;
+    private static final double NAME_WIDTH = 140.0;
+    private static final double ID_WIDTH = 100.0;
+
+    // ---- Recent lists layout ----
+    private static final double RECENT_ROW_HEIGHT = 40.0;
+    private static final int MAX_RECENT = 8;
+
+    private static final String ALL_STATUSES = "All statuses";
 
     /** Load every customer's primary email in the background so email search is complete. */
     private static final boolean PREFETCH_EMAILS = true;
 
     private static final String ROW_STYLE =
             "-fx-background-color: white; -fx-padding: 0;"
-            + " -fx-border-color: transparent transparent #ececec transparent;";
+            + " -fx-border-color: transparent transparent #ECEAF3 transparent;";
     private static final String ROW_HOVER_STYLE =
-            "-fx-background-color: #fde9c8; -fx-padding: 0;"
-            + " -fx-border-color: transparent transparent #ececec transparent;";
+            "-fx-background-color: #FDE7C7; -fx-padding: 0;"
+            + " -fx-border-color: transparent transparent #ECEAF3 transparent;";
+
+    // ---- Recently opened items. Static so they survive the dashboard being rebuilt when the
+    // user comes back from a customer screen; cleared on sign out. ----
+    private static final ObservableList<CustomerSummary> RECENT_CUSTOMERS = FXCollections.observableArrayList();
+    private static final ObservableList<LoanSummary> RECENT_LOANS = FXCollections.observableArrayList();
 
     // ---- Customer list data ----
     private final ObservableList<CustomerSummary> allCustomers = FXCollections.observableArrayList();
@@ -120,7 +150,7 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
-        placeholder.setStyle("-fx-text-fill: #726e97; -fx-font-size: 13;");
+        placeholder.setStyle("-fx-text-fill: #726E97; -fx-font-size: 13;");
 
         customerListView.setItems(visibleCustomers);
         customerListView.setPlaceholder(placeholder);
@@ -136,12 +166,14 @@ public class DashboardController {
         });
 
         setupLoanTable();
+        setupRecentLists();
+        updateSummary();
     }
 
     private void setupLoanTable() {
-        loanPlaceholder.setStyle("-fx-text-fill: #726e97; -fx-font-size: 12;");
+        loanPlaceholder.setStyle("-fx-text-fill: #726E97; -fx-font-size: 12;");
         loanPlaceholder.setWrapText(true);
-        loanPlaceholder.setMaxWidth(180);
+        loanPlaceholder.setMaxWidth(300);
         loanTable.setItems(visibleLoans);
         loanTable.setPlaceholder(loanPlaceholder);
 
@@ -160,13 +192,58 @@ public class DashboardController {
         loanCustomerColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getCustomerName()));
         loanStatusColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().getStatus()));
 
+        // principal can be missing (the mainframe sent nothing usable), so show a dash
+        loanPrincipalColumn.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue().getPrincipal()));
+        loanPrincipalColumn.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double value, boolean empty) {
+                super.updateItem(value, empty);
+                setText(empty ? null : value == null ? "-" : String.format("%,.2f", value));
+                setAlignment(Pos.CENTER_RIGHT);
+            }
+        });
+        // dates are shown as the mainframe sends them, so they sort correctly if they are yyyy-MM-dd
+        loanDateColumn.setCellValueFactory(c -> {
+            String date = c.getValue().getStartDate();
+            return new ReadOnlyStringWrapper(date == null || date.isBlank() ? "-" : date);
+        });
+
         // typing narrows the loans straight away; an empty box shows every loan
         loanSearchField.textProperty().addListener((obs, oldText, newText) -> showLoans());
+
+        // status filter: "All statuses" plus the statuses found in the loaded loans
+        loanStatusFilter.getItems().setAll(ALL_STATUSES);
+        loanStatusFilter.setValue(ALL_STATUSES);
+        loanStatusFilter.valueProperty().addListener((obs, oldValue, newValue) -> showLoans());
 
         // a loan has to be picked before its status can be changed
         changeStatusButton.disableProperty().bind(
                 loanTable.getSelectionModel().selectedItemProperty().isNull());
         updateLoanStatusLabel();
+    }
+
+    private void setupRecentLists() {
+        recentCustomersList.setItems(RECENT_CUSTOMERS);
+        recentCustomersList.setFixedCellSize(RECENT_ROW_HEIGHT);
+        recentCustomersList.setPlaceholder(emptyNote("No recent customers yet"));
+        recentCustomersList.setCellFactory(lv -> new RecentCell<CustomerSummary>(
+                CustomerSummary::getFullName,
+                CustomerSummary::getNumber,
+                this::handleCustomerSelected));
+
+        recentLoansList.setItems(RECENT_LOANS);
+        recentLoansList.setFixedCellSize(RECENT_ROW_HEIGHT);
+        recentLoansList.setPlaceholder(emptyNote("No recent loans yet"));
+        recentLoansList.setCellFactory(lv -> new RecentCell<LoanSummary>(
+                LoanSummary::getLoanNumber,
+                loan -> loan.getCustomerName() + "  |  " + loan.getStatus(),
+                this::openLoanSummary));
+    }
+
+    private Label emptyNote(String text) {
+        Label note = new Label(text);
+        note.setStyle("-fx-text-fill: #726E97; -fx-font-size: 12;");
+        return note;
     }
 
     @FXML
@@ -180,20 +257,24 @@ public class DashboardController {
     }
 
     private void openLoanSummary(LoanSummary loan) {
+        remember(RECENT_LOANS, loan, LoanSummary::getLoanNumber);
         LoanSummaryController.show(loanTable.getScene().getWindow(), customerService,
                 loan.getLoanNumber(), null);
     }
 
     /** Shows the changed status without reloading every customer's loans. */
     private void showNewStatus(LoanSummary loan, String newStatus) {
+        LoanSummary updated = loan.withStatus(newStatus);
         int index = allLoans.indexOf(loan);
         if (index >= 0) {
-            allLoans.set(index, loan.withStatus(newStatus));
+            allLoans.set(index, updated);
         }
+        remember(RECENT_LOANS, updated, LoanSummary::getLoanNumber);
+        populateLoanStatuses();
         showLoans();
     }
 
-    // add custoemr button
+    // add customer button
     @FXML
     private void handleAddCustomer(ActionEvent event) {
         try {
@@ -221,6 +302,20 @@ public class DashboardController {
         this.customerService = customerService;
         this.emailService = emailService;
         loadCustomers();
+    }
+
+    // ------------------------------------------------------------------
+    // Recently opened customers / loans (pure screen history, no business rules)
+    // ------------------------------------------------------------------
+
+    /** Moves the item to the top of the list, drops duplicates and keeps the list short. */
+    private static <T> void remember(ObservableList<T> list, T item, Function<T, String> key) {
+        String id = key.apply(item);
+        list.removeIf(existing -> key.apply(existing).equals(id));
+        list.add(0, item);
+        while (list.size() > MAX_RECENT) {
+            list.remove(list.size() - 1);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -318,6 +413,7 @@ public class DashboardController {
         visibleLoans.clear();
         updateLoanPlaceholder();
         updateLoanStatusLabel();
+        updateSummary();
 
         Task<LoanListResult> task = new Task<>() {
             @Override
@@ -351,6 +447,7 @@ public class DashboardController {
                     loanLoadError = result.getFirstError();
                 }
             }
+            populateLoanStatuses();
             showLoans();
         });
 
@@ -360,6 +457,7 @@ public class DashboardController {
             }
             loadingLoans = false;
             loanLoadError = describe(task.getException());
+            populateLoanStatuses();
             showLoans();
         });
 
@@ -380,9 +478,26 @@ public class DashboardController {
     }
 
     private void showLoans() {
-        visibleLoans.setAll(customerService.filterLoansByNumber(allLoans, loanSearchField.getText()));
+        visibleLoans.setAll(customerService.filterLoans(
+                allLoans, loanSearchField.getText(), selectedLoanStatus()));
         updateLoanPlaceholder();
         updateLoanStatusLabel();
+        updateSummary();
+    }
+
+    /** The status picked in the filter, or null when "All statuses" is selected. */
+    private String selectedLoanStatus() {
+        String value = loanStatusFilter.getValue();
+        return value == null || ALL_STATUSES.equals(value) ? null : value;
+    }
+
+    /** Refreshes the status filter from the loans that are loaded, keeping the current pick if it still exists. */
+    private void populateLoanStatuses() {
+        String current = selectedLoanStatus();
+        List<String> statuses = customerService.loanStatusesIn(allLoans);
+        loanStatusFilter.getItems().setAll(ALL_STATUSES);
+        loanStatusFilter.getItems().addAll(statuses);
+        loanStatusFilter.setValue(current != null && statuses.contains(current) ? current : ALL_STATUSES);
     }
 
     private void updateLoanPlaceholder() {
@@ -413,6 +528,30 @@ public class DashboardController {
             }
         }
         loanStatusLabel.setText(text);
+    }
+
+    /** Fills the Loan Summary card; the figures come from the business layer. */
+    private void updateSummary() {
+        if (customerService == null) {   // dashboard is built before the services are handed over
+            summaryTotalLabel.setText("-");
+            summaryAwaitingLabel.setText("-");
+            summaryIncompleteLabel.setText("-");
+            summaryStatusLabel.setText("-");
+            return;
+        }
+        LoanStats stats = customerService.summariseLoans(allLoans);
+        summaryTotalLabel.setText(String.valueOf(stats.getTotal()));
+        summaryAwaitingLabel.setText(String.valueOf(stats.getAwaitingVerification()));
+        summaryIncompleteLabel.setText(String.valueOf(stats.getIncompleteInformation()));
+
+        StringBuilder byStatus = new StringBuilder();
+        for (Map.Entry<String, Integer> entry : stats.getByStatus().entrySet()) {
+            if (byStatus.length() > 0) {
+                byStatus.append("   |   ");
+            }
+            byStatus.append(entry.getKey()).append(' ').append(entry.getValue());
+        }
+        summaryStatusLabel.setText(byStatus.length() == 0 ? "-" : byStatus.toString());
     }
 
     // ------------------------------------------------------------------
@@ -483,10 +622,10 @@ public class DashboardController {
 
             nameLabel.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto Bold'; -fx-font-size: 13;");
             idLabel.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto'; -fx-font-size: 13;");
-            emailLabel.setStyle("-fx-text-fill: #3b3a7d; -fx-font-family: 'Roboto'; -fx-font-size: 13;");
+            emailLabel.setStyle("-fx-text-fill: #726E97; -fx-font-family: 'Roboto'; -fx-font-size: 13;");
 
             row.setAlignment(Pos.CENTER_LEFT);
-            row.setPadding(new Insets(0, 12, 0, 12));
+            row.setPadding(new Insets(0, 10, 0, 10));
             row.setPrefHeight(ROW_HEIGHT);
             row.getChildren().addAll(nameLabel, idLabel, emailLabel);
 
@@ -525,6 +664,60 @@ public class DashboardController {
     }
 
     // ------------------------------------------------------------------
+    // One row in the Recent Customers / Recent Loans lists (two lines: title + detail)
+    // ------------------------------------------------------------------
+
+    private static class RecentCell<T> extends ListCell<T> {
+        private final VBox box = new VBox(2);
+        private final Label primary = new Label();
+        private final Label secondary = new Label();
+        private final Function<T, String> primaryText;
+        private final Function<T, String> secondaryText;
+
+        RecentCell(Function<T, String> primaryText, Function<T, String> secondaryText, Consumer<T> onClick) {
+            this.primaryText = primaryText;
+            this.secondaryText = secondaryText;
+
+            primary.setStyle("-fx-text-fill: #011936; -fx-font-family: 'Roboto Bold'; -fx-font-size: 13;");
+            secondary.setStyle("-fx-text-fill: #726E97; -fx-font-family: 'Roboto'; -fx-font-size: 11;");
+            box.setAlignment(Pos.CENTER_LEFT);
+            box.setPadding(new Insets(0, 10, 0, 10));
+            box.getChildren().addAll(primary, secondary);
+
+            setStyle(ROW_STYLE);
+            setOnMouseEntered(e -> {
+                if (!isEmpty()) {
+                    setStyle(ROW_HOVER_STYLE);
+                }
+            });
+            setOnMouseExited(e -> setStyle(ROW_STYLE));
+            setOnMouseClicked(e -> {
+                T item = getItem();
+                if (!isEmpty() && item != null) {
+                    getListView().getSelectionModel().clearSelection();
+                    onClick.accept(item);
+                }
+            });
+        }
+
+        @Override
+        protected void updateItem(T item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+                setCursor(Cursor.DEFAULT);
+                return;
+            }
+            primary.setText(primaryText.apply(item));
+            secondary.setText(secondaryText.apply(item));
+            setText(null);
+            setGraphic(box);
+            setCursor(Cursor.HAND);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // Clicking a customer
     // ------------------------------------------------------------------
 
@@ -537,6 +730,7 @@ public class DashboardController {
             CustomerController controller = loader.getController();
             controller.setServices(loginService, customerService, emailService);
             controller.loadCustomer(customer.getNumber());
+            remember(RECENT_CUSTOMERS, customer, CustomerSummary::getNumber);
 
             Stage stage = (Stage) customerListView.getScene().getWindow();
             Scene scene = new Scene(root);
@@ -555,6 +749,10 @@ public class DashboardController {
     private void handleSignOut(ActionEvent event) {
         signOutButton.setDisable(true);
         stopBackgroundWork();
+
+        // the next person to log in should not see this user's recent items
+        RECENT_CUSTOMERS.clear();
+        RECENT_LOANS.clear();
 
         // Run on a background thread in case logging out makes a network call
         Task<Void> logoutTask = new Task<>() {
@@ -623,7 +821,7 @@ public class DashboardController {
     @FXML
     private void handleReloadCustomers(ActionEvent event) {
         if (loadingCustomers) return; // Prevent overlapping reload calls
-        
+
         // Clear existing caches to force a fresh fetch
         emailCache.clear();
         emailFailed.clear();
@@ -632,6 +830,5 @@ public class DashboardController {
 
         loadCustomers();
     }
-
 
 }
