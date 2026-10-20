@@ -49,6 +49,10 @@ public class CustomerEmployerService {
             String type) throws IOException, LavsException {
         buildEmployerValidation(salary, type)
                 .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("name", name, "Employer name cannot be empty")
+                .requireNotBlank("position", position, "Position cannot be empty")
+                .requireNotBlank("salary", salary == null ? null : salary.toString(),
+                        "Salary cannot be empty")
                 .throwIfInvalid();
 
         AddEmployer addMessage = new AddEmployer(
@@ -78,6 +82,10 @@ public class CustomerEmployerService {
             String type) throws IOException, LavsException {
         buildEmployerValidation(salary, type)
                 .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("name", name, "Employer name cannot be empty")
+                .requireNotBlank("position", position, "Position cannot be empty")
+                .requireNotBlank("salary", salary == null ? null : salary.toString(),
+                        "Salary cannot be empty")
                 .requirePositive("employerId", id, "Employer id")
                 .throwIfInvalid();
 
@@ -156,9 +164,7 @@ public class CustomerEmployerService {
     /**
      * Validates the fields of an employer without sending it to the mainframe.
      * Static so the UI can check a form before a customer (and their number) exists.
-     * Nothing is required; a salary or type, if given, must be valid. The customer,
-     * name and position parameters are accepted for compatibility with existing
-     * callers but are not checked.
+     * Customer, name, position, salary and type are required; zero salary is valid.
      *
      * @throws ValidationException if the salary or the employer type is invalid
      */
@@ -168,7 +174,13 @@ public class CustomerEmployerService {
             String position,
             Double salary,
             String type) throws ValidationException {
-        buildEmployerValidation(salary, type).throwIfInvalid();
+        buildEmployerValidation(salary, type)
+                .requireNotBlank("customer", customer, "Customer cannot be empty")
+                .requireNotBlank("name", name, "Employer name cannot be empty")
+                .requireNotBlank("position", position, "Position cannot be empty")
+                .requireNotBlank("salary", salary == null ? null : salary.toString(),
+                        "Salary cannot be empty")
+                .throwIfInvalid();
     }
 
     private static ValidationResult buildEmployerValidation(Double salary, String type) {
@@ -177,8 +189,9 @@ public class CustomerEmployerService {
         if (salary != null && (!Double.isFinite(salary) || salary < 0)) {
             result.addError("salary", "Salary must be a non-negative number");
         }
-        if (type != null && !type.isBlank()
-                && !type.equals(TYPE_PRIMARY)
+        if (type == null || type.isBlank()) {
+            result.addError("type", "Employer type cannot be empty");
+        } else if (!type.equals(TYPE_PRIMARY)
                 && !type.equals(TYPE_SECONDARY)) {
             result.addError("type", "Employer type is invalid");
         }

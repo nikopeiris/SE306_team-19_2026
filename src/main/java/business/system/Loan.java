@@ -114,6 +114,25 @@ public class Loan {
     }
 
     /**
+     * Retrieves the constant values belonging to a category.
+     *
+     * @param category constant category identifier
+     * @param page page number of the values to retrieve
+     * @param size number of values to retrieve
+     * @return an array of constant values
+     * @throws LavsException if the mainframe rejects the request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public mainframe.client.messages.constantItem.List.Item[] retrieveConstantValues(
+            long category, long page, long size) throws IOException, LavsException {
+        mainframe.client.messages.constantItem.List listMessage =
+                new mainframe.client.messages.constantItem.List(category, page, size);
+        Status status = loanAdapter.send(listMessage);
+        Main.isValidStatus(status);
+        return listMessage.getItems();
+    }
+
+    /**
      * Retrieves a loan by its unique loan number.
      *
      * @param loanNumber loan identifier to retrieve
@@ -263,32 +282,5 @@ public class Loan {
         Status responseStatus = loanAdapter.send(updateStatusMessage);
         Main.isValidStatus(responseStatus);
         return updateStatusMessage;
-    }
-
-    /**
-     * Convenience wrapper used when the business validation is the only requirement.
-     */
-    public boolean addLoanToCustomerCheck(
-            String customerNumber,
-            double principal,
-            double annualRate,
-            int term,
-            String loanType,
-            String paymentFrequency,
-            String compoundType,
-            String renewalDate,
-            String startDate)
-            throws LavsException, IOException {
-        LoanValidation.validateLoanDetails(
-                customerNumber,
-                principal,
-                annualRate,
-                term,
-                loanType,
-                paymentFrequency,
-                compoundType,
-                renewalDate,
-                startDate);
-        return true;
     }
 }

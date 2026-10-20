@@ -311,20 +311,6 @@ class LoanTest {
     }
 
     @Test
-    void addLoanToCustomerCheckValidatesAndReturnsTrue() throws Exception {
-        assertTrue(loan.addLoanToCustomerCheck(
-                "C123",
-                1000.0,
-                5.0,
-                12,
-                "Fixed",
-                "Monthly",
-                "Monthly",
-                LocalDate.now().plusDays(30).toString(),
-                LocalDate.now().plusDays(5).toString()));
-    }
-
-    @Test
     void validateLoanDetailsAcceptsValidValues() throws Exception {
         LoanValidation.validateLoanDetails(
                 "C123",

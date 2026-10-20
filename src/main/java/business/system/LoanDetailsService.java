@@ -14,6 +14,7 @@ import business.lavsexceptions.LavsException;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanDetail;
 import business.system.dto.LoanRow;
+import business.system.dto.PaymentRow;
 import business.system.dto.RepaymentRow;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -56,12 +57,14 @@ public class LoanDetailsService {
             Create.PAYMENTFREQUENCY_ONRENEWAL, 1);
 
     private final Loan loanService;
+    private final Payment paymentService;
 
     public LoanDetailsService(MainframeAdapter adapter) {
         if (adapter == null) {
             throw new IllegalArgumentException("Loan details adapter cannot be null");
         }
         this.loanService = new Loan(adapter);
+        this.paymentService = new Payment(adapter);
     }
 
     // ------------------------------------------------------------------
@@ -244,6 +247,48 @@ public class LoanDetailsService {
             page++;
         }
         return rows;
+    }
+
+    /** Every recorded payment for the loan (all pages). */
+    public List<PaymentRow> paymentsFor(String loanNumber)
+            throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        List<PaymentRow> rows = new ArrayList<>();
+        long page = 1L;
+        for (int i = 0; i < MAX_PAGES; i++) {
+            mainframe.client.messages.loanPayment.List.Item[] items =
+                    paymentService.listPayments(loanNumber.trim(), page, PAGE_SIZE);
+            if (items == null || items.length == 0) {
+                break;
+            }
+            for (mainframe.client.messages.loanPayment.List.Item item : items) {
+                rows.add(new PaymentRow(item.getId(), item.getAmountPaid(), item.getDate()));
+            }
+            if (items.length < PAGE_SIZE) {
+                break;
+            }
+            page++;
+        }
+        return rows;
+    }
+
+    public void addPayment(String loanNumber, double amountPaid, String date)
+            throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        paymentService.addPayment(amountPaid, date, loanNumber.trim());
+    }
+
+    public void updatePayment(String loanNumber, long paymentId, double amountPaid, String date)
+            throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        paymentService.deletePayment(paymentId, loanNumber.trim());
+        paymentService.addPayment(amountPaid, date, loanNumber.trim());
+    }
+
+    public void deletePayment(String loanNumber, long paymentId)
+            throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        paymentService.deletePayment(paymentId, loanNumber.trim());
     }
 
     // ------------------------------------------------------------------
