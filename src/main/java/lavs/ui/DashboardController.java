@@ -37,7 +37,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -80,7 +79,9 @@ public class DashboardController {
     @FXML private TableColumn<LoanSummary, Double> loanPrincipalColumn;
     @FXML private TableColumn<LoanSummary, String> loanDateColumn;
     @FXML private TableColumn<LoanSummary, String> loanStatusColumn;
-    @FXML private Button changeStatusButton;
+    @FXML
+    private Button changeStatusButton;
+    @FXML private Pane dashboardRoot;
 
     // Bottom strip
     @FXML private ListView<CustomerSummary> recentCustomersList;
@@ -314,23 +315,32 @@ public class DashboardController {
     // add customer button
     @FXML
     private void handleAddCustomer(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
-            Parent root = loader.load();
-
-            stopLoanLoading();   // don't compete with the next screen for the mainframe
-            // Pass the services and initialize an empty context for a new customer
-            CustomerController controller = loader.getController();
-            controller.setServices(loginService, customerService, emailService);
-
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        showCustomerOverlay(null, null);
     }
+
+    private void showCustomerOverlay(CustomerSummary customer, String customerNumber) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
+        Parent customerOverlay = loader.load();
+
+        CustomerController controller = loader.getController();
+        controller.setServices(loginService, customerService, emailService);
+        
+        if (customerNumber != null) {
+            controller.loadCustomer(customerNumber);
+            remember(RECENT_CUSTOMERS, customer, CustomerSummary::getNumber);
+        }
+
+        // Add a close mechanism so the overlay can remove itself when Back/Save is clicked
+        controller.setOnCloseAction(() -> dashboardRoot.getChildren().remove(customerOverlay));
+
+        // Overlap it on top of the dashboard root
+        dashboardRoot.getChildren().add(customerOverlay);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 
     /** Called by LoginController when it opens the dashboard. */
     public void setServices(LoginService loginService, Customer customerService,
@@ -849,23 +859,7 @@ public class DashboardController {
     // ------------------------------------------------------------------
 
     private void handleCustomerSelected(CustomerSummary customer) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("customer.fxml"));
-            Parent root = loader.load();
-
-            stopLoanLoading();   // don't compete with the customer screen for the mainframe
-            CustomerController controller = loader.getController();
-            controller.setServices(loginService, customerService, emailService);
-            controller.loadCustomer(customer.getNumber());
-            remember(RECENT_CUSTOMERS, customer, CustomerSummary::getNumber);
-
-            Stage stage = (Stage) customerListView.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        showCustomerOverlay(customer, customer.getNumber());
     }
 
     // ------------------------------------------------------------------

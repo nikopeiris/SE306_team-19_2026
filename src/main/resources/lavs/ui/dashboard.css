@@ -34,7 +34,6 @@
   -fx-text-fill: #726e97;
 }
 
-/* ---------- Buttons (squircles, soft, with hover and pressed states) ---------- */
 .btn-primary,
 .btn-secondary,
 .btn-dark,
@@ -110,7 +109,6 @@
   -fx-background-color: rgba(248, 255, 244, 0.22);
 }
 
-/* ---------- Search fields ---------- */
 .search-field {
   -fx-background-color: rgba(114, 110, 151, 0.12);
   -fx-background-radius: 12;
@@ -139,7 +137,6 @@
   -fx-stroke-line-cap: round;
 }
 
-/* ---------- Drop-down ---------- */
 .modern-combo {
   -fx-background-color: rgba(114, 110, 151, 0.12);
   -fx-background-radius: 12;
@@ -277,7 +274,6 @@
   -fx-text-fill: #011936;
 }
 
-/* ---------- Status colours (dots in the table, bubbles in the summary) ---------- */
 .color-orange {
   -fx-fill: #f18f01;
 }
@@ -300,7 +296,6 @@
   -fx-fill: rgba(147, 22, 33, 0.55);
 }
 
-/* ---------- Loan summary bubbles ---------- */
 .bubble {
   -fx-stroke: #f8fff4;
   -fx-stroke-width: 2;
@@ -319,7 +314,6 @@
   -fx-text-fill: #011936;
 }
 
-/* ---------- Progress bar (rounded rectangle, not a pill) ---------- */
 .summary-progress {
   -fx-padding: 0;
   -fx-background-color: transparent;
@@ -337,7 +331,6 @@
   -fx-padding: 0;
 }
 
-/* ---------- Slim, modern scroll bars ---------- */
 .dashboard-root .scroll-bar {
   -fx-background-color: transparent;
   -fx-padding: 2;
