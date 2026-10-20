@@ -342,6 +342,18 @@ public class Customer {
         return loanSearchService.listLoansFor(customers, listener);
     }
 
+    /** As above; customers whose loans could not be read are also added to {@code failedOut}. */
+    public LoanListResult listLoansFor(List<CustomerSummary> customers,
+            LoanSearchService.ProgressListener listener, List<CustomerSummary> failedOut)
+            throws IOException {
+        return loanSearchService.listLoansFor(customers, listener, failedOut);
+    }
+
+    /** Reads one customer's loans; throws if the mainframe refuses so the caller can retry. */
+    public List<LoanSummary> loansOf(CustomerSummary customer) throws IOException, LavsException {
+        return loanSearchService.loansOf(customer);
+    }
+
     /** The statuses a loan with this status can be changed to (empty if none). */
     public List<String> allowedLoanStatuses(String currentStatus) {
         return loanStatusService.allowedStatuses(currentStatus);

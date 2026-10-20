@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -147,6 +150,16 @@ public class DashboardController {
     private int searchGeneration = 0;
     /** What to show in the empty list after a mainframe search (null = nothing special). */
     private String searchMessage = null;
+
+    // ---- Loans of customers found by search, and automatic retries ----
+    private static final int MAX_LOAN_RETRY_ROUNDS = 4;
+    private static final long LOAN_RETRY_DELAY_MS = 2000L;
+    /** Numbers of the customers whose loans are in the loan list. */
+    private final Set<String> loansLoaded = new HashSet<>();
+    /** Customers whose loans the mainframe refused; they are retried automatically. */
+    private final Map<String, CustomerSummary> loanRetryPending = new LinkedHashMap<>();
+    private boolean loanRetryRunning = false;
+    private int loanRetryRound = 0;
 
     // ---- Loan list data (loaded in the background, filtered as you type) ----
     private List<LoanSummary> allLoans = new ArrayList<>();
@@ -376,7 +389,13 @@ public class DashboardController {
         }
 
         // Add a close mechanism so the overlay can remove itself when Back/Save is clicked
-        controller.setOnCloseAction(() -> dashboardRoot.getChildren().remove(customerOverlay));
+        controller.setOnCloseAction(() -> {
+            dashboardRoot.getChildren().remove(customerOverlay);
+            // a loan may have been added on the customer's loan tab
+            if (customer != null) {
+                fetchLoansFor(List.of(currentSummary(customer)), true);
+            }
+        });
         // After a save, show the new / renamed customer in the list straight away
         controller.setOnSavedAction(this::showSavedCustomer);
 
@@ -480,6 +499,14 @@ public class DashboardController {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Finding customers on the mainframe
+    // ------------------------------------------------------------------
+    // The mainframe cannot list every customer: its search only matches WHOLE first or
+    // family names (and an empty search returns nothing). The list above therefore only
+    // holds customers whose name is a single letter or digit; everyone else is found by
+    // typing their full first or family name (or by opening their customer number).
+
     /**
      * Asks the mainframe for customers matching the typed text and adds them to the list.
      *
@@ -520,6 +547,7 @@ public class DashboardController {
             }
             List<CustomerSummary> found = task.getValue();
             mergeIntoList(found);
+            fetchLoansFor(found, false);
             searchMessage = found.isEmpty()
                     ? "No customer found for \"" + term + "\". The search only matches whole "
                             + "first or family names (e.g. \"jeff\", not \"jef\")."
@@ -548,6 +576,7 @@ public class DashboardController {
         task.setOnSucceeded(e -> {
             CustomerSummary found = task.getValue();
             mergeIntoList(List.of(found));
+            fetchLoansFor(List.of(found), false);
             if (open) {
                 showCustomerOverlay(found, number);
             } else if (generation == searchGeneration) {
@@ -603,6 +632,7 @@ public class DashboardController {
         task.setOnSucceeded(e -> {
             CustomerSummary saved = task.getValue();
             mergeIntoList(List.of(saved));
+            fetchLoansFor(List.of(saved), true);   // loans may have changed too
             remember(RECENT_CUSTOMERS, saved, CustomerSummary::getNumber);
             applyFilter();
         });
@@ -634,6 +664,7 @@ public class DashboardController {
         stopLoanLoading();
         final int generation = loanLoadGeneration;
         List<CustomerSummary> customers = new ArrayList<>(allCustomers);   // snapshot on the FX thread
+        final List<CustomerSummary> failedOut = new CopyOnWriteArrayList<>();
 
         loadingLoans = true;
         loanLoadError = null;
@@ -641,6 +672,9 @@ public class DashboardController {
         loansTotal = customers.size();
         failedCustomers = 0;
         allLoans = new ArrayList<>();
+        loansLoaded.clear();
+        loanRetryPending.clear();
+        loanRetryRunning = false;
         visibleLoans.clear();
         updateLoanPlaceholder();
         updateLoanStatusLabel();
@@ -660,7 +694,7 @@ public class DashboardController {
                         showLoans();
                     });
                     return generation == loanLoadGeneration;   // false = stop early
-                });
+                }, failedOut);
             }
         };
 
@@ -678,8 +712,17 @@ public class DashboardController {
                     loanLoadError = result.getFirstError();
                 }
             }
+            for (CustomerSummary c : customers) {
+                loansLoaded.add(c.getNumber());
+            }
+            for (CustomerSummary c : failedOut) {
+                loansLoaded.remove(c.getNumber());
+                loanRetryPending.put(c.getNumber(), c);
+            }
+            failedCustomers = loanRetryPending.size();
             populateLoanStatuses();
             showLoans();
+            startLoanRetry();   // try the customers the mainframe refused again
         });
 
         task.setOnFailed(e -> {
@@ -706,6 +749,146 @@ public class DashboardController {
             loanTask = null;
         }
         loadingLoans = false;
+        loanRetryRunning = false;
+    }
+
+    // ------------------------------------------------------------------
+    // Loans of individual customers (found by search, saved, or retried)
+    // ------------------------------------------------------------------
+
+    /** What one background round of reading customers' loans produced. */
+    private static class LoanFetch {
+        final List<LoanSummary> loans = new ArrayList<>();
+        final List<CustomerSummary> loaded = new ArrayList<>();
+        final List<CustomerSummary> failed = new ArrayList<>();
+    }
+
+    /**
+     * Reads the loans of these customers and adds them to the loan list and the summary.
+     *
+     * @param force false skips customers whose loans are already loaded; true reads them
+     *              again (used after a save, because loans may have changed)
+     */
+    private void fetchLoansFor(List<CustomerSummary> customers, boolean force) {
+        if (customerService == null) {
+            return;
+        }
+        List<CustomerSummary> todo = new ArrayList<>();
+        for (CustomerSummary c : customers) {
+            if (force || !loansLoaded.contains(c.getNumber())) {
+                todo.add(c);
+            }
+        }
+        if (todo.isEmpty()) {
+            return;
+        }
+        runLoanFetch(todo, 0L, () -> { });
+    }
+
+    private void runLoanFetch(List<CustomerSummary> todo, long delayMs, Runnable afterApplied) {
+        final int generation = loanLoadGeneration;
+        Task<LoanFetch> task = new Task<>() {
+            @Override
+            protected LoanFetch call() throws Exception {
+                LoanFetch fetch = new LoanFetch();
+                if (delayMs > 0) {
+                    Thread.sleep(delayMs);
+                }
+                for (CustomerSummary c : todo) {
+                    if (generation != loanLoadGeneration) {
+                        break;   // a full reload started; this result will be ignored
+                    }
+                    try {
+                        fetch.loans.addAll(customerService.loansOf(c));
+                        fetch.loaded.add(c);
+                    } catch (Exception ex) {
+                        fetch.failed.add(c);
+                    }
+                }
+                return fetch;
+            }
+        };
+        task.setOnSucceeded(e -> {
+            if (generation != loanLoadGeneration) {
+                return;
+            }
+            applyLoanFetch(task.getValue());
+            afterApplied.run();
+        });
+        task.setOnFailed(e -> {
+            if (generation == loanLoadGeneration) {
+                loanRetryRunning = false;
+                updateLoanStatusLabel();
+            }
+        });
+        startDaemon(task, "fetch-loans");
+    }
+
+    private void applyLoanFetch(LoanFetch fetch) {
+        mergeLoans(fetch.loans);
+        for (CustomerSummary c : fetch.loaded) {
+            loansLoaded.add(c.getNumber());
+            loanRetryPending.remove(c.getNumber());
+        }
+        for (CustomerSummary c : fetch.failed) {
+            loanRetryPending.put(c.getNumber(), c);
+        }
+        failedCustomers = loanRetryPending.size();
+        populateLoanStatuses();
+        showLoans();   // also refreshes the Loan Summary card
+        if (!fetch.failed.isEmpty()) {
+            startLoanRetry();
+        }
+    }
+
+    /** Adds loans to the list, replacing any with the same loan number. */
+    private void mergeLoans(List<LoanSummary> loans) {
+        Map<String, Integer> indexByNumber = new HashMap<>();
+        for (int i = 0; i < allLoans.size(); i++) {
+            indexByNumber.put(allLoans.get(i).getLoanNumber(), i);
+        }
+        for (LoanSummary loan : loans) {
+            Integer at = indexByNumber.get(loan.getLoanNumber());
+            if (at != null) {
+                allLoans.set(at, loan);
+            } else {
+                allLoans.add(loan);
+                indexByNumber.put(loan.getLoanNumber(), allLoans.size() - 1);
+            }
+        }
+    }
+
+    /** Starts retrying the customers the mainframe refused (does nothing if already retrying). */
+    private void startLoanRetry() {
+        if (loanRetryRunning || loanRetryPending.isEmpty()) {
+            return;
+        }
+        loanRetryRunning = true;
+        loanRetryRound = 0;
+        nextLoanRetryRound();
+        updateLoanStatusLabel();
+    }
+
+    /** Waits a little longer each round, then reads the still-missing customers again. */
+    private void nextLoanRetryRound() {
+        if (loanRetryPending.isEmpty() || loanRetryRound >= MAX_LOAN_RETRY_ROUNDS) {
+            loanRetryRunning = false;
+            updateLoanStatusLabel();
+            return;
+        }
+        loanRetryRound++;
+        List<CustomerSummary> todo = new ArrayList<>(loanRetryPending.values());
+        runLoanFetch(todo, LOAN_RETRY_DELAY_MS * loanRetryRound, this::nextLoanRetryRound);
+    }
+
+    /** The list's current entry for this customer (it may have been renamed since). */
+    private CustomerSummary currentSummary(CustomerSummary fallback) {
+        for (CustomerSummary c : allCustomers) {
+            if (c.getNumber().equals(fallback.getNumber())) {
+                return c;
+            }
+        }
+        return fallback;
     }
 
     private void showLoans() {
@@ -754,8 +937,10 @@ public class DashboardController {
             int shown = visibleLoans.size();
             String noun = all == 1 ? " loan" : " loans";
             text = shown == all ? all + noun : shown + " of " + all + noun;
+            // the mainframe only lists loans per customer, so say whose loans these are
+            text += " from " + loansLoaded.size() + (loansLoaded.size() == 1 ? " customer" : " customers");
             if (failedCustomers > 0) {
-                text += " (" + failedCustomers + " customer" + (failedCustomers == 1 ? "" : "s") + " skipped)";
+                text += " (" + failedCustomers + " skipped" + (loanRetryRunning ? ", retrying..." : "") + ")";
             }
         }
         loanStatusLabel.setText(text);
