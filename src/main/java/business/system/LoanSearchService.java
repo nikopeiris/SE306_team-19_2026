@@ -56,6 +56,15 @@ public class LoanSearchService {
      */
     public LoanListResult listLoansFor(List<CustomerSummary> customers, ProgressListener listener)
             throws IOException {
+        return listLoansFor(customers, listener, null);
+    }
+
+    /**
+     * Same as above, but every customer whose loans could not be read is also added to
+     * {@code failedOut} (if given) so the caller can try those customers again later.
+     */
+    public LoanListResult listLoansFor(List<CustomerSummary> customers, ProgressListener listener,
+            List<CustomerSummary> failedOut) throws IOException {
         Map<String, LoanSummary> byNumber = new LinkedHashMap<>();
         int failed = 0;
         String firstError = null;
@@ -67,6 +76,9 @@ public class LoanSearchService {
                 collectLoans(customer, byNumber, fresh);
             } catch (LavsException e) {
                 failed++;
+                if (failedOut != null) {
+                    failedOut.add(customer);
+                }
                 if (firstError == null) {
                     firstError = e.getMessage() == null ? "The mainframe rejected the request" : e.getMessage();
                 }
@@ -77,6 +89,17 @@ public class LoanSearchService {
             }
         }
         return new LoanListResult(new ArrayList<>(byNumber.values()), failed, firstError);
+    }
+
+    /**
+     * Reads all loans of one customer. Unlike {@link #listLoansFor} this throws when the
+     * mainframe refuses, so the caller knows this customer still needs to be retried.
+     */
+    public List<LoanSummary> loansOf(CustomerSummary customer) throws IOException, LavsException {
+        Map<String, LoanSummary> seen = new LinkedHashMap<>();
+        List<LoanSummary> fresh = new ArrayList<>();
+        collectLoans(customer, seen, fresh);
+        return fresh;
     }
 
     /**
