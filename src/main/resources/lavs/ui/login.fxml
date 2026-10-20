@@ -46,7 +46,7 @@
                               <StackPane fx:id="logoI">
                                  <children>
                                     <!-- dotless i (U+0131) so the yellow dot replaces the normal one -->
-                                    <Text fx:id="logoIStem" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="&#305;">
+                                    <Text fx:id="logoIStem" fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="ı">
                                        <font>
                                           <Font name="Roboto Black Italic" size="28.0" />
                                        </font>
@@ -167,9 +167,9 @@
                   <Font name="Roboto Black" size="96.0" />
                </font>
             </Text>
-            <Text fx:id="quoteText" fill="#f8fff4" layoutX="147.0" layoutY="528.0" strokeType="OUTSIDE" strokeWidth="0.0" text="There is no nobility in poverty. I have been a rich man and I have been a poor man. And I choose rich every single time. " wrappingWidth="327.6376953125">
+            <Text fx:id="quoteText" fill="#f8fff4" layoutX="147.0" layoutY="528.0" strokeType="OUTSIDE" strokeWidth="0.0" text="You see, in this world there's two kinds of people, my friend: those with loaded guns, and those who. You dig." wrappingWidth="327.6376953125">
                <font>
-                  <Font name="Roboto" size="17.0" />
+                  <Font name="Roboto Italic" size="17.0" />
                </font>
             </Text>
             <Text fx:id="quoteAuthor" fill="#f8fff4" layoutX="147.0" layoutY="605.0" strokeType="OUTSIDE" strokeWidth="0.0" text=" - Countrywide Bank CEO Dev Patel" wrappingWidth="327.6376953125">
@@ -177,7 +177,7 @@
                   <Font name="Roboto Black" size="17.0" />
                </font>
             </Text>
-            <Text fx:id="quoteCloseMark" fill="#f8fff4" layoutX="448.0" layoutY="634.0" strokeType="OUTSIDE" strokeWidth="0.0" text="&quot;">
+            <Text fx:id="quoteCloseMark" fill="#f8fff4" layoutX="479.0" layoutY="564.0" strokeType="OUTSIDE" strokeWidth="0.0" text="&quot;">
                <font>
                   <Font name="Roboto Black" size="96.0" />
                </font>

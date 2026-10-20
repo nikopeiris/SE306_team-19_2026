@@ -296,8 +296,32 @@ public class DashboardController {
 
     private void openLoanSummary(LoanSummary loan) {
         remember(RECENT_LOANS, loan, LoanSummary::getLoanNumber);
-        LoanSummaryController.show(loanTable.getScene().getWindow(), customerService,
-                loan.getLoanNumber(), null);
+        showLoanSummaryOverlay(loan);
+    }
+    
+    private void showLoanSummaryOverlay(LoanSummary loan) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("loan_summary.fxml"));
+            Parent loanOverlay = loader.load();
+
+            LoanSummaryController controller = loader.getController();
+            
+            // Initialize the controller with the loan details service, loan number, 
+            // and an optional callback to refresh the table/summary if changes are saved
+            controller.start(customerService.loanDetails(), loan.getLoanNumber(), () -> {
+                showLoans();
+                updateSummary();
+            });
+
+            // Set the close action to remove the overlay from the dashboard root when closed/back is clicked
+            controller.setOnCloseAction(() -> dashboardRoot.getChildren().remove(loanOverlay));
+
+            // Push the loan summary overlay on top of the dashboard root pane
+            dashboardRoot.getChildren().add(loanOverlay);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /** Shows the changed status without reloading every customer's loans. */
