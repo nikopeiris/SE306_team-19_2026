@@ -18,11 +18,17 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class CustomerController {
 
+    @FXML private Pane unsavedOverlay;
+    @FXML private Button keepEditingButton;
+    @FXML private Button personalInfoTabButton;
+    @FXML private Button contactInfoTabButton;
+    @FXML private Button loanTabButton;
     @FXML
     private Pane personalInfoPane;
     @FXML
@@ -34,7 +40,6 @@ public class CustomerController {
     private Consumer<String> onSavedAction;
 
     // Sub-controllers injected via JavaFX fx:id naming conventions
-    // (matches fx:id of the fx:include tag + "Controller")
     @FXML
     private PersonalInfoController personalInfoTabController;
     @FXML
@@ -51,7 +56,7 @@ public class CustomerController {
         context.setNavigation(new CustomerContext.Navigation() {
             @Override public void showPersonalInfo() { showPersonalInfoTab(); }
             @Override public void showContactInfo() { handleContactInfoTab(null); }
-            @Override public void save() { saveCustomer(); }
+            @Override public void save() { saveCustomer(false); }
             @Override public void cancel() { goToDashboard(); }
         });
 
@@ -86,6 +91,40 @@ public class CustomerController {
     @FXML
     private void handlePersonalInfoTab(ActionEvent event) {
         showPersonalInfoTab();
+    }
+
+    // X in the corner: leave straight away if nothing changed, otherwise ask first
+    @FXML
+    private void handleClose(ActionEvent event) {
+        if (hasUnsavedChanges()) {
+            unsavedOverlay.setVisible(true);
+            keepEditingButton.requestFocus();
+        } else {
+            goToDashboard();
+        }
+    }
+
+    private boolean hasUnsavedChanges() {
+        // only the personal tab can report changes so far, add the contact and loan tabs here once they can too
+        return personalInfoTabController != null && personalInfoTabController.hasUnsavedChanges();
+    }
+
+    @FXML
+    private void handleKeepEditing(ActionEvent event) {
+        unsavedOverlay.setVisible(false);
+    }
+
+    @FXML
+    private void handleExitWithoutSaving(ActionEvent event) {
+        unsavedOverlay.setVisible(false);
+        goToDashboard();
+    }
+
+    // the prompt goes away first so any error from the save lands on the form, not behind the prompt
+    @FXML
+    private void handleSaveAndExit(ActionEvent event) {
+        unsavedOverlay.setVisible(false);
+        saveCustomer(true);
     }
 
     @FXML
@@ -130,6 +169,16 @@ public class CustomerController {
             pane.setVisible(visible);
             pane.setManaged(visible);
         }
+        markActiveTab(tab == personalInfoPane ? personalInfoTabButton
+                : tab == contactInfoPane ? contactInfoTabButton : loanTabButton);
+    }
+
+    // the css fills whichever tab button carries tab-button-active
+    private void markActiveTab(Button active) {
+        for (Button button : new Button[] { personalInfoTabButton, contactInfoTabButton, loanTabButton }) {
+            button.getStyleClass().remove("tab-button-active");
+        }
+        active.getStyleClass().add("tab-button-active");
     }
 
     // ------------------------------------------------------------------
@@ -166,7 +215,7 @@ public class CustomerController {
     // Saving (create or edit)
     // ------------------------------------------------------------------
 
-    private void saveCustomer() {
+    private void saveCustomer(boolean exitAfterSave) {
         if (saving) {
             return;
         }
@@ -207,9 +256,13 @@ public class CustomerController {
             if (onSavedAction != null) {
                 onSavedAction.accept(result.customerNumber());
             }
-            // Reload so the screen shows exactly what is in the mainframe
-            // (and a new customer becomes an existing one for the next save)
-            loadCustomer(result.customerNumber());
+            if (exitAfterSave && !result.hasProblems()) {
+                goToDashboard();
+            } else {
+                // Reload so the screen shows exactly what is in the mainframe
+                // (and a new customer becomes an existing one for the next save)
+                loadCustomer(result.customerNumber());
+            }
         });
 
         task.setOnFailed(e -> {

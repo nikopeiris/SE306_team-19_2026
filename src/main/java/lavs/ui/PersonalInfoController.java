@@ -1,6 +1,7 @@
 package lavs.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import business.system.customer.CustomerOptions;
@@ -257,6 +258,47 @@ public class PersonalInfoController {
         return box.getEditor().getText();
     }
 
+    /** True when this tab no longer matches what was loaded (or has been filled in on a new customer). */
+    public boolean hasUnsavedChanges() {
+        CustomerDetails original = context.getOriginal();
+        Personal now = readPersonal();
+        Personal before = original == null ? null : original.personal();
+
+        if (!same(now.title(), before == null ? null : before.title())
+                || !same(now.firstName(), before == null ? null : before.firstName())
+                || !same(now.familyName(), before == null ? null : before.familyName())
+                || !same(now.dateOfBirth(), before == null ? null : before.dateOfBirth())
+                || !same(now.nationality(), before == null ? null : before.nationality())) {
+            return true;
+        }
+
+        List<Employer> loadedEmployers = original == null ? List.of() : original.employers();
+        return !employerKeys(readEmployers()).equals(employerKeys(loadedEmployers));
+    }
+
+    // null and blank count as the same, so an untouched field never looks edited
+    private static boolean same(String a, String b) {
+        return clean(a).equals(clean(b));
+    }
+
+    private static String clean(String text) {
+        return text == null ? "" : text.trim();
+    }
+
+    // one comparable line per employer, sorted so the order they come in doesn't matter
+    private static List<String> employerKeys(List<Employer> employers) {
+        List<String> keys = new ArrayList<>();
+        for (Employer e : employers) {
+            if (CustomerOptions.EMPLOYER_PRIMARY.equals(e.type())
+                    || CustomerOptions.EMPLOYER_SECONDARY.equals(e.type())) {
+                keys.add(e.type() + "|" + clean(e.name()) + "|" + clean(e.position())
+                        + "|" + formatSalary(e.salary()));
+            }
+        }
+        Collections.sort(keys);
+        return keys;
+    }
+
     // ------------------------------------------------------------------
     // Buttons
     // ------------------------------------------------------------------
@@ -290,10 +332,5 @@ public class PersonalInfoController {
     @FXML
     private void handlePersonalInfoSave(ActionEvent event) {
         context.getNavigation().save();
-    }
-
-    @FXML
-    private void handlePersonalInfoCancel(ActionEvent event) {
-        context.getNavigation().cancel();
     }
 }
