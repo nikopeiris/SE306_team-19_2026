@@ -31,55 +31,87 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-/**
- * The loan summary window. It shows what LoanDetailsService returns for one loan, the full
- * repayment schedule when asked, and an edit form. No business logic lives here: the form's
- * text and choices go to the business layer as typed, and whether a loan can be edited is
- * whatever the business layer says.
- */
+
 public class LoanSummaryController {
 
-    @FXML private Label messageLabel;
-    @FXML private GridPane detailsGrid;
-    @FXML private Label nameLabel;
-    @FXML private Label customerIdLabel;
-    @FXML private Label loanTypeLabel;
-    @FXML private Label termLabel;
-    @FXML private Label compoundLabel;
-    @FXML private Label amountLabel;
-    @FXML private Label paymentFrequencyLabel;
-    @FXML private CheckBox interestOnlyCheck;
-    @FXML private Label rateLabel;
-    @FXML private Label nextPaymentLabel;
-    @FXML private Label renewDateLabel;
-    @FXML private Label interestPaidLabel;
-    @FXML private Label principalPaidLabel;
-    @FXML private Label statusLabel;
+    @FXML
+    private Label messageLabel;
+    @FXML
+    private GridPane detailsGrid;
+    @FXML
+    private Label nameLabel;
+    @FXML
+    private Label customerIdLabel;
+    @FXML
+    private Label loanTypeLabel;
+    @FXML
+    private Label termLabel;
+    @FXML
+    private Label compoundLabel;
+    @FXML
+    private Label amountLabel;
+    @FXML
+    private Label paymentFrequencyLabel;
+    @FXML
+    private CheckBox interestOnlyCheck;
+    @FXML
+    private Label rateLabel;
+    @FXML
+    private Label nextPaymentLabel;
+    @FXML
+    private Label renewDateLabel;
+    @FXML
+    private Label interestPaidLabel;
+    @FXML
+    private Label principalPaidLabel;
+    @FXML
+    private Label statusLabel;
 
-    @FXML private TableView<RepaymentRow> scheduleTable;
-    @FXML private TableColumn<RepaymentRow, String> paymentNumberColumn;
-    @FXML private TableColumn<RepaymentRow, String> dateColumn;
-    @FXML private TableColumn<RepaymentRow, String> amountColumn;
-    @FXML private TableColumn<RepaymentRow, String> principalColumn;
-    @FXML private TableColumn<RepaymentRow, String> interestColumn;
-    @FXML private TableColumn<RepaymentRow, String> remainingColumn;
+    @FXML
+    private TableView<RepaymentRow> scheduleTable;
+    @FXML
+    private TableColumn<RepaymentRow, String> paymentNumberColumn;
+    @FXML
+    private TableColumn<RepaymentRow, String> dateColumn;
+    @FXML
+    private TableColumn<RepaymentRow, String> amountColumn;
+    @FXML
+    private TableColumn<RepaymentRow, String> principalColumn;
+    @FXML
+    private TableColumn<RepaymentRow, String> interestColumn;
+    @FXML
+    private TableColumn<RepaymentRow, String> remainingColumn;
 
     // edit form
-    @FXML private GridPane editPane;
-    @FXML private ComboBox<String> editLoanTypeCombo;
-    @FXML private CheckBox editInterestOnlyCheck;
-    @FXML private TextField editAmountField;
-    @FXML private TextField editTermField;
-    @FXML private ComboBox<String> editCompoundCombo;
-    @FXML private TextField editRateField;
-    @FXML private ComboBox<String> editPaymentFrequencyCombo;
+    @FXML
+    private GridPane editPane;
+    @FXML
+    private ComboBox<String> editLoanTypeCombo;
+    @FXML
+    private CheckBox editInterestOnlyCheck;
+    @FXML
+    private TextField editAmountField;
+    @FXML
+    private TextField editTermField;
+    @FXML
+    private ComboBox<String> editCompoundCombo;
+    @FXML
+    private TextField editRateField;
+    @FXML
+    private ComboBox<String> editPaymentFrequencyCombo;
 
-    @FXML private Button scheduleButton;
-    @FXML private Button paymentsButton;
-    @FXML private Button editButton;
-    @FXML private Button saveEditButton;
-    @FXML private Button cancelEditButton;
-    @FXML private Button closeButton;
+    @FXML
+    private Button scheduleButton;
+    @FXML
+    private Button paymentsButton;
+    @FXML
+    private Button editButton;
+    @FXML
+    private Button saveEditButton;
+    @FXML
+    private Button cancelEditButton;
+    @FXML
+    private Button closeButton;
 
     private final ObservableList<RepaymentRow> scheduleRows = FXCollections.observableArrayList();
     private final Label schedulePlaceholder = new Label("");
@@ -89,6 +121,7 @@ public class LoanSummaryController {
     private Runnable onChanged;
     private LoanDetail current;
     private boolean scheduleRequested = false;
+    private Runnable onCloseAction;
 
     /**
      * Opens the summary window for a loan.
@@ -123,15 +156,17 @@ public class LoanSummaryController {
 
         scheduleTable.setItems(scheduleRows);
         scheduleTable.setPlaceholder(schedulePlaceholder);
-        paymentNumberColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.text(c.getValue().paymentNumber())));
+        paymentNumberColumn
+                .setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.text(c.getValue().paymentNumber())));
         dateColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.text(c.getValue().date())));
         amountColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.money(c.getValue().amountPaid())));
         principalColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.money(c.getValue().principal())));
         interestColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.money(c.getValue().interest())));
-        remainingColumn.setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.money(c.getValue().remainingBalance())));
+        remainingColumn
+                .setCellValueFactory(c -> new ReadOnlyStringWrapper(LoanFormat.money(c.getValue().remainingBalance())));
     }
 
-    private void start(LoanDetailsService details, String loanNumber, Runnable onChanged) {
+    public void start(LoanDetailsService details, String loanNumber, Runnable onChanged) {
         this.details = details;
         this.loanNumber = loanNumber;
         this.onChanged = onChanged;
@@ -190,7 +225,8 @@ public class LoanSummaryController {
         cancelEditButton.setVisible(editing);
         scheduleButton.setDisable(editing);
         scheduleButton.setText(view == scheduleTable
-                ? "Hide Payment Schedule" : "Show full Payment Schedule");
+                ? "Hide Payment Schedule"
+                : "Show full Payment Schedule");
 
         if (scheduleButton.getScene() != null) {
             scheduleButton.getScene().getWindow().sizeToScene();
@@ -229,7 +265,7 @@ public class LoanSummaryController {
             schedulePlaceholder.setText("No payments scheduled.");
         });
         task.setOnFailed(e -> {
-            scheduleRequested = false;   // let the next click try again
+            scheduleRequested = false; // let the next click try again
             schedulePlaceholder.setText("Could not load the payment schedule.");
             messageLabel.setText(message(task.getException()));
         });
@@ -294,9 +330,9 @@ public class LoanSummaryController {
         };
         task.setOnSucceeded(e -> {
             saveEditButton.setDisable(false);
-            scheduleRequested = false;       // the schedule changes with the loan
+            scheduleRequested = false; // the schedule changes with the loan
             scheduleRows.clear();
-            loadDetail();                    // shows the saved loan again
+            loadDetail(); // shows the saved loan again
             if (onChanged != null) {
                 onChanged.run();
             }
@@ -323,7 +359,7 @@ public class LoanSummaryController {
 
     @FXML
     private void handleClose(ActionEvent event) {
-        ((Stage) closeButton.getScene().getWindow()).close();
+        closeOverlay();
     }
 
     private static String message(Throwable ex) {
@@ -338,5 +374,15 @@ public class LoanSummaryController {
         Thread thread = new Thread(task, name);
         thread.setDaemon(true);
         thread.start();
+    }
+
+    public void setOnCloseAction(Runnable onCloseAction) {
+        this.onCloseAction = onCloseAction;
+    }
+
+    private void closeOverlay() {
+        if (onCloseAction != null) {
+            onCloseAction.run();
+        }
     }
 }

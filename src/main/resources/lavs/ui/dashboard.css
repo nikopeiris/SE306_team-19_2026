@@ -1,0 +1,367 @@
+.dashboard-root {
+  -fx-background-color: #011936;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  -fx-background-color: #f8fff4;
+  -fx-background-radius: 22;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 30, 0, 0, 10);
+}
+.card-title {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 19px;
+  -fx-text-fill: #011936;
+}
+.card-title-small {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 16px;
+  -fx-text-fill: #011936;
+}
+.muted {
+  -fx-font-family: "Roboto";
+  -fx-font-size: 12px;
+  -fx-text-fill: #726e97;
+}
+.col-header {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 11px;
+  -fx-text-fill: #726e97;
+}
+.empty-note {
+  -fx-font-family: "Roboto";
+  -fx-font-size: 13px;
+  -fx-text-fill: #726e97;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-dark,
+.btn-ghost {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 13px;
+  -fx-background-radius: 11;
+  -fx-background-insets: 0;
+  -fx-border-radius: 11;
+  -fx-padding: 0 16 0 16;
+  -fx-cursor: hand;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+.btn-primary:pressed,
+.btn-secondary:pressed,
+.btn-dark:pressed,
+.btn-ghost:pressed {
+  -fx-scale-x: 0.97;
+  -fx-scale-y: 0.97;
+}
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-dark:disabled,
+.btn-ghost:disabled {
+  -fx-opacity: 0.35;
+}
+
+.btn-primary {
+  -fx-background-color: #f18f01;
+  -fx-text-fill: #011936;
+  -fx-effect: dropshadow(gaussian, rgba(241, 143, 1, 0.4), 12, 0, 0, 3);
+}
+.btn-primary:hover {
+  -fx-background-color: #f7a223;
+}
+.btn-primary:pressed {
+  -fx-background-color: #d98000;
+}
+
+.btn-secondary {
+  -fx-background-color: rgba(114, 110, 151, 0.14);
+  -fx-text-fill: #726e97;
+}
+.btn-secondary:hover {
+  -fx-background-color: rgba(114, 110, 151, 0.24);
+}
+.btn-secondary:pressed {
+  -fx-background-color: rgba(114, 110, 151, 0.32);
+}
+
+.btn-dark {
+  -fx-background-color: #011936;
+  -fx-text-fill: #f8fff4;
+}
+.btn-dark:hover {
+  -fx-opacity: 0.88;
+}
+.btn-dark:pressed {
+  -fx-opacity: 0.75;
+}
+
+.btn-ghost {
+  -fx-background-color: transparent;
+  -fx-border-color: rgba(248, 255, 244, 0.45);
+  -fx-border-width: 1;
+  -fx-text-fill: #f8fff4;
+}
+.btn-ghost:hover {
+  -fx-background-color: rgba(248, 255, 244, 0.12);
+}
+.btn-ghost:pressed {
+  -fx-background-color: rgba(248, 255, 244, 0.22);
+}
+
+.search-field {
+  -fx-background-color: rgba(114, 110, 151, 0.12);
+  -fx-background-radius: 12;
+  -fx-border-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-prompt-text-fill: #726e97;
+  -fx-font-family: "Roboto";
+  -fx-font-size: 14px;
+  -fx-padding: 0 14 0 40;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-highlight-fill: #f18f01;
+  -fx-highlight-text-fill: #011936;
+}
+.search-field:hover {
+  -fx-background-color: rgba(114, 110, 151, 0.18);
+}
+.search-field:focused {
+  -fx-background-color: white;
+  -fx-effect: dropshadow(gaussian, rgba(241, 143, 1, 0.6), 10, 0.15, 0, 0);
+}
+.search-icon {
+  -fx-fill: transparent;
+  -fx-stroke: #726e97;
+  -fx-stroke-width: 1.8;
+  -fx-stroke-line-cap: round;
+}
+
+.modern-combo {
+  -fx-background-color: rgba(114, 110, 151, 0.12);
+  -fx-background-radius: 12;
+  -fx-border-color: transparent;
+  -fx-padding: 0 4 0 6;
+  -fx-cursor: hand;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+.modern-combo:hover {
+  -fx-background-color: rgba(114, 110, 151, 0.2);
+}
+.modern-combo:showing {
+  -fx-background-color: white;
+}
+.modern-combo .list-cell {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-font-family: "Roboto";
+  -fx-font-size: 14px;
+}
+.modern-combo .arrow-button {
+  -fx-background-color: transparent;
+  -fx-padding: 0 10 0 0;
+}
+.modern-combo .arrow {
+  -fx-background-color: #726e97;
+}
+.combo-box-popup .list-view {
+  -fx-background-color: #f8fff4;
+  -fx-background-radius: 12;
+  -fx-border-color: rgba(1, 25, 54, 0.12);
+  -fx-border-radius: 12;
+  -fx-padding: 6;
+}
+.combo-box-popup .list-view .list-cell {
+  -fx-background-color: transparent;
+  -fx-background-radius: 8;
+  -fx-padding: 8 12 8 12;
+  -fx-text-fill: #011936;
+  -fx-font-family: "Roboto";
+  -fx-font-size: 13px;
+}
+.combo-box-popup .list-view .list-cell:filled:hover,
+.combo-box-popup .list-view .list-cell:filled:selected {
+  -fx-background-color: rgba(241, 143, 1, 0.2);
+  -fx-text-fill: #011936;
+}
+
+/* ---------- Lists (customers, recents) ---------- */
+.modern-list {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+}
+.modern-list .list-cell {
+  -fx-background-color: transparent;
+  -fx-padding: 0;
+  -fx-text-fill: #011936;
+  -fx-border-color: transparent transparent rgba(1, 25, 54, 0.06) transparent;
+  -fx-border-insets: 0 12 0 12;
+}
+.modern-list .list-cell:filled:hover,
+.modern-list .list-cell:filled:selected {
+  -fx-background-color: rgba(241, 143, 1, 0.14);
+  -fx-background-radius: 12;
+  -fx-background-insets: 2 0 2 0;
+}
+.cell-primary {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 13px;
+  -fx-text-fill: #011936;
+}
+.cell-body {
+  -fx-font-family: "Roboto";
+  -fx-font-size: 13px;
+  -fx-text-fill: #011936;
+}
+.cell-secondary {
+  -fx-font-family: "Roboto";
+  -fx-font-size: 12px;
+  -fx-text-fill: #726e97;
+}
+
+/* ---------- Loans table ---------- */
+.modern-table {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+  -fx-focus-color: transparent;
+  -fx-faint-focus-color: transparent;
+  -fx-table-cell-border-color: transparent;
+  -fx-selection-bar: rgba(241, 143, 1, 0.18);
+  -fx-selection-bar-non-focused: rgba(241, 143, 1, 0.12);
+  -fx-selection-bar-text: #011936;
+}
+.modern-table .column-header-background {
+  -fx-background-color: transparent;
+  -fx-pref-height: 30;
+}
+.modern-table .column-header,
+.modern-table .filler {
+  -fx-background-color: transparent;
+  -fx-size: 30;
+  -fx-border-color: transparent transparent rgba(1, 25, 54, 0.1) transparent;
+}
+.modern-table .column-header .label {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 11px;
+  -fx-text-fill: #726e97;
+  -fx-alignment: CENTER-LEFT;
+}
+.modern-table .table-row-cell {
+  -fx-background-color: transparent;
+  -fx-cell-size: 38;
+  -fx-border-color: transparent transparent rgba(1, 25, 54, 0.06) transparent;
+}
+.modern-table .table-row-cell:filled:hover {
+  -fx-background-color: rgba(114, 110, 151, 0.1);
+}
+.modern-table .table-row-cell:filled:selected {
+  -fx-background-color: rgba(241, 143, 1, 0.18);
+}
+.modern-table .table-cell {
+  -fx-font-family: "Roboto";
+  -fx-font-size: 13px;
+  -fx-text-fill: #011936;
+  -fx-alignment: CENTER-LEFT;
+  -fx-padding: 0 8 0 8;
+  -fx-border-color: transparent;
+}
+.modern-table .table-row-cell:filled:selected .table-cell {
+  -fx-text-fill: #011936;
+}
+
+.color-orange {
+  -fx-fill: #f18f01;
+}
+.color-navy {
+  -fx-fill: #011936;
+}
+.color-lavender {
+  -fx-fill: #726e97;
+}
+.color-crimson {
+  -fx-fill: #931621;
+}
+.color-navy-soft {
+  -fx-fill: rgba(1, 25, 54, 0.55);
+}
+.color-lavender-soft {
+  -fx-fill: rgba(114, 110, 151, 0.55);
+}
+.color-crimson-soft {
+  -fx-fill: rgba(147, 22, 33, 0.55);
+}
+
+.bubble {
+  -fx-stroke: #f8fff4;
+  -fx-stroke-width: 2;
+}
+.bubble-percent {
+  -fx-font-family: "Roboto Black";
+}
+.bubble-name {
+  -fx-font-family: "Roboto Bold";
+  -fx-font-size: 10px;
+}
+.bubble-light-text {
+  -fx-text-fill: #f8fff4;
+}
+.bubble-dark-text {
+  -fx-text-fill: #011936;
+}
+
+.summary-progress {
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+}
+.summary-progress > .track {
+  -fx-background-color: rgba(114, 110, 151, 0.18);
+  -fx-background-radius: 4;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+}
+.summary-progress > .bar {
+  -fx-background-color: #f18f01;
+  -fx-background-radius: 4;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+}
+
+.dashboard-root .scroll-bar {
+  -fx-background-color: transparent;
+  -fx-padding: 2;
+}
+.dashboard-root .scroll-bar:vertical {
+  -fx-pref-width: 10;
+}
+.dashboard-root .scroll-bar:horizontal {
+  -fx-pref-height: 10;
+}
+.dashboard-root .scroll-bar .track {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+}
+.dashboard-root .scroll-bar .thumb {
+  -fx-background-color: rgba(114, 110, 151, 0.45);
+  -fx-background-radius: 3;
+  -fx-background-insets: 0;
+}
+.dashboard-root .scroll-bar .thumb:hover {
+  -fx-background-color: rgba(114, 110, 151, 0.75);
+}
+.dashboard-root .scroll-bar .increment-button,
+.dashboard-root .scroll-bar .decrement-button {
+  -fx-background-color: transparent;
+  -fx-padding: 0;
+  -fx-pref-width: 0;
+  -fx-pref-height: 0;
+}
+.dashboard-root .scroll-bar .increment-arrow,
+.dashboard-root .scroll-bar .decrement-arrow {
+  -fx-padding: 0;
+  -fx-shape: " ";
+}
