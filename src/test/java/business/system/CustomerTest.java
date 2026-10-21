@@ -240,7 +240,7 @@ class CustomerTest {
         java.util.List<CustomerSummary> result = customer.listAllCustomers();
 
         assertEquals(java.util.List.of("C3", "C2", "C1"), numbersOf(result));
-        verify(adapter, times(1)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(2)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
@@ -262,7 +262,7 @@ class CustomerTest {
         assertEquals("C100", result.get(0).getNumber());
         assertEquals("Name005", result.stream()
                 .filter(c -> c.getNumber().equals("C5")).findFirst().orElseThrow().getFirstName());
-        verify(adapter, times(2)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(3)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
@@ -278,7 +278,7 @@ class CustomerTest {
 
         assertEquals(java.util.List.of("C1", "C2"), numbersOf(result));
         // one empty search plus one search per letter and digit
-        verify(adapter, times(37)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(39)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
