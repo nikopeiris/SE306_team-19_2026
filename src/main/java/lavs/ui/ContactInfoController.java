@@ -28,9 +28,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * The contact details tab: lists addresses, phone numbers and emails and lets the
- * user add, edit and remove them. Nothing is sent to the mainframe until the customer
- * is saved. Every validation rule is checked by the business layer.
+ * Controller for managing customer contact info (addresses, phones, emails).
+ * Local edits stay in context until saved to backend.
  */
 public class ContactInfoController {
 
@@ -45,16 +44,14 @@ public class ContactInfoController {
         refresh();
     }
 
-    /** Redraws all three lists from the context. */
+    /** Refresh all lists from context state. */
     public void refresh() {
         renderAddresses();
         renderPhones();
         renderEmails();
     }
 
-    // ------------------------------------------------------------------
-    // Lists
-    // ------------------------------------------------------------------
+    // --- List rendering ---
 
     private void renderAddresses() {
         addressListContainer.getChildren().clear();
@@ -127,9 +124,7 @@ public class ContactInfoController {
         return on ? " [" + name + "]" : "";
     }
 
-    // ------------------------------------------------------------------
-    // Buttons on the tab
-    // ------------------------------------------------------------------
+    // --- Actions ---
 
     @FXML private void handleAddAddress(ActionEvent event) { editAddress(null); }
     @FXML private void handleAddNumber(ActionEvent event) { editPhone(null); }
@@ -145,9 +140,7 @@ public class ContactInfoController {
         context.getNavigation().save();
     }
 
-    // ------------------------------------------------------------------
-    // Add / edit dialogs (existing == null means "add")
-    // ------------------------------------------------------------------
+    // --- Dialogs (null existing means add) ---
 
     private void editAddress(Address existing) {
         ComboBox<String> type = choice(CustomerOptions.ADDRESS_TYPES, existing == null ? null : existing.type());
@@ -242,11 +235,8 @@ public class ContactInfoController {
         });
     }
 
-    // ------------------------------------------------------------------
-    // Dialog and form helpers
-    // ------------------------------------------------------------------
+    // --- Helpers ---
 
-    /** Shows a modal dialog. {@code onSave} returns an error message, or null to close. */
     private void showDialog(String title, Node content, Supplier<String> onSave) {
         Stage popup = new Stage();
         popup.initModality(Modality.APPLICATION_MODAL);
@@ -283,7 +273,6 @@ public class ContactInfoController {
         void run() throws Exception;
     }
 
-    /** Runs a business-layer validation and returns its message, or null if it passed. */
     private static String check(Check validation) {
         try {
             validation.run();
@@ -307,7 +296,7 @@ public class ContactInfoController {
     private static ComboBox<String> choice(List<String> items, String selected) {
         ComboBox<String> box = new ComboBox<>(FXCollections.observableArrayList(items));
         if (selected != null && !selected.isBlank() && !items.contains(selected)) {
-            box.getItems().add(selected);   // a value from the server that is not in our list
+            box.getItems().add(selected); // Server value missing from defaults
         }
         box.setValue(selected != null && !selected.isBlank() ? selected : items.get(0));
         box.setPrefWidth(250);
