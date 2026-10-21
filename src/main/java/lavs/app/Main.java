@@ -38,7 +38,7 @@ public class Main extends Application {
             logIncontroller.setCustomerService(customerService);
             logIncontroller.setEmailService(emailService);
 
-            // 1. Pass width and height into the Scene constructor (e.g., 1000x650)
+            // 1. Pass width and height into the Scene constructor (e.g., 1000x800)
             Scene scene = new Scene(root, 1200, 800);
 
             // 2. Load stylesheet safely

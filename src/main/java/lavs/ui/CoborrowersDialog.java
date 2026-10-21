@@ -22,7 +22,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
-/** Lists and manages the co-borrowers and guarantors of one loan. */
+/**
+ * Controller for the co-borrowers and guarantors management window.
+ * Lets users view, add, edit, or drop co-borrowers for a specific loan.
+ */
 public class CoborrowersDialog {
     @FXML private Label hintLabel;
     @FXML private Label emptyLabel;
@@ -34,6 +37,7 @@ public class CoborrowersDialog {
     private String loanNumber;
     private Stage stage;
 
+    // Quick factory method to spin up and display this dialog modally
     static void show(LoanDetailsService details, String loanNumber, Window owner) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -65,6 +69,7 @@ public class CoborrowersDialog {
 
     @FXML
     private void handleAdd(ActionEvent event) {
+        // Pop open the individual co-borrower form for adding a new one
         CoborrowerDialog.show(details, loanNumber, null, stage, this::refresh);
     }
 
@@ -74,23 +79,28 @@ public class CoborrowersDialog {
     }
 
     private void refresh() {
+        // Lock UI and fetch fresh data on a background thread so we don't freeze the JavaFX app
         setStatus("Loading co-borrowers...", false);
         addButton.setDisable(true);
+        
         Task<List<CoborrowerRow>> task = new Task<>() {
             @Override
             protected List<CoborrowerRow> call() throws Exception {
                 return details.coborrowersFor(loanNumber);
             }
         };
+        
         task.setOnSucceeded(e -> {
             addButton.setDisable(false);
             setStatus("", false);
             render(task.getValue());
         });
+        
         task.setOnFailed(e -> {
             addButton.setDisable(false);
             setStatus(CustomerDocumentsDialog.describe(task.getException()), true);
         });
+        
         CustomerDocumentsDialog.start(task, "load-coborrowers");
     }
 
@@ -98,12 +108,14 @@ public class CoborrowersDialog {
         listContainer.getChildren().clear();
         emptyLabel.setVisible(coborrowers.isEmpty());
         emptyLabel.setManaged(coborrowers.isEmpty());
+        
         try {
             for (CoborrowerRow coborrower : coborrowers) {
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/lavs/ui/coborrower_row.fxml"));
                 Node row = loader.load();
                 CoborrowerRowController controller = loader.getController();
+                // Wire up actions for editing and deleting individual rows
                 controller.setCoborrower(coborrower, c -> edit(c), this::confirmDelete);
                 listContainer.getChildren().add(row);
             }
@@ -117,17 +129,21 @@ public class CoborrowersDialog {
     }
 
     private void confirmDelete(CoborrowerRow coborrower) {
+        // Always prompt before removing someone permanently from the loan
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
                 "Remove " + LoanFormat.text(coborrower.name()) + " from this loan?",
                 ButtonType.YES, ButtonType.NO);
         confirm.setTitle("Remove co-borrower");
         confirm.setHeaderText(null);
         confirm.initOwner(stage);
+        
         Optional<ButtonType> answer = confirm.showAndWait();
         if (answer.isEmpty() || answer.get() != ButtonType.YES) {
             return;
         }
+        
         setStatus("Removing co-borrower...", false);
+        
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -135,13 +151,16 @@ public class CoborrowersDialog {
                 return null;
             }
         };
+        
         task.setOnSucceeded(e -> refresh());
         task.setOnFailed(e -> setStatus(CustomerDocumentsDialog.describe(task.getException()), true));
+        
         CustomerDocumentsDialog.start(task, "delete-coborrower");
     }
 
     private void setStatus(String message, boolean error) {
         statusLabel.setText(message);
+        // Red for errors, muted grayish-purple for normal status hints
         statusLabel.setStyle(error ? "-fx-text-fill: #b00020;" : "-fx-text-fill: #726e97;");
     }
 }
