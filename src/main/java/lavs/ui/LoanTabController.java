@@ -51,7 +51,6 @@ public class LoanTabController {
     @FXML private TextField rateField;
     @FXML private ComboBox<String> paymentFrequencyCombo;
     @FXML private CheckBox interestOnlyCheck;
-    @FXML private Button coborrowersButton;
     @FXML private Label addLoanErrorLabel;
     @FXML private Button submitLoanButton;
 
@@ -271,11 +270,6 @@ public class LoanTabController {
             addLoanErrorLabel.setText(message(task.getException()));
         });
         startDaemon(task, "add-loan");
-    }
-
-    /** Placeholder: co-borrowers are not built yet. */
-    @FXML
-    private void handleCoborrowers(ActionEvent event) {
     }
 
     private void closeOverlay() {

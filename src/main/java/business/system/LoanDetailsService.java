@@ -11,14 +11,18 @@ import java.util.List;
 import java.util.Map;
 
 import business.lavsexceptions.LavsException;
+import business.system.dto.CoborrowerRow;
+import business.system.dto.CustomerSummary;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanDetail;
 import business.system.dto.LoanRow;
 import business.system.dto.PaymentRow;
 import business.system.dto.RepaymentRow;
+import business.validation.LoanValidation;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
 import dataaccess.systemadapters.MainframeAdapter;
+import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.Retrieve;
 import mainframe.client.messages.loan.UpdateStatus;
@@ -56,13 +60,23 @@ public class LoanDetailsService {
             Create.PAYMENTFREQUENCY_YEARLY, 1,
             Create.PAYMENTFREQUENCY_ONRENEWAL, 1);
 
+    // what the user can pick as the role of someone added to a loan
+    private static final List<String> COBORROWER_TYPES = List.of(
+            AddCoborrower.TYPE_COBORROWER,
+            AddCoborrower.TYPE_GUARANTOR);
+
+    private final MainframeAdapter adapter;
     private final Loan loanService;
     private final Payment paymentService;
+    // Created on first use. Coborrower extends Customer, and a Customer builds a
+    // LoanDetailsService, so creating it in this constructor would never stop.
+    private Coborrower coborrowerService;
 
     public LoanDetailsService(MainframeAdapter adapter) {
         if (adapter == null) {
             throw new IllegalArgumentException("Loan details adapter cannot be null");
         }
+        this.adapter = adapter;
         this.loanService = new Loan(adapter);
         this.paymentService = new Payment(adapter);
     }
@@ -292,8 +306,147 @@ public class LoanDetailsService {
     }
 
     // ------------------------------------------------------------------
+    // Co-borrowers and guarantors
+    // ------------------------------------------------------------------
+
+    /** The roles a person can have on a loan: "Coborrower" or "Guarantor". */
+    public List<String> coborrowerTypeOptions() { return COBORROWER_TYPES; }
+
+    /** Every co-borrower and guarantor on the loan (all pages). */
+    public List<CoborrowerRow> coborrowersFor(String loanNumber)
+            throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        List<CoborrowerRow> rows = new ArrayList<>();
+        long page = 1L;
+        for (int i = 0; i < MAX_PAGES; i++) {
+            mainframe.client.messages.loanCoborrower.List.Item[] items =
+                    coborrowers().retrieveCoborrowers(loanNumber.trim(), page, PAGE_SIZE);
+            if (items == null || items.length == 0) {
+                break;
+            }
+            for (mainframe.client.messages.loanCoborrower.List.Item item : items) {
+                rows.add(new CoborrowerRow(item.getId(), item.getCoborrowerNumber(),
+                        item.getCoborrowerName(), item.getType()));
+            }
+            if (items.length < PAGE_SIZE) {
+                break;
+            }
+            page++;
+        }
+        return rows;
+    }
+
+    /**
+     * Finds existing customers by name, for choosing who to add to a loan. The mainframe only
+     * matches whole words. A blank search finds nothing.
+     */
+    public List<CustomerSummary> searchCustomers(String term) throws IOException, LavsException {
+        return coborrowers().searchCustomers(term);
+    }
+
+    /**
+     * Adds an existing customer to a loan as a co-borrower or guarantor. The customer must have
+     * a mailing address and a phone number or email, must not be the loan's primary borrower,
+     * and must not already be on the loan.
+     *
+     * @throws ValidationException if the customer or type is not acceptable
+     * @throws LavsException if the mainframe rejects a request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public void addCoborrower(String loanNumber, String customerNumber, String type)
+            throws IOException, LavsException {
+        coborrowers().validateCoborrowerDetails(customerNumber, loanNumber, type);
+        String loan = loanNumber.trim();
+        String customer = customerNumber.trim();
+        requireCanJoin(loan, customer, null);
+        coborrowers().addCoborrower(customer, loan, type.trim());
+    }
+
+    /**
+     * Changes who a co-borrower is, or their role. The mainframe has no update message, so the
+     * old entry is removed and a new one added. Everything that can be checked is checked before
+     * anything is removed, and if the new entry is rejected the old one is put back.
+     *
+     * @throws ValidationException if the customer or type is not acceptable
+     * @throws LavsException if the mainframe rejects a request
+     * @throws IOException if the mainframe cannot be reached
+     */
+    public void updateCoborrower(String loanNumber, long coborrowerId, String customerNumber,
+            String type) throws IOException, LavsException {
+        Coborrower service = coborrowers();
+        service.validateCoborrowerDetails(customerNumber, loanNumber, type);
+        String loan = loanNumber.trim();
+        String customer = customerNumber.trim();
+        String newType = type.trim();
+
+        mainframe.client.messages.loanCoborrower.Retrieve existing =
+                service.retrieveCoborrower(coborrowerId, loan);
+        String oldCustomer = existing.getCoborrowerNumber() == null
+                ? "" : existing.getCoborrowerNumber().trim();
+        String oldType = existing.getType() == null ? "" : existing.getType().trim();
+        if (oldCustomer.equals(customer) && oldType.equals(newType)) {
+            return;     // nothing changed
+        }
+
+        requireCanJoin(loan, customer, coborrowerId);
+        if (!oldCustomer.equals(customer)) {
+            LoanValidation.preReqCheck(customer, adapter);
+        }
+
+        service.deleteCoborrower(coborrowerId, loan);
+        try {
+            service.addCoborrower(customer, loan, newType);
+        } catch (IOException | LavsException | RuntimeException e) {
+            try {
+                service.addCoborrower(oldCustomer, loan, oldType);
+            } catch (IOException | LavsException | RuntimeException restoreFailed) {
+                e.addSuppressed(restoreFailed);
+            }
+            throw e;
+        }
+    }
+
+    /** Removes a co-borrower or guarantor from a loan. */
+    public void deleteCoborrower(String loanNumber, long coborrowerId)
+            throws IOException, LavsException {
+        coborrowers().deleteCoborrower(coborrowerId, loanNumber);
+    }
+
+    // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+
+    private Coborrower coborrowers() {
+        if (coborrowerService == null) {
+            coborrowerService = new Coborrower(adapter);
+        }
+        return coborrowerService;
+    }
+
+    /**
+     * Checks the customer may be added to the loan: not its primary borrower and not already on
+     * it. {@code ignoreId} is the entry being replaced when an existing one is edited.
+     */
+    private void requireCanJoin(String loanNumber, String customerNumber, Long ignoreId)
+            throws IOException, LavsException {
+        ValidationResult result = new ValidationResult();
+        String primary = loanService.retrieveLoan(loanNumber).getCustomerNumber();
+        if (primary != null && customerNumber.equals(primary.trim())) {
+            result.addError("coborrowerNumber",
+                    "The primary borrower cannot also be a co-borrower on the same loan.");
+        } else {
+            for (CoborrowerRow row : coborrowersFor(loanNumber)) {
+                boolean replaced = ignoreId != null && row.id() == ignoreId;
+                if (!replaced && row.customerNumber() != null
+                        && customerNumber.equals(row.customerNumber().trim())) {
+                    result.addError("coborrowerNumber",
+                            "Customer " + customerNumber + " is already on this loan.");
+                    break;
+                }
+            }
+        }
+        result.throwIfInvalid();
+    }
 
     private LoanRow toRow(String loanNumber, Double amount, String startDate, String status)
             throws IOException {
