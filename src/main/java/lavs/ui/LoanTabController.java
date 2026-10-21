@@ -242,6 +242,13 @@ public class LoanTabController {
     }
 
     @FXML
+    private void handleResetLoan(ActionEvent event) {
+        resetForm();
+        DRAFT_CACHE.clear(context.getCustomerNumber());
+        addLoanErrorLabel.setText("");
+    }
+
+    @FXML
     private void handleSubmitLoan(ActionEvent event) {
         final String number = context.getCustomerNumber();
         final LoanApplication application = new LoanApplication(
@@ -265,8 +272,8 @@ public class LoanTabController {
         };
         task.setOnSucceeded(e -> {
             submitLoanButton.setDisable(false);
-            DRAFT_CACHE.clear(number);
             closeOverlay();
+            DRAFT_CACHE.clear(number);
             resetForm();
             refresh();
             messageLabel.setText("Loan " + task.getValue() + " created.");
@@ -287,9 +294,28 @@ public class LoanTabController {
     }
 
     private void closeOverlay() {
+        saveCurrentDraft();
         addLoanPane.setVisible(false);
         addLoanPane.setManaged(false);
         addLoanErrorLabel.setText("");
+    }
+
+    private void saveCurrentDraft() {
+        String number = context.getCustomerNumber();
+        if (number != null) {
+            DRAFT_CACHE.save(number, currentApplication());
+        }
+    }
+
+    private LoanApplication currentApplication() {
+        return new LoanApplication(
+                loanTypeCombo.getValue(),
+                amountField.getText(),
+                termField.getText(),
+                rateField.getText(),
+                compoundCombo.getValue(),
+                paymentFrequencyCombo.getValue(),
+                interestOnlyCheck.isSelected());
     }
 
     /** Fills the dropdowns from the business layer the first time the form is opened. */
