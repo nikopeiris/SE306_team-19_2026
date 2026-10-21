@@ -87,19 +87,28 @@ class LoanStatusServiceTest {
     // ---- allowed statuses ---------------------------------------------
 
     @Test
-    void newLoansCanBeSentForCheckingOrCancelled() {
-        assertEquals(List.of("Pending", "Cancelled"), service.allowedStatuses(" New "));
+    void newLoansCanBeMovedToAnyOtherStatus() {
+        assertEquals(List.of("Pending", "Active", "Defaulted", "Cancelled"),
+                service.allowedStatuses(" New "));
     }
 
     @Test
-    void pendingLoansCanOnlyBeCancelled() {
-        assertEquals(List.of("Cancelled"), service.allowedStatuses("Pending"));
+    void pendingLoansCanBeMovedToAnyOtherStatus() {
+        assertEquals(List.of("New", "Active", "Defaulted", "Cancelled"),
+                service.allowedStatuses("Pending"));
     }
 
     @Test
-    void otherOrMissingStatusesCannotBeChanged() {
-        assertTrue(service.allowedStatuses("Active").isEmpty());
-        assertTrue(service.allowedStatuses("Defaulted").isEmpty());
+    void activeAndDefaultedLoansCanBeMovedToAnyOtherStatus() {
+        assertEquals(List.of("New", "Pending", "Defaulted", "Cancelled"),
+                service.allowedStatuses("Active"));
+        assertEquals(List.of("New", "Pending", "Active", "Cancelled"),
+                service.allowedStatuses("Defaulted"));
+    }
+
+    @Test
+    void cancelledUnknownOrMissingStatusesCannotBeChanged() {
+        assertTrue(service.allowedStatuses("Cancelled").isEmpty());
         assertTrue(service.allowedStatuses("Nonsense").isEmpty());
         assertTrue(service.allowedStatuses(null).isEmpty());
     }
@@ -115,12 +124,12 @@ class LoanStatusServiceTest {
 
     @Test
     void changeStatusRefusesAChangeThatIsNotAllowed() throws Exception {
-        stubLoan("Active");
+        stubLoan("Cancelled");
 
         ValidationException thrown = assertThrows(ValidationException.class,
-                () -> service.changeStatus("L1", "Cancelled"));
+                () -> service.changeStatus("L1", "Active"));
 
-        assertEquals("A loan that is Active cannot be changed to Cancelled.",
+        assertEquals("A loan that is Cancelled cannot be changed to Active.",
                 thrown.getResult().getError("status"));
         verify(loan, never()).updateLoanStatus(anyString(), anyString());
     }
@@ -133,6 +142,19 @@ class LoanStatusServiceTest {
 
         assertEquals(sent, service.changeStatus(" L1 ", " Cancelled "));
 
+        verify(lookups, never()).coborrowers(anyString());
+        verify(lookups, never()).checkContactDetails(anyString());
+    }
+
+    @Test
+    void changeStatusSetsActiveDefaultedOrNewWithoutCheckingBorrowers() throws Exception {
+        for (String target : List.of("Active", "Defaulted", "New")) {
+            stubLoan("Pending");
+            UpdateStatus sent = mock(UpdateStatus.class);
+            when(loan.updateLoanStatus("L1", target)).thenReturn(sent);
+
+            assertEquals(sent, service.changeStatus("L1", target));
+        }
         verify(lookups, never()).coborrowers(anyString());
         verify(lookups, never()).checkContactDetails(anyString());
     }
