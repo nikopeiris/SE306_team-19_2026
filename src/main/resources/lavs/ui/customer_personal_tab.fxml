@@ -146,14 +146,7 @@
 
                   <Separator />
 
-                  <Label fx:id="documentsHeadingLabel" styleClass="section-title" text="Documents" />
-
-                  <HBox alignment="CENTER_LEFT" spacing="16.0">
-                     <children>
-                        <Button fx:id="documentsButton" mnemonicParsing="false" onAction="#handleDocuments" prefHeight="44.0" prefWidth="180.0" styleClass="button-secondary" text="View documents" />
-                        <Label fx:id="documentsHintLabel" styleClass="hint-label" text="Save the customer first to manage their documents." />
-                     </children>
-                  </HBox>
+                  <fx:include fx:id="documentsSection" source="documents_section.fxml" />
                </children>
             </VBox>
          </content>

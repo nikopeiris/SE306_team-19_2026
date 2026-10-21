@@ -40,6 +40,8 @@ public class AddDocumentDialog {
     @FXML private TextField fileNameField;
     @FXML private TextField fileTypeField;
     @FXML private TextField sizeField;
+    @FXML private VBox fileTypeBox;
+    @FXML private VBox sizeBox;
     @FXML private Label errorLabel;
     @FXML private HBox actionRow;
     @FXML private Button saveButton;
@@ -80,7 +82,7 @@ public class AddDocumentDialog {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Document");
             alert.setHeaderText("Could not open the form");
-            alert.setContentText(CustomerDocumentsDialog.describe(e));
+            alert.setContentText(DocumentsSectionController.describe(e));
             alert.showAndWait();
         }
     }
@@ -111,21 +113,21 @@ public class AddDocumentDialog {
         // the X inside the popup is the way out, so no window bar on top of it
         stage.initStyle(StageStyle.UNDECORATED);
         stage.setTitle(document == null ? "Add Document" : "Document");
-        stage.setScene(CustomerDocumentsDialog.styled(new Scene(root)));
+        stage.setScene(DocumentsSectionController.styled(new Scene(root)));
         stage.showAndWait();
     }
 
-    // The service has no way to edit a document, so an existing one is read-only and can only be deleted
+    // The service has no way to edit a document, so an existing one is read-only and can only be deleted.
+    // The document list only carries the type and file name, so file type and size aren't shown here.
     private void showDetails(CustomerDocument shown) {
         titleLabel.setText("Document details");
         typeField.setText(Objects.toString(shown.type(), ""));
         fileNameField.setText(Objects.toString(shown.fileName(), ""));
-        Object size = null;
-        sizeField.setText(size == null ? "" : String.valueOf(size));
 
-        for (TextField field : new TextField[] { typeField, fileNameField, fileTypeField, sizeField }) {
-            field.setEditable(false);
-        }
+        typeField.setEditable(false);
+        fileNameField.setEditable(false);
+        setShown(fileTypeBox, false);
+        setShown(sizeBox, false);
         setShown(chooseFileButton, false);
         setShown(noteLabel, false);
         setShown(saveButton, false);
@@ -175,9 +177,9 @@ public class AddDocumentDialog {
         });
         task.setOnFailed(e -> {
             saveButton.setDisable(false);
-            errorLabel.setText(CustomerDocumentsDialog.describe(task.getException()));
+            errorLabel.setText(DocumentsSectionController.describe(task.getException()));
         });
-        CustomerDocumentsDialog.start(task, "add-document");
+        DocumentsSectionController.start(task, "add-document");
     }
 
     // ------------------------------------------------------------------
@@ -217,10 +219,10 @@ public class AddDocumentDialog {
         });
         task.setOnFailed(e -> {
             confirmDeleteButton.setDisable(false);
-            errorLabel.setText(CustomerDocumentsDialog.describe(task.getException()));
+            errorLabel.setText(DocumentsSectionController.describe(task.getException()));
             handleKeepDocument(null);
         });
-        CustomerDocumentsDialog.start(task, "delete-document");
+        DocumentsSectionController.start(task, "delete-document");
     }
 
     @FXML

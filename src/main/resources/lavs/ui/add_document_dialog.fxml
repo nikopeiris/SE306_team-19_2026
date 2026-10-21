@@ -47,14 +47,14 @@
          </children>
       </VBox>
 
-      <VBox spacing="6.0">
+      <VBox fx:id="fileTypeBox" spacing="6.0">
          <children>
             <Label styleClass="field-label" text="File type" />
             <TextField fx:id="fileTypeField" maxWidth="Infinity" prefHeight="44.0" promptText="optional, e.g. pdf" />
          </children>
       </VBox>
 
-      <VBox spacing="6.0">
+      <VBox fx:id="sizeBox" spacing="6.0">
          <children>
             <HBox spacing="4.0">
                <children>

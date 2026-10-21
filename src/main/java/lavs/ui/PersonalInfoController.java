@@ -14,7 +14,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 
@@ -47,8 +46,7 @@ public class PersonalInfoController {
     @FXML private TextField secondaryCompanyField;
     @FXML private TextField secondarySalaryField;
 
-    @FXML private Button documentsButton;
-    @FXML private Label documentsHintLabel;
+    @FXML private DocumentsSectionController documentsSectionController;
 
     private CustomerContext context;
 
@@ -76,12 +74,11 @@ public class PersonalInfoController {
 
         numbersOnly(salaryField);
         numbersOnly(secondarySalaryField);
-
-        setDocumentsAvailable(false);
     }
 
     public void init(CustomerContext context) {
         this.context = context;
+        documentsSectionController.init(context);
     }
 
     // ------------------------------------------------------------------
@@ -153,7 +150,7 @@ public class PersonalInfoController {
             dateOfBirthField.setValue(null);
         }
         populateEmployers(details.employers());
-        setDocumentsAvailable(!p.isNew());
+        documentsSectionController.load(p.isNew() ? null : p.number());
     }
 
     private void populateEmployers(List<Employer> employers) {
@@ -219,17 +216,6 @@ public class PersonalInfoController {
         secondarySalaryField.clear();
     }
 
-    // ------------------------------------------------------------------
-    // Documents
-    // ------------------------------------------------------------------
-
-    /** Documents belong to a saved customer, so the button waits until one exists. */
-    private void setDocumentsAvailable(boolean available) {
-        documentsButton.setDisable(!available);
-        documentsHintLabel.setVisible(!available);
-        documentsHintLabel.setManaged(!available);
-    }
-
     private static void numbersOnly(TextField field) {
         field.textProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue != null && !newValue.matches("\\d*(\\.\\d*)?")) {
@@ -257,6 +243,10 @@ public class PersonalInfoController {
     private static String text(ComboBox<String> box) {
         return box.getEditor().getText();
     }
+
+    // ------------------------------------------------------------------
+    // Unsaved changes
+    // ------------------------------------------------------------------
 
     /** True when this tab no longer matches what was loaded (or has been filled in on a new customer). */
     public boolean hasUnsavedChanges() {
@@ -302,16 +292,6 @@ public class PersonalInfoController {
     // ------------------------------------------------------------------
     // Buttons
     // ------------------------------------------------------------------
-
-    @FXML
-    private void handleDocuments(ActionEvent event) {
-        CustomerDetails original = context.getOriginal();
-        if (original == null || original.personal().isNew()) {
-            return;
-        }
-        CustomerDocumentsDialog.show(context, original.personal().number(),
-                documentsButton.getScene().getWindow());
-    }
 
     @FXML
     private void handleAddSecondaryEmployment(ActionEvent event) {
