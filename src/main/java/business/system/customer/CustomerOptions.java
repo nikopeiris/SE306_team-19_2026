@@ -6,6 +6,7 @@ import mainframe.client.messages.customer.AddAddress;
 import mainframe.client.messages.customer.AddEmail;
 import mainframe.client.messages.customer.AddEmployer;
 import mainframe.client.messages.customer.AddPhoneNumber;
+import mainframe.client.messages.customer.AddRelationship;
 
 /**
  * The choices the UI offers in its dropdowns. They live here so the UI never
@@ -43,4 +44,11 @@ public final class CustomerOptions {
 
     public static final String EMPLOYER_PRIMARY = AddEmployer.TYPE_PRIMARY;
     public static final String EMPLOYER_SECONDARY = AddEmployer.TYPE_SECONDARY;
+
+    public static final String RELATIONSHIP_TYPE_OTHER = AddRelationship.TYPE_OTHER;
+    public static final List<String> RELATIONSHIP_TYPES = List.of(
+            AddRelationship.TYPE_PARENT,
+            AddRelationship.TYPE_SPOUSE,
+            AddRelationship.TYPE_LEGALAUTHORITY,
+            AddRelationship.TYPE_OTHER);
 }
