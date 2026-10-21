@@ -27,7 +27,7 @@ import javafx.stage.Window;
 
 /**
  * Controller for the document popup (add_document_dialog.fxml). It adds a new document,
- * or shows an existing one with a delete button. It only reads the fields; every rule
+ * or edits and deletes an existing one. It only reads the fields; every rule
  * (what is required, what is valid) is checked by the business layer and its message
  * is shown in the form.
  */
@@ -63,7 +63,7 @@ public class AddDocumentDialog {
         open(context, customerNumber, null, owner, onAdded);
     }
 
-    /** Opens an existing document's details; {@code onChanged} runs after it is deleted. */
+    /** Opens an existing document for editing; {@code onChanged} runs after it is saved or deleted. */
     public static void showExisting(CustomerContext context, String customerNumber,
             CustomerDocument document, Window owner, Runnable onChanged) {
         open(context, customerNumber, document, owner, onChanged);
@@ -117,21 +117,16 @@ public class AddDocumentDialog {
         stage.showAndWait();
     }
 
-    // The service has no way to edit a document, so an existing one is read-only and can only be deleted.
-    // The document list only carries the type and file name, so file type and size aren't shown here.
+    // Only the type and file name can be changed. The file type and size stay as they were stored,
+    // so they aren't shown here, and the file can't be swapped for a different one.
     private void showDetails(CustomerDocument shown) {
-        titleLabel.setText("Document details");
+        titleLabel.setText("Edit document");
         typeField.setText(Objects.toString(shown.type(), ""));
         fileNameField.setText(Objects.toString(shown.fileName(), ""));
 
-        typeField.setEditable(false);
-        fileNameField.setEditable(false);
         setShown(fileTypeBox, false);
         setShown(sizeBox, false);
         setShown(chooseFileButton, false);
-        setShown(noteLabel, false);
-        setShown(saveButton, false);
-        saveButton.setDefaultButton(false);
         setShown(deleteButton, true);
     }
 
@@ -156,6 +151,10 @@ public class AddDocumentDialog {
 
     @FXML
     private void handleSave(ActionEvent event) {
+        if (document != null) {
+            saveChanges();
+            return;
+        }
         Customer service = context.getCustomerService();
         String type = typeField.getText();
         String fileName = fileNameField.getText();
@@ -180,6 +179,45 @@ public class AddDocumentDialog {
             errorLabel.setText(DocumentsSectionController.describe(task.getException()));
         });
         DocumentsSectionController.start(task, "add-document");
+    }
+
+    // ------------------------------------------------------------------
+    // Editing
+    // ------------------------------------------------------------------
+
+    private void saveChanges() {
+        String type = typeField.getText();
+        String fileName = fileNameField.getText();
+        if (clean(type).equals(clean(document.type())) && clean(fileName).equals(clean(document.fileName()))) {
+            stage.close();
+            return;
+        }
+
+        Customer service = context.getCustomerService();
+        CustomerDocument target = document;
+        errorLabel.setText("");
+        saveButton.setDisable(true);
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                service.updateCustomerDocument(customerNumber, target.id(), type, fileName);
+                return null;
+            }
+        };
+        task.setOnSucceeded(e -> {
+            stage.close();
+            onChanged.run();
+        });
+        task.setOnFailed(e -> {
+            saveButton.setDisable(false);
+            errorLabel.setText(DocumentsSectionController.describe(task.getException()));
+        });
+        DocumentsSectionController.start(task, "update-document");
+    }
+
+    // null and blank count as the same, so an untouched field never looks edited
+    private static String clean(String text) {
+        return text == null ? "" : text.trim();
     }
 
     // ------------------------------------------------------------------
