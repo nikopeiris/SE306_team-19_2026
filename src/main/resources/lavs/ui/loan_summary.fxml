@@ -210,6 +210,7 @@
          <children>
             <Button fx:id="scheduleButton" mnemonicParsing="false" onAction="#handleToggleSchedule" prefWidth="260.0" text="Show full Payment Schedule" />
             <Button fx:id="paymentsButton" mnemonicParsing="false" onAction="#handlePayments" prefWidth="130.0" text="Payments" />
+            <Button fx:id="coborrowersButton" mnemonicParsing="false" onAction="#handleCoborrowers" prefWidth="120.0" text="Co-borrowers" />
             <Button fx:id="editButton" disable="true" mnemonicParsing="false" onAction="#handleEdit" prefWidth="100.0" text="Edit" />
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="saveEditButton" mnemonicParsing="false" onAction="#handleSaveEdit" prefWidth="120.0" style="-fx-background-color: #011936;" text="Save Changes" textFill="WHITE" visible="false" />

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import business.lavsexceptions.LavsException;
+import business.system.dto.CoborrowerRow;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanDetail;
 import business.system.dto.LoanRow;
@@ -21,7 +24,9 @@ import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
 import mainframe.client.Status;
+import mainframe.client.messages.loan.AddCoborrower;
 import mainframe.client.messages.loan.Create;
+import mainframe.client.messages.loan.DeleteCoborrower;
 import mainframe.client.messages.loan.Retrieve;
 import mainframe.client.messages.loan.UpdateStatus;
 
@@ -195,6 +200,160 @@ class LoanDetailsServiceTest {
         service.updatePayment(" L1 ", 4L, 30.0, "2026-01-02");
         service.deletePayment(" L1 ", 4L);
         verify(adapter, times(4)).send(any(Message.class));
+    }
+
+    // ------------------------------------------------------------------
+    // Co-borrowers
+    // ------------------------------------------------------------------
+
+    @Test
+    void coborrowerTypeOptionsAreCoborrowerAndGuarantor() {
+        assertEquals(List.of("Coborrower", "Guarantor"), service.coborrowerTypeOptions());
+    }
+
+    @Test
+    void invalidCoborrowerInputIsRejectedBeforeAdapterCalls() throws Exception {
+        assertThrows(ValidationException.class, () -> service.coborrowersFor(" "));
+        assertThrows(ValidationException.class, () -> service.addCoborrower(" ", "C2", "Coborrower"));
+        assertThrows(ValidationException.class, () -> service.addCoborrower("L1", " ", "Coborrower"));
+        assertThrows(ValidationException.class, () -> service.addCoborrower("L1", "C2", "Bad"));
+        assertThrows(ValidationException.class, () -> service.updateCoborrower("L1", 1L, "C2", null));
+        assertThrows(ValidationException.class, () -> service.deleteCoborrower("L1", 0L));
+        assertThrows(ValidationException.class, () -> service.deleteCoborrower(" ", 1L));
+        assertTrue(service.searchCustomers("  ").isEmpty());
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void coborrowersForMapsItemsAndTrimsLoanNumber() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        List<CoborrowerRow> rows = service.coborrowersFor(" L1 ");
+        assertEquals(1, rows.size());
+        assertEquals(new CoborrowerRow(9L, "C2", "Jane Smith", "Coborrower"), rows.get(0));
+    }
+
+    @Test
+    void addCoborrowerSendsTrimmedValues() throws Exception {
+        stubCoborrowerLoan("C1", null, null);
+        service.addCoborrower(" L1 ", " C3 ", " Guarantor ");
+
+        List<AddCoborrower> sent = sent(AddCoborrower.class);
+        assertEquals(1, sent.size());
+        assertEquals("C3", sent.get(0).getCoborrowerNumber());
+        assertEquals("L1", sent.get(0).getLoanNumber());
+        assertEquals("Guarantor", sent.get(0).getType());
+    }
+
+    @Test
+    void addCoborrowerRejectsThePrimaryBorrower() throws Exception {
+        stubCoborrowerLoan("C1", null, null);
+        assertThrows(ValidationException.class, () -> service.addCoborrower("L1", "C1", "Coborrower"));
+        verify(adapter, never()).send(any(AddCoborrower.class));
+    }
+
+    @Test
+    void addCoborrowerRejectsSomeoneAlreadyOnTheLoan() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        assertThrows(ValidationException.class, () -> service.addCoborrower("L1", "C2", "Guarantor"));
+        verify(adapter, never()).send(any(AddCoborrower.class));
+    }
+
+    @Test
+    void updateCoborrowerReplacesTheOldEntry() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        service.updateCoborrower(" L1 ", 9L, "C3", "Guarantor");
+
+        assertEquals(1, sent(DeleteCoborrower.class).size());
+        List<AddCoborrower> sent = sent(AddCoborrower.class);
+        assertEquals(1, sent.size());
+        assertEquals("C3", sent.get(0).getCoborrowerNumber());
+        assertEquals("Guarantor", sent.get(0).getType());
+    }
+
+    @Test
+    void updateCoborrowerCanChangeOnlyTheRole() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        service.updateCoborrower("L1", 9L, "C2", "Guarantor");
+
+        verify(adapter).send(any(DeleteCoborrower.class));
+        verify(adapter).send(any(AddCoborrower.class));
+    }
+
+    @Test
+    void updateCoborrowerWithNoChangeSendsNothing() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        service.updateCoborrower("L1", 9L, "C2", "Coborrower");
+
+        verify(adapter, never()).send(any(DeleteCoborrower.class));
+        verify(adapter, never()).send(any(AddCoborrower.class));
+    }
+
+    @Test
+    void updateCoborrowerRejectsThePrimaryBorrowerWithoutDeletingAnything() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        assertThrows(ValidationException.class, () -> service.updateCoborrower("L1", 9L, "C1", "Coborrower"));
+        verify(adapter, never()).send(any(DeleteCoborrower.class));
+    }
+
+    @Test
+    void updateCoborrowerPutsTheOldEntryBackIfTheNewOneIsRejected() throws Exception {
+        stubCoborrowerLoan("C1", "C2", "Coborrower");
+        AtomicInteger adds = new AtomicInteger();
+        when(adapter.send(any(AddCoborrower.class))).thenAnswer(invocation ->
+                adds.incrementAndGet() == 1 ? new Status(5, "Rejected", 1L) : new Status(1L));
+
+        assertThrows(LavsException.class, () -> service.updateCoborrower("L1", 9L, "C3", "Guarantor"));
+
+        List<AddCoborrower> sent = sent(AddCoborrower.class);
+        assertEquals(2, sent.size());
+        assertEquals("C3", sent.get(0).getCoborrowerNumber());
+        assertEquals("C2", sent.get(1).getCoborrowerNumber());
+        assertEquals("Coborrower", sent.get(1).getType());
+    }
+
+    @Test
+    void deleteCoborrowerSendsDeleteWithTrimmedLoanNumber() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1L));
+        service.deleteCoborrower(" L1 ", 9L);
+
+        verify(adapter).send(any(DeleteCoborrower.class));
+    }
+
+    /** The messages of one type that the service has sent to the adapter so far. */
+    private <T extends Message> List<T> sent(Class<T> type) {
+        List<T> found = new ArrayList<>();
+        for (var invocation : mockingDetails(adapter).getInvocations()) {
+            Object message = invocation.getArguments()[0];
+            if (type.isInstance(message)) {
+                found.add(type.cast(message));
+            }
+        }
+        return found;
+    }
+
+    /**
+     * Stubs a loan whose primary borrower is {@code primary}, whose co-borrower list holds one
+     * entry (id 9) if {@code onLoan} is not null, and whose customers all pass the prerequisites.
+     */
+    private void stubCoborrowerLoan(String primary, String onLoan, String type) throws Exception {
+        when(adapter.send(any(Message.class))).thenAnswer(invocation -> {
+            Message message = invocation.getArgument(0);
+            if (message instanceof Retrieve loan) {
+                set(loan, "_customerNumber", primary);
+            } else if (message instanceof mainframe.client.messages.loanCoborrower.List list) {
+                if (onLoan != null) {
+                    add(list, list.new Item("Jane Smith", onLoan, 9L, type));
+                }
+            } else if (message instanceof mainframe.client.messages.loanCoborrower.Retrieve entry) {
+                set(entry, "_coborrowerNumber", onLoan);
+                set(entry, "_type", type);
+            } else if (message instanceof mainframe.client.messages.customerAddress.List addresses) {
+                add(addresses, addresses.new Item("Auckland", "NZ", 1L, "y", "n", "Home"));
+            } else if (message instanceof mainframe.client.messages.customerEmail.List emails) {
+                add(emails, emails.new Item("jane@example.com", 1L, "y", "Home"));
+            }
+            return new Status(1L);
+        });
     }
 
     private static void set(Object target, String name, Object value) throws Exception {
