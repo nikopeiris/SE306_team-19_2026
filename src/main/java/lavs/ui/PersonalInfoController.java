@@ -1,6 +1,7 @@
 package lavs.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import business.system.customer.CustomerOptions;
@@ -13,7 +14,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Pane;
 
@@ -46,8 +46,7 @@ public class PersonalInfoController {
     @FXML private TextField secondaryCompanyField;
     @FXML private TextField secondarySalaryField;
 
-    @FXML private Button documentsButton;
-    @FXML private Label documentsHintLabel;
+    @FXML private DocumentsSectionController documentsSectionController;
 
     private CustomerContext context;
 
@@ -75,12 +74,11 @@ public class PersonalInfoController {
 
         numbersOnly(salaryField);
         numbersOnly(secondarySalaryField);
-
-        setDocumentsAvailable(false);
     }
 
     public void init(CustomerContext context) {
         this.context = context;
+        documentsSectionController.init(context);
     }
 
     // ------------------------------------------------------------------
@@ -152,7 +150,7 @@ public class PersonalInfoController {
             dateOfBirthField.setValue(null);
         }
         populateEmployers(details.employers());
-        setDocumentsAvailable(!p.isNew());
+        documentsSectionController.load(p.isNew() ? null : p.number());
     }
 
     private void populateEmployers(List<Employer> employers) {
@@ -218,17 +216,6 @@ public class PersonalInfoController {
         secondarySalaryField.clear();
     }
 
-    // ------------------------------------------------------------------
-    // Documents
-    // ------------------------------------------------------------------
-
-    /** Documents belong to a saved customer, so the button waits until one exists. */
-    private void setDocumentsAvailable(boolean available) {
-        documentsButton.setDisable(!available);
-        documentsHintLabel.setVisible(!available);
-        documentsHintLabel.setManaged(!available);
-    }
-
     private static void numbersOnly(TextField field) {
         field.textProperty().addListener((obs, oldValue, newValue) -> {
             if (newValue != null && !newValue.matches("\\d*(\\.\\d*)?")) {
@@ -258,18 +245,53 @@ public class PersonalInfoController {
     }
 
     // ------------------------------------------------------------------
-    // Buttons
+    // Unsaved changes
     // ------------------------------------------------------------------
 
-    @FXML
-    private void handleDocuments(ActionEvent event) {
+    /** True when this tab no longer matches what was loaded (or has been filled in on a new customer). */
+    public boolean hasUnsavedChanges() {
         CustomerDetails original = context.getOriginal();
-        if (original == null || original.personal().isNew()) {
-            return;
+        Personal now = readPersonal();
+        Personal before = original == null ? null : original.personal();
+
+        if (!same(now.title(), before == null ? null : before.title())
+                || !same(now.firstName(), before == null ? null : before.firstName())
+                || !same(now.familyName(), before == null ? null : before.familyName())
+                || !same(now.dateOfBirth(), before == null ? null : before.dateOfBirth())
+                || !same(now.nationality(), before == null ? null : before.nationality())) {
+            return true;
         }
-        CustomerDocumentsDialog.show(context, original.personal().number(),
-                documentsButton.getScene().getWindow());
+
+        List<Employer> loadedEmployers = original == null ? List.of() : original.employers();
+        return !employerKeys(readEmployers()).equals(employerKeys(loadedEmployers));
     }
+
+    // null and blank count as the same, so an untouched field never looks edited
+    private static boolean same(String a, String b) {
+        return clean(a).equals(clean(b));
+    }
+
+    private static String clean(String text) {
+        return text == null ? "" : text.trim();
+    }
+
+    // one comparable line per employer, sorted so the order they come in doesn't matter
+    private static List<String> employerKeys(List<Employer> employers) {
+        List<String> keys = new ArrayList<>();
+        for (Employer e : employers) {
+            if (CustomerOptions.EMPLOYER_PRIMARY.equals(e.type())
+                    || CustomerOptions.EMPLOYER_SECONDARY.equals(e.type())) {
+                keys.add(e.type() + "|" + clean(e.name()) + "|" + clean(e.position())
+                        + "|" + formatSalary(e.salary()));
+            }
+        }
+        Collections.sort(keys);
+        return keys;
+    }
+
+    // ------------------------------------------------------------------
+    // Buttons
+    // ------------------------------------------------------------------
 
     @FXML
     private void handleAddSecondaryEmployment(ActionEvent event) {
@@ -290,10 +312,5 @@ public class PersonalInfoController {
     @FXML
     private void handlePersonalInfoSave(ActionEvent event) {
         context.getNavigation().save();
-    }
-
-    @FXML
-    private void handlePersonalInfoCancel(ActionEvent event) {
-        context.getNavigation().cancel();
     }
 }

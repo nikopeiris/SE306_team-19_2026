@@ -12,6 +12,8 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -200,9 +202,21 @@ public class LoanTabController {
     }
 
     private void openSummary(LoanRow loan) {
-        LoanSummaryController.show(loanTabRoot.getScene().getWindow(),
-                context.getCustomerService(), loan.loanNumber(), this::refresh);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("loan_summary.fxml"));
+            Parent loanOverlay = loader.load();
+
+            LoanSummaryController controller = loader.getController();
+            controller.start(context.getCustomerService().loanDetails(), loan.loanNumber(), this::refresh);
+            controller.setOnCloseAction(() -> loanTabRoot.getChildren().remove(loanOverlay));
+            loanTabRoot.getChildren().add(loanOverlay);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
+
 
     // ------------------------------------------------------------------
     // Adding a loan

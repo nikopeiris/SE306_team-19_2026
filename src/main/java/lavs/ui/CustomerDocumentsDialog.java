@@ -2,8 +2,8 @@ package lavs.ui;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import business.lavsexceptions.LavsException;
 import business.system.Customer;
@@ -17,34 +17,32 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.FlowPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
 /**
- * Controller for the documents popup (documents_dialog.fxml): lists a customer's
- * documents and lets the user add or remove them. Unlike the contact details,
+ * Controller for the documents window (documents_dialog.fxml): shows a customer's
+ * documents as tiles, with a + tile to add another. Unlike the contact details,
  * documents are saved to the mainframe straight away, so this only works for a
  * customer that already exists. Every rule is checked by the business layer.
  */
 public class CustomerDocumentsDialog {
 
-    private static final String MUTED = "-fx-text-fill: #726e97;";
-    private static final String ERROR = "-fx-text-fill: #b00020;";
-
     @FXML private Label hintLabel;
     @FXML private Label emptyLabel;
     @FXML private Label statusLabel;
-    @FXML private VBox listContainer;
+    @FXML private FlowPane listContainer;
+    @FXML private Button addTile;
 
     private CustomerContext context;
     private String customerNumber;
     private Stage stage;
 
-    /** Opens the popup and waits until it is closed. */
+    /** Opens the window and waits until it is closed. */
     public static void show(CustomerContext context, String customerNumber, Window owner) {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -88,13 +86,8 @@ public class CustomerDocumentsDialog {
         AddDocumentDialog.show(context, customerNumber, stage, this::refresh);
     }
 
-    @FXML
-    private void handleClose(ActionEvent event) {
-        stage.close();
-    }
-
     // ------------------------------------------------------------------
-    // The list
+    // The tiles
     // ------------------------------------------------------------------
 
     private void refresh() {
@@ -115,52 +108,34 @@ public class CustomerDocumentsDialog {
     }
 
     private void render(List<CustomerDocument> documents) {
-        listContainer.getChildren().clear();
+        // the + tile stays put at the end, everything else is rebuilt
+        listContainer.getChildren().removeIf(node -> node != addTile);
         emptyLabel.setVisible(documents.isEmpty());
         emptyLabel.setManaged(documents.isEmpty());
         try {
+            List<Node> tiles = new ArrayList<>();
             for (CustomerDocument document : documents) {
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/lavs/ui/document_row.fxml"));
-                Node row = loader.load();
+                Node tile = loader.load();
                 DocumentRowController controller = loader.getController();
-                controller.setDocument(document, this::confirmRemove);
-                listContainer.getChildren().add(row);
+                controller.setDocument(document, this::openDocument);
+                tiles.add(tile);
             }
+            listContainer.getChildren().addAll(0, tiles);
         } catch (IOException e) {
             setStatus(describe(e), true);
         }
     }
 
-    private void confirmRemove(CustomerDocument document) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                "Remove \"" + document.fileName() + "\" from this customer?",
-                ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Remove document");
-        confirm.setHeaderText(null);
-        confirm.initOwner(stage);
-        Optional<ButtonType> answer = confirm.showAndWait();
-        if (answer.isEmpty() || answer.get() != ButtonType.YES) {
-            return;
-        }
-
-        Customer service = context.getCustomerService();
-        setStatus("Removing document...", false);
-        Task<Void> task = new Task<>() {
-            @Override
-            protected Void call() throws Exception {
-                service.deleteCustomerDocument(customerNumber, document.id());
-                return null;
-            }
-        };
-        task.setOnSucceeded(e -> refresh());
-        task.setOnFailed(e -> setStatus(describe(task.getException()), true));
-        start(task, "delete-document");
+    private void openDocument(CustomerDocument document) {
+        AddDocumentDialog.showExisting(context, customerNumber, document, stage, this::refresh);
     }
 
     private void setStatus(String message, boolean isError) {
         statusLabel.setText(message);
-        statusLabel.setStyle(isError ? ERROR : MUTED);
+        statusLabel.getStyleClass().removeAll("hint-label", "error-label");
+        statusLabel.getStyleClass().add(isError ? "error-label" : "hint-label");
     }
 
     // ------------------------------------------------------------------

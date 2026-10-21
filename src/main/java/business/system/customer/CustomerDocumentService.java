@@ -59,6 +59,7 @@ public class CustomerDocumentService {
 
   /**
    * Updates an existing customer document by creating a new version and removing the old one.
+   * The details are kept exactly as they are.
    *
    * @param customer the customer number or identifier
    * @param documentId the ID of the document to update
@@ -68,15 +69,36 @@ public class CustomerDocumentService {
    * @throws IOException if the mainframe cannot be reached
    */
   public AddDocument updateDocument(String customer, long documentId) throws IOException, LavsException {
-    Retrieve customerDocument = retrieveCustomerDocument(customer, documentId);
-    String fileName = customerDocument.getFileName();
-    String fileType = customerDocument.getFileType();
-    Long size = customerDocument.getSize();
-    String type = customerDocument.getType();
+    Retrieve existing = retrieveCustomerDocument(customer, documentId);
+    return replaceDocument(customer, documentId, existing, existing.getType(), existing.getFileName());
+  }
 
-    AddDocument updatedDocument = addDocument(customer, fileName, fileType, size, type);
+  /**
+   * Changes the type and file name of an existing customer document. The mainframe can't edit
+   * a document in place, so the new details are added first and the old document is removed
+   * after, which means the document gets a new id. The file type and size carry over unchanged.
+   *
+   * @param customer the customer number or identifier
+   * @param documentId the ID of the document to update
+   * @param type the new document type classification
+   * @param fileName the new name of the file
+   * @return the mainframe message containing the newly created document details
+   * @throws ValidationException if the new type or file name is invalid
+   * @throws LavsException if the mainframe rejects the request
+   * @throws IOException if the mainframe cannot be reached
+   */
+  public AddDocument updateDocument(String customer, Long documentId, String type, String fileName)
+      throws IOException, LavsException {
+    Retrieve existing = retrieveCustomerDocument(customer, documentId);
+    return replaceDocument(customer, documentId, existing, type, fileName);
+  }
+
+  // adding first means a failed validation leaves the old document untouched
+  private AddDocument replaceDocument(String customer, Long documentId, Retrieve existing,
+      String type, String fileName) throws IOException, LavsException {
+    AddDocument updated = addDocument(customer, fileName, existing.getFileType(), existing.getSize(), type);
     deleteDocument(customer, documentId);
-    return updatedDocument;
+    return updated;
   }
 
   /**

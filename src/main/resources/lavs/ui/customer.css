@@ -1,0 +1,366 @@
+/*
+ * Customer popup styles (customer.fxml + customer_personal_tab.fxml)
+ * Everything is scoped under .customer-popup so it can't leak into dashboard.css
+ * Mint Cream #F8FFF4 is the main surface, Prussian Blue #011936 is text and primary actions,
+ * Carrot Orange #F18F01 is the accent, Deep Crimson #941621 is for required marks and destructive actions.
+ */
+
+/* The root covers the whole dashboard window, so its dark fill is the overlay behind the card */
+.customer-popup {
+  -fx-background-color: rgba(0, 0, 0, 0.55);
+  -fx-font-family: "Roboto", "Helvetica Neue", "Segoe UI", sans-serif;
+  -fx-font-size: 14px;
+}
+
+.customer-popup .popup-card {
+  -fx-fill: #f8fff4;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 24, 0, 0, 8);
+}
+
+/* ---------- Unsaved changes prompt ---------- */
+.customer-popup .confirm-scrim {
+  -fx-background-color: rgba(0, 0, 0, 0.45);
+}
+
+.customer-popup .confirm-card {
+  -fx-background-color: #f8fff4;
+  -fx-background-radius: 0;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 28, 0, 0, 10);
+}
+
+.customer-popup .confirm-message {
+  -fx-text-fill: #011936;
+  -fx-font-size: 14px;
+}
+
+/* ---------- Buttons ---------- */
+.customer-popup .button {
+  -fx-cursor: hand;
+  -fx-font-size: 14px;
+  -fx-font-weight: bold;
+  -fx-background-radius: 0;
+  -fx-background-insets: 0;
+  -fx-border-width: 2;
+  -fx-border-radius: 0;
+  -fx-border-color: transparent;
+  -fx-padding: 0 20 0 20;
+}
+
+/* Keeps keyboard focus visible without bringing back the default blue glow */
+.customer-popup .button:focused {
+  -fx-border-color: #011936;
+}
+
+.customer-popup .button-primary {
+  -fx-background-color: #011936;
+  -fx-text-fill: #f8fff4;
+}
+
+.customer-popup .button-primary:hover {
+  -fx-background-color: #0b2a52;
+}
+
+.customer-popup .button-primary:armed {
+  -fx-background-color: #000f22;
+}
+
+/* Navy border would vanish into the navy fill, so the focus ring goes orange here */
+.customer-popup .button-primary:focused {
+  -fx-border-color: #f18f01;
+}
+
+.customer-popup .button-secondary {
+  -fx-background-color: #f18f01;
+  -fx-text-fill: #011936;
+}
+
+.customer-popup .button-secondary:hover {
+  -fx-background-color: #ffa31a;
+}
+
+.customer-popup .button-secondary:armed {
+  -fx-background-color: #d98200;
+}
+
+.customer-popup .button-outline {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-border-color: #011936;
+}
+
+.customer-popup .button-outline:hover {
+  -fx-background-color: rgba(1, 25, 54, 0.08);
+}
+
+.customer-popup .button-outline:armed {
+  -fx-background-color: rgba(1, 25, 54, 0.16);
+}
+
+.customer-popup .button-danger {
+  -fx-background-color: transparent;
+  -fx-text-fill: #941621;
+  -fx-border-color: #941621;
+}
+
+.customer-popup .button-danger:hover {
+  -fx-background-color: #941621;
+  -fx-text-fill: #f8fff4;
+}
+
+.customer-popup .close-button {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-font-size: 16px;
+  -fx-padding: 0;
+}
+
+.customer-popup .close-button:hover {
+  -fx-background-color: #011936;
+  -fx-text-fill: #f8fff4;
+}
+
+/* ---------- Tabs ---------- */
+.customer-popup .tab-track {
+  -fx-background-color: rgba(1, 25, 54, 0.08);
+  -fx-background-radius: 0;
+}
+
+.customer-popup .tab-button {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-background-radius: 0;
+  -fx-border-radius: 0;
+}
+
+.customer-popup .tab-button:hover {
+  -fx-background-color: rgba(1, 25, 54, 0.08);
+}
+
+/* The open tab is filled in solid, CustomerController moves this class when you switch tabs */
+.customer-popup .tab-button-active,
+.customer-popup .tab-button-active:hover {
+  -fx-background-color: #f18f01;
+  -fx-text-fill: #011936;
+}
+
+/* ---------- Form text ---------- */
+.customer-popup .section-title {
+  -fx-text-fill: #011936;
+  -fx-font-size: 17px;
+  -fx-font-weight: bold;
+}
+
+.customer-popup .field-label {
+  -fx-text-fill: #011936;
+  -fx-font-size: 13px;
+  -fx-font-weight: bold;
+}
+
+.customer-popup .required-mark {
+  -fx-text-fill: #941621;
+  -fx-font-size: 15px;
+  -fx-font-weight: bold;
+}
+
+.customer-popup .hint-label {
+  -fx-text-fill: rgba(1, 25, 54, 0.7);
+  -fx-font-size: 13px;
+}
+
+/* ---------- Inputs ---------- */
+/* White fields on the mint card need an outline or they disappear */
+.customer-popup .text-field {
+  -fx-background-color: #ffffff;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+  -fx-border-color: rgba(1, 25, 54, 0.22);
+  -fx-border-width: 2;
+  -fx-border-radius: 0;
+  -fx-text-fill: #011936;
+  -fx-prompt-text-fill: #6b7a8d;
+  -fx-highlight-fill: #f18f01;
+  -fx-highlight-text-fill: #011936;
+  -fx-padding: 0 12 0 12;
+  -fx-font-size: 14px;
+}
+
+.customer-popup .text-field:focused {
+  -fx-border-color: #011936;
+}
+
+/* Customer number and status can't be edited, so they get a slightly tinted fill */
+.customer-popup .text-field:readonly {
+  -fx-background-color: rgba(1, 25, 54, 0.06);
+}
+
+/* ComboBox and DatePicker share most of the same look */
+.customer-popup .combo-box,
+.customer-popup .date-picker {
+  -fx-background-color: #ffffff;
+  -fx-background-insets: 0;
+  -fx-background-radius: 0;
+  -fx-border-color: rgba(1, 25, 54, 0.22);
+  -fx-border-width: 2;
+  -fx-border-radius: 0;
+  -fx-padding: 0;
+}
+
+.customer-popup .combo-box:focused,
+.customer-popup .date-picker:focused {
+  -fx-border-color: #011936;
+}
+
+.customer-popup .combo-box > .list-cell {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-padding: 0 0 0 12;
+}
+
+.customer-popup .combo-box > .arrow-button,
+.customer-popup .date-picker > .arrow-button {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+}
+
+.customer-popup .combo-box > .arrow-button > .arrow,
+.customer-popup .date-picker > .arrow-button > .arrow {
+  -fx-background-color: #011936;
+}
+
+/* Title and nationality are editable, so they carry their own text field. It has to go flat or you get a box in a box */
+.customer-popup .combo-box > .text-field,
+.customer-popup .combo-box > .text-field:focused,
+.customer-popup .date-picker > .text-field,
+.customer-popup .date-picker > .text-field:focused {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+  -fx-padding: 0 0 0 12;
+}
+
+.combo-box-popup > .list-view {
+  -fx-background-color: #ffffff;
+  -fx-background-radius: 0;
+  -fx-border-color: rgba(1, 25, 54, 0.3);
+  -fx-border-radius: 0;
+  -fx-padding: 4;
+}
+
+.combo-box-popup .list-cell {
+  -fx-background-color: transparent;
+  -fx-text-fill: #011936;
+  -fx-padding: 8 12 8 12;
+}
+
+.combo-box-popup .list-cell:filled:hover,
+.combo-box-popup .list-cell:filled:selected {
+  -fx-background-color: #f18f01;
+  -fx-background-radius: 0;
+  -fx-text-fill: #011936;
+}
+
+/* ---------- Layout bits ---------- */
+.customer-popup .separator:horizontal .line {
+  -fx-background-color: transparent;
+  -fx-border-color: rgba(1, 25, 54, 0.15);
+  -fx-border-width: 1 0 0 0;
+}
+
+.customer-popup .form-scroll,
+.customer-popup .form-scroll > .viewport {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+}
+
+.customer-popup .form-scroll > .corner {
+  -fx-background-color: transparent;
+}
+
+.customer-popup .form-scroll .scroll-bar:vertical {
+  -fx-background-color: transparent;
+  -fx-pref-width: 10;
+}
+
+.customer-popup .form-scroll .scroll-bar .track {
+  -fx-background-color: transparent;
+  -fx-border-color: transparent;
+}
+
+.customer-popup .form-scroll .scroll-bar .thumb {
+  -fx-background-color: rgba(1, 25, 54, 0.35);
+  -fx-background-radius: 0;
+  -fx-background-insets: 0;
+}
+
+/* Scroll arrows aren't needed, the thumb is enough */
+.customer-popup .form-scroll .scroll-bar .increment-button,
+.customer-popup .form-scroll .scroll-bar .decrement-button {
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+}
+
+.customer-popup .form-scroll .scroll-bar .increment-arrow,
+.customer-popup .form-scroll .scroll-bar .decrement-arrow {
+  -fx-padding: 0;
+  -fx-shape: " ";
+}
+
+.customer-popup .footer-bar {
+  -fx-border-color: rgba(1, 25, 54, 0.15);
+  -fx-border-width: 1 0 0 0;
+}
+
+/* ---------- Documents window and popup ---------- */
+/* These two are their own windows, so the root is a solid mint surface, not the dark overlay */
+.customer-popup.customer-dialog {
+  -fx-background-color: #f8fff4;
+}
+
+/* The add popup has no window bar, so it gets a navy outline to stand off whatever is behind it */
+.customer-popup.customer-dialog-frame {
+  -fx-border-color: #011936;
+  -fx-border-width: 2;
+}
+
+.customer-popup .document-tile {
+  -fx-background-color: #ffffff;
+  -fx-border-color: rgba(1, 25, 54, 0.22);
+  -fx-alignment: CENTER_LEFT;
+  -fx-padding: 0 16 0 16;
+}
+
+.customer-popup .document-tile:hover {
+  -fx-border-color: #f18f01;
+}
+
+.customer-popup .document-type {
+  -fx-text-fill: #011936;
+  -fx-font-size: 15px;
+  -fx-font-weight: bold;
+}
+
+.customer-popup .document-name {
+  -fx-text-fill: rgba(1, 25, 54, 0.75);
+  -fx-font-size: 13px;
+  -fx-font-weight: normal;
+}
+
+.customer-popup .add-tile {
+  -fx-background-color: #f18f01;
+  -fx-text-fill: #011936;
+  -fx-font-size: 30px;
+  -fx-padding: 0;
+}
+
+.customer-popup .add-tile:hover {
+  -fx-background-color: #ffa31a;
+}
+
+.customer-popup .add-tile:armed {
+  -fx-background-color: #d98200;
+}
+
+.customer-popup .error-label {
+  -fx-text-fill: #941621;
+  -fx-font-size: 13px;
+}

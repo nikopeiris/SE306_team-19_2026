@@ -439,6 +439,17 @@ public class Customer {
         documentService.deleteDocument(number, documentId);
     }
 
+    /**
+     * Changes a document's type and file name. Its file type and size stay as they were stored,
+     * and the document gets a new id because the mainframe can't edit one in place.
+     *
+     * @throws ValidationException if the new type or file name is missing or too long
+     */
+    public void updateCustomerDocument(String number, Long documentId, String type,
+            String fileName) throws IOException, LavsException {
+        documentService.updateDocument(number, documentId, type, fileName);
+    }
+
     /** Loads a customer's personal details, addresses, phones, emails and employers. */
     public CustomerDetails loadCustomerDetails(String number) throws IOException, LavsException {
         return detailsService.load(number);
