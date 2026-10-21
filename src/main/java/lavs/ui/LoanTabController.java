@@ -3,7 +3,9 @@ package lavs.ui;
 import java.io.IOException;
 import java.util.List;
 
+import business.lavsexceptions.LavsException;
 import business.system.LoanDetailsService;
+import business.system.LoanDraftCache;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanRow;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -56,6 +58,7 @@ public class LoanTabController {
     @FXML private Button submitLoanButton;
 
     private CustomerContext context;
+    private static final LoanDraftCache DRAFT_CACHE = new LoanDraftCache();
 
     private final ObservableList<LoanRow> loans = FXCollections.observableArrayList();
     private final Label placeholder = new Label("");
@@ -225,6 +228,7 @@ public class LoanTabController {
     @FXML
     private void handleAddLoan(ActionEvent event) {
         fillChoicesOnce();
+        populateDraft(DRAFT_CACHE.get(context.getCustomerNumber()));
         addLoanErrorLabel.setText("");
         if (addLoanPane != null) {
             addLoanPane.setVisible(true);
@@ -261,6 +265,7 @@ public class LoanTabController {
         };
         task.setOnSucceeded(e -> {
             submitLoanButton.setDisable(false);
+            DRAFT_CACHE.clear(number);
             closeOverlay();
             resetForm();
             refresh();
@@ -268,6 +273,9 @@ public class LoanTabController {
         });
         task.setOnFailed(e -> {
             submitLoanButton.setDisable(false);
+            if (isRetryableFailure(task.getException())) {
+                DRAFT_CACHE.save(number, application);
+            }
             addLoanErrorLabel.setText(message(task.getException()));
         });
         startDaemon(task, "add-loan");
@@ -307,6 +315,20 @@ public class LoanTabController {
         interestOnlyCheck.setSelected(false);
     }
 
+    private void populateDraft(LoanApplication draft) {
+        if (draft == null) {
+            resetForm();
+            return;
+        }
+        loanTypeCombo.setValue(draft.loanType());
+        amountField.setText(draft.amount());
+        termField.setText(draft.term());
+        rateField.setText(draft.rate());
+        compoundCombo.setValue(draft.compoundType());
+        paymentFrequencyCombo.setValue(draft.paymentFrequency());
+        interestOnlyCheck.setSelected(draft.interestOnly());
+    }
+
     // ------------------------------------------------------------------
     // Navigation
     // ------------------------------------------------------------------
@@ -329,8 +351,13 @@ public class LoanTabController {
         if (ex instanceof IOException) {
             return "Could not reach the mainframe. Please try again.";
         }
+
         String text = ex == null ? null : ex.getMessage();
         return (text == null || text.isBlank()) ? "Something went wrong." : text;
+    }
+
+    private static boolean isRetryableFailure(Throwable error) {
+        return error instanceof IOException || error instanceof LavsException;
     }
 
     private static void startDaemon(Task<?> task, String name) {
