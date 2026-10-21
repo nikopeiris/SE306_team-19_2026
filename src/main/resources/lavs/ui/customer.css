@@ -309,3 +309,58 @@
   -fx-border-color: rgba(1, 25, 54, 0.15);
   -fx-border-width: 1 0 0 0;
 }
+
+/* ---------- Documents window and popup ---------- */
+/* These two are their own windows, so the root is a solid mint surface, not the dark overlay */
+.customer-popup.customer-dialog {
+  -fx-background-color: #f8fff4;
+}
+
+/* The add popup has no window bar, so it gets a navy outline to stand off whatever is behind it */
+.customer-popup.customer-dialog-frame {
+  -fx-border-color: #011936;
+  -fx-border-width: 2;
+}
+
+.customer-popup .document-tile {
+  -fx-background-color: #ffffff;
+  -fx-border-color: rgba(1, 25, 54, 0.22);
+  -fx-alignment: CENTER_LEFT;
+  -fx-padding: 0 16 0 16;
+}
+
+.customer-popup .document-tile:hover {
+  -fx-border-color: #f18f01;
+}
+
+.customer-popup .document-type {
+  -fx-text-fill: #011936;
+  -fx-font-size: 15px;
+  -fx-font-weight: bold;
+}
+
+.customer-popup .document-name {
+  -fx-text-fill: rgba(1, 25, 54, 0.75);
+  -fx-font-size: 13px;
+  -fx-font-weight: normal;
+}
+
+.customer-popup .add-tile {
+  -fx-background-color: #f18f01;
+  -fx-text-fill: #011936;
+  -fx-font-size: 30px;
+  -fx-padding: 0;
+}
+
+.customer-popup .add-tile:hover {
+  -fx-background-color: #ffa31a;
+}
+
+.customer-popup .add-tile:armed {
+  -fx-background-color: #d98200;
+}
+
+.customer-popup .error-label {
+  -fx-text-fill: #941621;
+  -fx-font-size: 13px;
+}

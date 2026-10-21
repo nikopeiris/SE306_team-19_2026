@@ -4,38 +4,88 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="14.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.AddDocumentDialog">
+<VBox prefWidth="480.0" spacing="16.0" styleClass="customer-popup, customer-dialog, customer-dialog-frame" stylesheets="@customer.css" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.AddDocumentDialog">
    <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+      <Insets bottom="24.0" left="28.0" right="28.0" top="20.0" />
    </padding>
    <children>
-      <Button mnemonicParsing="false" onAction="#handleChooseFile" text="Choose file..." />
-
-      <GridPane hgap="12.0" vgap="10.0">
+      <HBox alignment="CENTER_LEFT">
          <children>
-            <Label text="Type *" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-            <TextField fx:id="typeField" prefWidth="260.0" promptText="e.g. Passport" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-            <Label text="File name *" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <TextField fx:id="fileNameField" prefWidth="260.0" promptText="e.g. passport.pdf" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label text="File type" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <TextField fx:id="fileTypeField" prefWidth="260.0" promptText="optional, e.g. pdf" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-            <Label text="Size (bytes) *" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-            <TextField fx:id="sizeField" prefWidth="260.0" promptText="size in bytes" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-         </children>
-      </GridPane>
-
-      <Label style="-fx-text-fill: #726e97;" text="* required. Only the details are stored, not the file itself." />
-      <Label fx:id="errorLabel" maxWidth="380.0" style="-fx-text-fill: #b00020;" wrapText="true" />
-
-      <HBox spacing="10.0">
-         <children>
-            <Button fx:id="saveButton" defaultButton="true" mnemonicParsing="false" onAction="#handleSave" text="Save" />
-            <Button cancelButton="true" mnemonicParsing="false" onAction="#handleCancel" text="Cancel" />
+            <Label fx:id="titleLabel" styleClass="section-title" text="Add document" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button cancelButton="true" mnemonicParsing="false" onAction="#handleCancel" prefHeight="36.0" prefWidth="36.0" styleClass="close-button" text="✕" />
          </children>
       </HBox>
+
+      <Button fx:id="chooseFileButton" mnemonicParsing="false" onAction="#handleChooseFile" prefHeight="44.0" prefWidth="170.0" styleClass="button-secondary" text="Choose file" />
+
+      <VBox spacing="6.0">
+         <children>
+            <HBox spacing="4.0">
+               <children>
+                  <Label styleClass="field-label" text="Type" />
+                  <Label styleClass="required-mark" text="*" />
+               </children>
+            </HBox>
+            <TextField fx:id="typeField" maxWidth="Infinity" prefHeight="44.0" promptText="e.g. Passport" />
+         </children>
+      </VBox>
+
+      <VBox spacing="6.0">
+         <children>
+            <HBox spacing="4.0">
+               <children>
+                  <Label styleClass="field-label" text="File name" />
+                  <Label styleClass="required-mark" text="*" />
+               </children>
+            </HBox>
+            <TextField fx:id="fileNameField" maxWidth="Infinity" prefHeight="44.0" promptText="e.g. passport.pdf" />
+         </children>
+      </VBox>
+
+      <VBox spacing="6.0">
+         <children>
+            <Label styleClass="field-label" text="File type" />
+            <TextField fx:id="fileTypeField" maxWidth="Infinity" prefHeight="44.0" promptText="optional, e.g. pdf" />
+         </children>
+      </VBox>
+
+      <VBox spacing="6.0">
+         <children>
+            <HBox spacing="4.0">
+               <children>
+                  <Label styleClass="field-label" text="Size (bytes)" />
+                  <Label styleClass="required-mark" text="*" />
+               </children>
+            </HBox>
+            <TextField fx:id="sizeField" maxWidth="Infinity" prefHeight="44.0" promptText="size in bytes" />
+         </children>
+      </VBox>
+
+      <Label fx:id="noteLabel" styleClass="hint-label" text="* required. Only the details are stored, not the file itself." />
+      <Label fx:id="errorLabel" maxWidth="Infinity" styleClass="error-label" wrapText="true" />
+
+      <HBox fx:id="actionRow" alignment="CENTER_RIGHT" spacing="12.0">
+         <children>
+            <Button fx:id="deleteButton" managed="false" mnemonicParsing="false" onAction="#handleDelete" prefHeight="44.0" prefWidth="120.0" styleClass="button-danger" text="Delete" visible="false" />
+            <Button fx:id="saveButton" defaultButton="true" mnemonicParsing="false" onAction="#handleSave" prefHeight="44.0" prefWidth="120.0" styleClass="button-primary" text="Save" />
+         </children>
+      </HBox>
+
+      <VBox fx:id="confirmBox" managed="false" spacing="12.0" visible="false">
+         <children>
+            <Label styleClass="confirm-message" text="Delete this document? It is removed from the customer straight away." wrapText="true" />
+            <HBox alignment="CENTER_RIGHT" spacing="12.0">
+               <children>
+                  <Button mnemonicParsing="false" onAction="#handleKeepDocument" prefHeight="44.0" prefWidth="120.0" styleClass="button-outline" text="Keep" />
+                  <Button fx:id="confirmDeleteButton" mnemonicParsing="false" onAction="#handleConfirmDelete" prefHeight="44.0" prefWidth="120.0" styleClass="button-danger" text="Delete" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
    </children>
 </VBox>
