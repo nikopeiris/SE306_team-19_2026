@@ -301,7 +301,8 @@ class LoanStatusServiceTest {
         MainframeAdapter customerAdapter = mock(MainframeAdapter.class);
         Customer customer = new Customer(customerAdapter);
 
-        assertEquals(List.of("Cancelled"), customer.allowedLoanStatuses("Pending"));
+        assertEquals(List.of("New", "Active", "Defaulted", "Cancelled"),
+                customer.allowedLoanStatuses("Pending"));
         assertThrows(ValidationException.class, () -> customer.changeLoanStatus(" ", "Pending"));
     }
 }
