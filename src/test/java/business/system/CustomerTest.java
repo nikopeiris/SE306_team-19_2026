@@ -240,7 +240,7 @@ class CustomerTest {
         java.util.List<CustomerSummary> result = customer.listAllCustomers();
 
         assertEquals(java.util.List.of("C3", "C2", "C1"), numbersOf(result));
-        verify(adapter, times(1)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(2)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
@@ -262,7 +262,7 @@ class CustomerTest {
         assertEquals("C100", result.get(0).getNumber());
         assertEquals("Name005", result.stream()
                 .filter(c -> c.getNumber().equals("C5")).findFirst().orElseThrow().getFirstName());
-        verify(adapter, times(2)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(3)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
@@ -278,7 +278,7 @@ class CustomerTest {
 
         assertEquals(java.util.List.of("C1", "C2"), numbersOf(result));
         // one empty search plus one search per letter and digit
-        verify(adapter, times(37)).send(org.mockito.ArgumentMatchers.any(Search.class));
+        verify(adapter, times(39)).send(org.mockito.ArgumentMatchers.any(Search.class));
     }
 
     @Test
@@ -298,6 +298,103 @@ class CustomerTest {
                 () -> customer.listAllCustomers());
 
         assertEquals("Search rejected", exception.getMessage());
+    }
+
+    @Test
+    void searchCustomersReturnsSortedMatchesAndBlankSearchIsEmpty() throws Exception {
+        stubSearchResults((text, page) -> new String[][] {
+                {"C1", "Zoe", "Smith"},
+                {"C2", "amy", "Adams"}});
+
+        assertEquals(java.util.List.of("C2", "C1"),
+                numbersOf(customer.searchCustomers("  a ")));
+        assertTrue(customer.searchCustomers(" ").isEmpty());
+    }
+
+    @Test
+    void findCustomerSummaryMapsRetrievedCustomer() throws Exception {
+        when(adapter.send(any(Retrieve.class))).thenReturn(new Status(1));
+
+        CustomerSummary result = customer.findCustomerSummary(" C1 ");
+
+        assertEquals("C1", result.getNumber());
+        verify(adapter).send(any(Retrieve.class));
+    }
+
+    @Test
+    void customerFacadeDelegatesSearchDocumentsAndDetailsOperations() throws Exception {
+        CustomerDocumentService documents = mock(CustomerDocumentService.class);
+        CustomerDetailsService details = mock(CustomerDetailsService.class);
+        replace(customer, "documentService", documents);
+        replace(customer, "detailsService", details);
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1));
+
+        when(documents.listDocuments("C1", 1L, 100L)).thenReturn(null);
+        CustomerDetails.SaveResult saveResult = new CustomerDetails.SaveResult("C1", List.of());
+        when(details.load("C1")).thenReturn(CustomerDetails.empty());
+        when(details.save(any(), any())).thenReturn(saveResult);
+
+        assertTrue(customer.listCustomerAddresses("C1") != null);
+        assertTrue(customer.listCustomerPhoneNumbers("C1") != null);
+        assertTrue(customer.listCustomerEmails("C1") != null);
+        assertTrue(customer.listCustomerEmployers("C1") != null);
+        assertTrue(customer.listCustomerDocuments("C1").isEmpty());
+        customer.addCustomerDocument("C1", "Passport", "id.pdf", "pdf", 10L);
+        customer.deleteCustomerDocument("C1", 4L);
+        customer.updateCustomerDocument("C1", 4L, "Driver licence", "licence.pdf");
+        assertEquals(CustomerDetails.empty(), customer.loadCustomerDetails("C1"));
+        assertEquals(saveResult, customer.saveCustomer(CustomerDetails.empty(), CustomerDetails.empty()));
+
+        verify(documents).listDocuments("C1", 1L, 100L);
+        verify(documents).addDocument("C1", "id.pdf", "pdf", 10L, "Passport");
+        verify(documents).deleteDocument("C1", 4L);
+        verify(documents).updateDocument("C1", 4L, "Driver licence", "licence.pdf");
+    }
+
+    @Test
+    void customerFacadeDelegatesLoanAndValidationOperations() throws Exception {
+        LoanSearchService search = mock(LoanSearchService.class);
+        LoanStatusService statuses = mock(LoanStatusService.class);
+        LoanDetailsService details = mock(LoanDetailsService.class);
+        CustomerDetailsService customerDetails = mock(CustomerDetailsService.class);
+        replace(customer, "loanSearchService", search);
+        replace(customer, "loanStatusService", statuses);
+        replace(customer, "loanDetailsService", details);
+        replace(customer, "detailsService", customerDetails);
+
+        List<CustomerSummary> customers = List.of(new CustomerSummary("C1", "Jane", "Doe"));
+        List<LoanSummary> loans = List.of(
+                new LoanSummary("L1", "C1", "Jane Doe", 100.0, "2026-01-01", "Pending"));
+        List<CustomerSummary> failed = new ArrayList<>();
+        LoanListResult result = new LoanListResult(loans, 0, null);
+        when(search.listLoansFor(customers, null)).thenReturn(result);
+        when(search.listLoansFor(customers, null, failed)).thenReturn(result);
+        when(search.loansOf(customers.get(0))).thenReturn(loans);
+        when(search.filterByLoanNumber(loans, "L1")).thenReturn(loans);
+        when(statuses.allowedStatuses("New")).thenReturn(List.of("Pending"));
+
+        assertEquals(result, customer.listLoansFor(customers, null));
+        assertEquals(result, customer.listLoansFor(customers, null, failed));
+        assertEquals(loans, customer.loansOf(customers.get(0)));
+        assertEquals(List.of("Pending"), customer.allowedLoanStatuses("New"));
+        customer.changeLoanStatus("L1", "Pending");
+        assertEquals(loans, customer.filterLoansByNumber(loans, "L1"));
+        assertEquals(List.of("Pending"), customer.loanStatusesIn(loans));
+        assertEquals(1, customer.summariseLoans(loans).getTotal());
+        assertTrue(customer.isAwaitingVerification(" pending "));
+        assertSame(details, customer.loanDetails());
+
+        customer.validatePersonalDetails(CustomerDetails.empty().personal());
+        customer.validateAddresses(List.of());
+        customer.validatePhones(List.of());
+        customer.validateEmails(List.of());
+        customer.validateEmployers(List.of());
+
+        verify(search).listLoansFor(customers, null);
+        verify(search).listLoansFor(customers, null, failed);
+        verify(search).loansOf(customers.get(0));
+        verify(statuses).allowedStatuses("New");
+        verify(statuses).changeStatus("L1", "Pending");
     }
 
     @Test

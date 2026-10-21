@@ -3,7 +3,9 @@ package lavs.ui;
 import java.io.IOException;
 import java.util.List;
 
+import business.lavsexceptions.LavsException;
 import business.system.LoanDetailsService;
+import business.system.LoanDraftCache;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanRow;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -56,6 +58,7 @@ public class LoanTabController {
     @FXML private Button submitLoanButton;
 
     private CustomerContext context;
+    private static final LoanDraftCache DRAFT_CACHE = new LoanDraftCache();
 
     private final ObservableList<LoanRow> loans = FXCollections.observableArrayList();
     private final Label placeholder = new Label("");
@@ -225,6 +228,7 @@ public class LoanTabController {
     @FXML
     private void handleAddLoan(ActionEvent event) {
         fillChoicesOnce();
+        populateDraft(DRAFT_CACHE.get(context.getCustomerNumber()));
         addLoanErrorLabel.setText("");
         if (addLoanPane != null) {
             addLoanPane.setVisible(true);
@@ -235,6 +239,13 @@ public class LoanTabController {
     @FXML
     private void handleCancelLoan(ActionEvent event) {
         closeOverlay();
+    }
+
+    @FXML
+    private void handleResetLoan(ActionEvent event) {
+        resetForm();
+        DRAFT_CACHE.clear(context.getCustomerNumber());
+        addLoanErrorLabel.setText("");
     }
 
     @FXML
@@ -262,12 +273,16 @@ public class LoanTabController {
         task.setOnSucceeded(e -> {
             submitLoanButton.setDisable(false);
             closeOverlay();
+            DRAFT_CACHE.clear(number);
             resetForm();
             refresh();
             messageLabel.setText("Loan " + task.getValue() + " created.");
         });
         task.setOnFailed(e -> {
             submitLoanButton.setDisable(false);
+            if (isRetryableFailure(task.getException())) {
+                DRAFT_CACHE.save(number, application);
+            }
             addLoanErrorLabel.setText(message(task.getException()));
         });
         startDaemon(task, "add-loan");
@@ -279,9 +294,28 @@ public class LoanTabController {
     }
 
     private void closeOverlay() {
+        saveCurrentDraft();
         addLoanPane.setVisible(false);
         addLoanPane.setManaged(false);
         addLoanErrorLabel.setText("");
+    }
+
+    private void saveCurrentDraft() {
+        String number = context.getCustomerNumber();
+        if (number != null) {
+            DRAFT_CACHE.save(number, currentApplication());
+        }
+    }
+
+    private LoanApplication currentApplication() {
+        return new LoanApplication(
+                loanTypeCombo.getValue(),
+                amountField.getText(),
+                termField.getText(),
+                rateField.getText(),
+                compoundCombo.getValue(),
+                paymentFrequencyCombo.getValue(),
+                interestOnlyCheck.isSelected());
     }
 
     /** Fills the dropdowns from the business layer the first time the form is opened. */
@@ -307,6 +341,20 @@ public class LoanTabController {
         interestOnlyCheck.setSelected(false);
     }
 
+    private void populateDraft(LoanApplication draft) {
+        if (draft == null) {
+            resetForm();
+            return;
+        }
+        loanTypeCombo.setValue(draft.loanType());
+        amountField.setText(draft.amount());
+        termField.setText(draft.term());
+        rateField.setText(draft.rate());
+        compoundCombo.setValue(draft.compoundType());
+        paymentFrequencyCombo.setValue(draft.paymentFrequency());
+        interestOnlyCheck.setSelected(draft.interestOnly());
+    }
+
     // ------------------------------------------------------------------
     // Navigation
     // ------------------------------------------------------------------
@@ -329,8 +377,13 @@ public class LoanTabController {
         if (ex instanceof IOException) {
             return "Could not reach the mainframe. Please try again.";
         }
+
         String text = ex == null ? null : ex.getMessage();
         return (text == null || text.isBlank()) ? "Something went wrong." : text;
+    }
+
+    private static boolean isRetryableFailure(Throwable error) {
+        return error instanceof IOException || error instanceof LavsException;
     }
 
     private static void startDaemon(Task<?> task, String name) {

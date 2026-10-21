@@ -20,6 +20,7 @@ import mainframe.client.Status;
 import mainframe.client.messages.customer.AddDocument;
 import mainframe.client.messages.customer.DeleteDocument;
 import mainframe.client.messages.customerDocument.Retrieve;
+import mainframe.client.messages.customerDocument.List;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerDocumentServiceTest {
@@ -96,6 +97,37 @@ class CustomerDocumentServiceTest {
         assertEquals(4L, deleted.getId());
         verify(adapter).send(deleted);
         verify(adapter).send(retrieved);
+    }
+
+    @Test
+    void listDocumentsReturnsMappedDocuments() throws Exception {
+        when(adapter.send(any(List.class))).thenAnswer(invocation -> {
+            List message = invocation.getArgument(0);
+            java.lang.reflect.Field data = List.class.getDeclaredField("_data");
+            data.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.ArrayList<List.Item> items = (java.util.ArrayList<List.Item>) data.get(message);
+            items.add(message.new Item("passport.pdf", 7L, "Passport"));
+            return new Status(1);
+        });
+
+        List.Item[] items = service.listDocuments(" C1 ", 1L, 100L);
+
+        assertEquals(1, items.length);
+        assertEquals("passport.pdf", items[0].getFileName());
+        assertEquals(7L, items[0].getId());
+        assertEquals("Passport", items[0].getType());
+    }
+
+    @Test
+    void listDocumentsPropagatesRejectedStatus() throws Exception {
+        when(adapter.send(any(List.class)))
+                .thenReturn(new Status(500, "Documents unavailable", 1));
+
+        LavsException exception = assertThrows(LavsException.class,
+                () -> service.listDocuments("C1", 1L, 100L));
+
+        assertEquals("Documents unavailable", exception.getMessage());
     }
 
     @Test
