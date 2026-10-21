@@ -2,7 +2,6 @@ package business.system;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import business.Main;
 import business.lavsexceptions.LavsException;
@@ -24,15 +23,18 @@ import mainframe.client.messages.loanCoborrower.List.Item;
  */
 public class LoanStatusService {
     /**
-     * The changes an MMM may make. New loans are sent for checking (Pending) or
-     * cancelled; a Pending loan can only be cancelled. Checking and verification
-     * (which sets Active or Defaulted) is outside the scope of LAVS.
+     * The changes an MMM may make. A New, Pending, Active or Defaulted loan can be moved to any
+     * of the other statuses, including Cancelled. A Cancelled loan is final and cannot be
+     * changed. Whether a loan may be Active or Defaulted is decided by the bank's checking and
+     * verification, which is outside LAVS, so the MMM can also set these by hand. Changing a loan
+     * to Pending still checks that its borrowers are ready (see changeStatus).
      */
-    private static final Map<String, List<String>> ALLOWED_CHANGES = Map.of(
+    private static final List<String> STATUSES = List.of(
             UpdateStatus.STATUS_NEW,
-            List.of(UpdateStatus.STATUS_PENDING, UpdateStatus.STATUS_CANCELLED),
             UpdateStatus.STATUS_PENDING,
-            List.of(UpdateStatus.STATUS_CANCELLED));
+            UpdateStatus.STATUS_ACTIVE,
+            UpdateStatus.STATUS_DEFAULTED,
+            UpdateStatus.STATUS_CANCELLED);
 
     /** How many co-borrowers to ask the mainframe for (a loan has only a handful). */
     private static final long COBORROWER_PAGE_SIZE = 100L;
@@ -70,7 +72,11 @@ public class LoanStatusService {
         if (currentStatus == null) {
             return List.of();
         }
-        return ALLOWED_CHANGES.getOrDefault(currentStatus.trim(), List.of());
+        String current = currentStatus.trim();
+        if (!STATUSES.contains(current) || UpdateStatus.STATUS_CANCELLED.equals(current)) {
+            return List.of();
+        }
+        return STATUSES.stream().filter(status -> !status.equals(current)).toList();
     }
 
     /**
