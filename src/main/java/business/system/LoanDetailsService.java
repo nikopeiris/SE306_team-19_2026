@@ -111,6 +111,16 @@ public class LoanDetailsService {
      */
     public Create addLoan(String customerNumber, LoanApplication application)
             throws IOException, LavsException {
+        return addLoan(customerNumber, application, null);
+    }
+
+    /**
+     * Creates a loan and optionally adds its guarantor during creation.
+     *
+     * @param guarantorId customer number of the guarantor, or null when none was selected
+     */
+    public Create addLoan(String customerNumber, LoanApplication application, String guarantorId)
+            throws IOException, LavsException {
         ValidationResult result = new ValidationResult().requireNotBlank("customerNumber",
                 customerNumber, "Customer number cannot be null or empty");
         Terms terms = parseTerms(application, result);
@@ -119,7 +129,7 @@ public class LoanDetailsService {
         LocalDate renewal = start.plusMonths(months(terms.years()));
         return loanService.addLoan(customerNumber, terms.principal(), terms.rate(),
                 terms.payments(), terms.rateType(), terms.frequency(), terms.compound(),
-                renewal.toString(), start.toString(), null);
+                renewal.toString(), start.toString(), guarantorId);
     }
 
     // ------------------------------------------------------------------

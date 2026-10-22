@@ -262,6 +262,11 @@ public final class LoanValidation {
 
         boolean hasJobs = employers != null && employers.length > 0;
 
+        if (customerId.equals(guarantorId)) {
+            result.addError("guarantorId", "Guarantor cannot be the same as the customer.");
+            throw new ValidationException(result);
+        }
+
         if (!hasJobs) {
             if (guarantorId == null || guarantorId.isBlank()) {
                 result.addError("guarantorId", "Guarantor is required when customer has no employment.");

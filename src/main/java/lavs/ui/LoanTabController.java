@@ -8,6 +8,7 @@ import business.system.LoanDetailsService;
 import business.system.LoanDraftCache;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanRow;
+import mainframe.client.messages.loan.AddCoborrower;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -54,6 +55,8 @@ public class LoanTabController {
     @FXML private ComboBox<String> paymentFrequencyCombo;
     @FXML private CheckBox interestOnlyCheck;
     @FXML private Label addLoanErrorLabel;
+    @FXML private Button addCoborrowerButton;
+    @FXML private Label selectedCoborrowerLabel;
     @FXML private Button submitLoanButton;
 
     private CustomerContext context;
@@ -61,6 +64,8 @@ public class LoanTabController {
 
     private final ObservableList<LoanRow> loans = FXCollections.observableArrayList();
     private final Label placeholder = new Label("");
+    private String selectedCoborrowerNumber;
+    private String selectedCoborrowerType;
 
     /** The customer whose loans are on screen. */
     private String loadedFor = null;
@@ -236,6 +241,17 @@ public class LoanTabController {
     }
 
     @FXML
+    private void handleAddCoborrower(ActionEvent event) {
+        CoborrowerDialog.showForApplication(details(), addCoborrowerButton.getScene().getWindow(),
+                selection -> {
+                    selectedCoborrowerNumber = selection.customerNumber();
+                    selectedCoborrowerType = selection.type();
+                    selectedCoborrowerLabel.setText(selection.type() + ": " + selection.displayName()
+                            + " (" + selection.customerNumber() + ")");
+                });
+    }
+
+    @FXML
     private void handleCancelLoan(ActionEvent event) {
         closeOverlay();
     }
@@ -266,7 +282,14 @@ public class LoanTabController {
         Task<String> task = new Task<>() {
             @Override
             protected String call() throws Exception {
-                return details.addLoan(number, application).getLoanNumber();
+                String guarantor = AddCoborrower.TYPE_GUARANTOR.equals(selectedCoborrowerType)
+                        ? selectedCoborrowerNumber : null;
+                String loanNumber = details.addLoan(number, application, guarantor).getLoanNumber();
+                if (AddCoborrower.TYPE_COBORROWER.equals(selectedCoborrowerType)) {
+                    details.addCoborrower(loanNumber, selectedCoborrowerNumber,
+                            AddCoborrower.TYPE_COBORROWER);
+                }
+                return loanNumber;
             }
         };
         task.setOnSucceeded(e -> {
@@ -333,6 +356,9 @@ public class LoanTabController {
         termField.clear();
         rateField.clear();
         interestOnlyCheck.setSelected(false);
+        selectedCoborrowerNumber = null;
+        selectedCoborrowerType = null;
+        selectedCoborrowerLabel.setText("No co-borrower or guarantor selected.");
     }
 
     private void populateDraft(LoanApplication draft) {
