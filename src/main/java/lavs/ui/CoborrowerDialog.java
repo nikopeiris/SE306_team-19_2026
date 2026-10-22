@@ -2,6 +2,7 @@ package lavs.ui;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import business.system.LoanDetailsService;
 import business.system.dto.CoborrowerRow;
@@ -29,6 +30,8 @@ import javafx.stage.Window;
  * customer number; the business layer checks the choice (see LoanDetailsService).
  */
 public class CoborrowerDialog {
+    public record Selection(String customerNumber, String type, String displayName) {}
+
     @FXML private TextField searchField;
     @FXML private Button searchButton;
     @FXML private Label searchStatusLabel;
@@ -42,16 +45,28 @@ public class CoborrowerDialog {
     private String loanNumber;
     private CoborrowerRow existing;
     private Runnable onSaved;
+    private Consumer<Selection> onSelected;
+    private boolean selectionOnly;
     private Stage stage;
 
     static void show(LoanDetailsService details, String loanNumber, CoborrowerRow existing,
             Window owner, Runnable onSaved) {
+        show(details, loanNumber, existing, owner, onSaved, null);
+    }
+
+    static void showForApplication(LoanDetailsService details, Window owner,
+            Consumer<Selection> onSelected) {
+        show(details, null, null, owner, null, onSelected);
+    }
+
+    private static void show(LoanDetailsService details, String loanNumber, CoborrowerRow existing,
+            Window owner, Runnable onSaved, Consumer<Selection> onSelected) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     CoborrowerDialog.class.getResource("/lavs/ui/coborrower_dialog.fxml"));
             Parent root = loader.load();
             CoborrowerDialog dialog = loader.getController();
-            dialog.open(details, loanNumber, existing, owner, onSaved, root);
+            dialog.open(details, loanNumber, existing, owner, onSaved, onSelected, root);
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, CustomerDocumentsDialog.describe(e));
             alert.setTitle("Co-borrower");
@@ -80,11 +95,13 @@ public class CoborrowerDialog {
     }
 
     private void open(LoanDetailsService details, String loanNumber, CoborrowerRow existing,
-            Window owner, Runnable onSaved, Parent root) {
+            Window owner, Runnable onSaved, Consumer<Selection> onSelected, Parent root) {
         this.details = details;
         this.loanNumber = loanNumber;
         this.existing = existing;
         this.onSaved = onSaved;
+        this.onSelected = onSelected;
+        this.selectionOnly = onSelected != null;
 
         typeCombo.setItems(FXCollections.observableArrayList(details.coborrowerTypeOptions()));
         if (existing == null) {
@@ -97,7 +114,8 @@ public class CoborrowerDialog {
         stage = new Stage();
         stage.initOwner(owner);
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.setTitle(existing == null ? "Add Co-borrower" : "Edit Co-borrower");
+        stage.setTitle(selectionOnly ? "Add Co-borrower or Guarantor"
+                : existing == null ? "Add Co-borrower" : "Edit Co-borrower");
         stage.setScene(CustomerDocumentsDialog.styled(new Scene(root)));
         stage.showAndWait();
     }
@@ -128,6 +146,21 @@ public class CoborrowerDialog {
     @FXML
     private void handleSave(ActionEvent event) {
         errorLabel.setText("");
+        if (selectionOnly) {
+            String customerNumber = customerNumberField.getText();
+            String type = typeCombo.getValue();
+            if (customerNumber == null || customerNumber.isBlank()
+                    || type == null || type.isBlank()) {
+                errorLabel.setText("Customer number and role are required.");
+                return;
+            }
+            onSelected.accept(new Selection(customerNumber.trim(), type,
+                    resultsList.getSelectionModel().getSelectedItem() == null
+                            ? customerNumber.trim()
+                            : resultsList.getSelectionModel().getSelectedItem().getFullName()));
+            stage.close();
+            return;
+        }
         saveButton.setDisable(true);
         final String customerNumber = customerNumberField.getText();
         final String type = typeCombo.getValue();

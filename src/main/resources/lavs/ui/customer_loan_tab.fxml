@@ -56,7 +56,14 @@
             <ComboBox fx:id="paymentFrequencyCombo" layoutX="300.0" layoutY="190.0" prefWidth="200.0" />
             <CheckBox fx:id="interestOnlyCheck" layoutX="580.0" layoutY="194.0" mnemonicParsing="false" text="Interest Only" />
 
-            <Label fx:id="addLoanErrorLabel" layoutX="20.0" layoutY="288.0" prefHeight="20.0" prefWidth="810.0" textFill="#b00020" wrapText="true" />
+            <Button fx:id="addCoborrowerButton" layoutX="20.0" layoutY="245.0"
+                    mnemonicParsing="false" onAction="#handleAddCoborrower"
+                    text="Add Co-borrower / Guarantor" />
+            <Label fx:id="selectedCoborrowerLabel" layoutX="20.0" layoutY="275.0"
+                   prefWidth="810.0" style="-fx-text-fill: #726e97;"
+                   text="No co-borrower or guarantor selected." />
+
+            <Label fx:id="addLoanErrorLabel" layoutX="20.0" layoutY="298.0" prefHeight="25.0" prefWidth="810.0" textFill="#b00020" wrapText="true" />
 
             <Button fx:id="resetLoanButton" layoutX="530.0" layoutY="335.0" mnemonicParsing="false" onAction="#handleResetLoan" text="Reset" />
             <Button fx:id="cancelLoanButton" layoutX="620.0" layoutY="335.0" mnemonicParsing="false" onAction="#handleCancelLoan" text="Cancel" />
