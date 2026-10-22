@@ -20,14 +20,19 @@ import business.system.dto.CoborrowerRow;
 import business.system.dto.LoanApplication;
 import business.system.dto.LoanDetail;
 import business.system.dto.LoanRow;
+import business.system.dto.NoteDetail;
+import business.system.dto.NoteRow;
 import business.validation.ValidationException;
 import dataaccess.systemadapters.MainframeAdapter;
 import mainframe.client.Message;
 import mainframe.client.Status;
 import mainframe.client.messages.loan.AddCoborrower;
+import mainframe.client.messages.loan.AddNote;
 import mainframe.client.messages.loan.Create;
 import mainframe.client.messages.loan.DeleteCoborrower;
+import mainframe.client.messages.loan.DeleteNote;
 import mainframe.client.messages.loan.Retrieve;
+import mainframe.client.messages.loan.UpdateNote;
 import mainframe.client.messages.loan.UpdateStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -200,6 +205,155 @@ class LoanDetailsServiceTest {
         service.updatePayment(" L1 ", 4L, 30.0, "2026-01-02");
         service.deletePayment(" L1 ", 4L);
         verify(adapter, times(4)).send(any(Message.class));
+    }
+
+    // ------------------------------------------------------------------
+    // Notes
+    // ------------------------------------------------------------------
+
+    @Test
+    void invalidNoteInputIsRejectedBeforeAdapterCalls() {
+        assertThrows(ValidationException.class, () -> service.notesFor(" "));
+        assertThrows(ValidationException.class, () -> service.noteDetail(null, 1L));
+        assertThrows(ValidationException.class, () -> service.noteDetail("L1", 0L));
+        assertThrows(ValidationException.class, () -> service.addNote(" ", "Line 1", "General"));
+        assertThrows(ValidationException.class, () -> service.addNote("L1", " ", "General"));
+        assertThrows(ValidationException.class, () -> service.addNote("L1", "Line 1", null));
+        assertThrows(ValidationException.class, () -> service.updateNote("L1", 0L, "Line 1", "General"));
+        assertThrows(ValidationException.class, () -> service.updateNote("L1", 1L, "", "General"));
+        assertThrows(ValidationException.class, () -> service.deleteNote("L1", 0L));
+        assertThrows(ValidationException.class, () -> service.deleteNote(" ", 1L));
+        verifyNoInteractions(adapter);
+    }
+
+    @Test
+    void notesForMapsItemsAndTrimsLoanNumber() throws Exception {
+        when(adapter.send(any(Message.class))).thenAnswer(invocation -> {
+            Message message = invocation.getArgument(0);
+            if (message instanceof mainframe.client.messages.loanNote.List list) {
+                add(list, list.new Item("test", "2026-10-20", 5L, "General"));
+            }
+            return new Status(1L);
+        });
+
+        List<NoteRow> rows = service.notesFor(" L1 ");
+
+        assertEquals(List.of(new NoteRow(5L, "General", "test", "2026-10-20")), rows);
+        ArgumentCaptor<mainframe.client.messages.loanNote.List> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanNote.List.class);
+        verify(adapter).send(captor.capture());
+        assertEquals("L1", get(captor.getValue(), "_number"));
+    }
+
+    @Test
+    void notesForReturnsEmptyListWhenLoanHasNoNotes() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1L));
+
+        assertTrue(service.notesFor("L1").isEmpty());
+        verify(adapter, times(1)).send(any(Message.class));
+    }
+
+    @Test
+    void notesForReadsEveryPageUntilAShortPage() throws Exception {
+        when(adapter.send(any(Message.class))).thenAnswer(invocation -> {
+            Message message = invocation.getArgument(0);
+            if (message instanceof mainframe.client.messages.loanNote.List list) {
+                // a full page of 100 notes, then a single note on the second page
+                int count = list.getPage() == 1L ? 100 : 1;
+                for (int i = 0; i < count; i++) {
+                    add(list, list.new Item("test", "2026-10-20", (list.getPage() - 1) * 100 + i + 1,
+                            "General"));
+                }
+            }
+            return new Status(1L);
+        });
+
+        List<NoteRow> rows = service.notesFor("L1");
+
+        assertEquals(101, rows.size());
+        assertEquals(1L, rows.get(0).id());
+        assertEquals(101L, rows.get(100).id());
+        verify(adapter, times(2)).send(any(mainframe.client.messages.loanNote.List.class));
+    }
+
+    @Test
+    void notesForThrowsLavsExceptionWhenMainframeRejectsRequest() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(500, "Note list rejected", 1L));
+
+        LavsException exception = assertThrows(LavsException.class, () -> service.notesFor("L1"));
+
+        assertEquals("Note list rejected", exception.getMessage());
+    }
+
+    @Test
+    void noteDetailMapsMainframeValues() throws Exception {
+        when(adapter.send(any(Message.class))).thenAnswer(invocation -> {
+            Message message = invocation.getArgument(0);
+            if (message instanceof mainframe.client.messages.loanNote.Retrieve retrieve) {
+                set(retrieve, "_id", 7L);
+                set(retrieve, "_type", "Follow up");
+                set(retrieve, "_lines", "Line 1\nLine 2");
+                set(retrieve, "_author", "test");
+                set(retrieve, "_dateAdded", "2026-10-20");
+            }
+            return new Status(1L);
+        });
+
+        NoteDetail detail = service.noteDetail(" L1 ", 7L);
+
+        assertEquals(new NoteDetail(7L, "Follow up", "Line 1\nLine 2", "test", "2026-10-20"), detail);
+        ArgumentCaptor<mainframe.client.messages.loanNote.Retrieve> captor =
+                ArgumentCaptor.forClass(mainframe.client.messages.loanNote.Retrieve.class);
+        verify(adapter).send(captor.capture());
+        assertEquals("L1", get(captor.getValue(), "_number"));
+    }
+
+    @Test
+    void addNoteSendsTrimmedValues() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1L));
+
+        service.addNote(" L1 ", "  Line 1\nLine 2 ", " General ");
+
+        List<AddNote> sent = sent(AddNote.class);
+        assertEquals(1, sent.size());
+        assertEquals("L1", sent.get(0).getLoanNumber());
+        assertEquals("Line 1\nLine 2", sent.get(0).getLines());
+        assertEquals("General", sent.get(0).getType());
+    }
+
+    @Test
+    void updateNoteSendsTrimmedValues() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1L));
+
+        service.updateNote(" L1 ", 4L, " Updated ", " Follow up ");
+
+        List<UpdateNote> sent = sent(UpdateNote.class);
+        assertEquals(1, sent.size());
+        assertEquals("L1", sent.get(0).getLoanNumber());
+        assertEquals(4L, sent.get(0).getId());
+        assertEquals("Updated", sent.get(0).getLines());
+        assertEquals("Follow up", sent.get(0).getType());
+    }
+
+    @Test
+    void deleteNoteSendsDeleteWithTrimmedLoanNumber() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(1L));
+
+        service.deleteNote(" L1 ", 4L);
+
+        List<DeleteNote> sent = sent(DeleteNote.class);
+        assertEquals(1, sent.size());
+        assertEquals("L1", sent.get(0).getLoanNumber());
+        assertEquals(4L, sent.get(0).getId());
+    }
+
+    @Test
+    void noteWritesPropagateMainframeRejection() throws Exception {
+        when(adapter.send(any(Message.class))).thenReturn(new Status(404, "Note not found", 1L));
+
+        assertThrows(LavsException.class, () -> service.addNote("L1", "Line 1", "General"));
+        assertThrows(LavsException.class, () -> service.updateNote("L1", 4L, "Line 1", "General"));
+        assertThrows(LavsException.class, () -> service.deleteNote("L1", 4L));
     }
 
     // ------------------------------------------------------------------

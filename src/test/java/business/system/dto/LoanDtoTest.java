@@ -27,6 +27,25 @@ class LoanDtoTest {
     }
 
     @Test
+    void noteRecordsExposeAllFields() {
+        NoteRow row = new NoteRow(4L, "General", "jane", "2026-10-20");
+        assertEquals(4L, row.id());
+        assertEquals("General", row.type());
+        assertEquals("jane", row.author());
+        assertEquals("2026-10-20", row.dateAdded());
+        assertEquals(row, new NoteRow(4L, "General", "jane", "2026-10-20"));
+
+        NoteDetail detail = new NoteDetail(4L, "General", "Line 1\nLine 2", "jane", "2026-10-20");
+        assertEquals(4L, detail.id());
+        assertEquals("General", detail.type());
+        assertEquals("Line 1\nLine 2", detail.lines());
+        assertEquals("jane", detail.author());
+        assertEquals("2026-10-20", detail.dateAdded());
+        assertEquals(detail, new NoteDetail(4L, "General", "Line 1\nLine 2", "jane", "2026-10-20"));
+        assertNotEquals(detail, new NoteDetail(5L, "General", "Line 1\nLine 2", "jane", "2026-10-20"));
+    }
+
+    @Test
     void loanSummaryCanChangeStatusWithoutMutatingOriginal() {
         LoanSummary original = new LoanSummary("L1", "C1", "Jane", 100.0, "2026-01-01", "New");
         LoanSummary changed = original.withStatus("Paid");
