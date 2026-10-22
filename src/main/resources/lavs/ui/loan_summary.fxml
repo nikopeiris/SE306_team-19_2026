@@ -18,7 +18,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<VBox prefWidth="720.0" spacing="14.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.LoanSummaryController">
+<VBox prefWidth="920.0" spacing="14.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="lavs.ui.LoanSummaryController">
    <padding><Insets bottom="20.0" left="24.0" right="24.0" top="20.0" /></padding>
    <children>
       <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Loan Summary">
@@ -211,6 +211,7 @@
             <Button fx:id="scheduleButton" mnemonicParsing="false" onAction="#handleToggleSchedule" prefWidth="260.0" text="Show full Payment Schedule" />
             <Button fx:id="paymentsButton" mnemonicParsing="false" onAction="#handlePayments" prefWidth="130.0" text="Payments" />
             <Button fx:id="coborrowersButton" mnemonicParsing="false" onAction="#handleCoborrowers" prefWidth="120.0" text="Co-borrowers" />
+            <Button fx:id="notesButton" mnemonicParsing="false" onAction="#handleNotes" prefWidth="100.0" text="Notes" />
             <Button fx:id="editButton" disable="true" mnemonicParsing="false" onAction="#handleEdit" prefWidth="100.0" text="Edit" />
             <Region HBox.hgrow="ALWAYS" />
             <Button fx:id="saveEditButton" mnemonicParsing="false" onAction="#handleSaveEdit" prefWidth="120.0" style="-fx-background-color: #011936;" text="Save Changes" textFill="WHITE" visible="false" />

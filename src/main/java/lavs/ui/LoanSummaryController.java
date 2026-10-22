@@ -106,6 +106,8 @@ public class LoanSummaryController {
     private Button paymentsButton;
     @FXML
     private Button coborrowersButton;
+    @FXML 
+    private Button notesButton;
     @FXML
     private Button editButton;
     @FXML
@@ -282,6 +284,11 @@ public class LoanSummaryController {
     @FXML
     private void handleCoborrowers(ActionEvent event) {
         CoborrowersDialog.show(details, loanNumber, coborrowersButton.getScene().getWindow());
+    }
+
+    @FXML
+    private void handleNotes(ActionEvent event) {
+        NotesDialog.show(details, loanNumber, notesButton.getScene().getWindow());
     }
 
     // ------------------------------------------------------------------

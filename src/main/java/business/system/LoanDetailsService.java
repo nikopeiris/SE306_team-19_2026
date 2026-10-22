@@ -18,6 +18,8 @@ import business.system.dto.LoanDetail;
 import business.system.dto.LoanRow;
 import business.system.dto.PaymentRow;
 import business.system.dto.RepaymentRow;
+import business.system.dto.NoteDetail;
+import business.system.dto.NoteRow;
 import business.validation.LoanValidation;
 import business.validation.ValidationException;
 import business.validation.ValidationResult;
@@ -68,6 +70,7 @@ public class LoanDetailsService {
     private final MainframeAdapter adapter;
     private final Loan loanService;
     private final Payment paymentService;
+    private final LoanNoteService noteService;
     // Created on first use. Coborrower extends Customer, and a Customer builds a
     // LoanDetailsService, so creating it in this constructor would never stop.
     private Coborrower coborrowerService;
@@ -79,6 +82,7 @@ public class LoanDetailsService {
         this.adapter = adapter;
         this.loanService = new Loan(adapter);
         this.paymentService = new Payment(adapter);
+        this.noteService = new LoanNoteService(adapter);
     }
 
     // ------------------------------------------------------------------
@@ -303,6 +307,54 @@ public class LoanDetailsService {
             throws IOException, LavsException {
         requireNumber("loanNumber", loanNumber, "Loan number");
         paymentService.deletePayment(paymentId, loanNumber.trim());
+    }
+
+    // ------------------------------------------------------------------
+    // Notes
+    // ------------------------------------------------------------------
+
+    public List<NoteRow> notesFor(String loanNumber) throws IOException, LavsException {
+        requireNumber("loanNumber", loanNumber, "Loan number");
+        List<NoteRow> rows = new ArrayList<>();
+        long page = 1L;
+        for (int i = 0; i < MAX_PAGES; i++) {
+            mainframe.client.messages.loanNote.List.Item[] items =
+                    noteService.listNotes(loanNumber.trim(), page, PAGE_SIZE);
+            if (items == null || items.length == 0) {
+                break;
+            }
+            for (mainframe.client.messages.loanNote.List.Item item : items) {
+                rows.add(new NoteRow(item.getId(), item.getType(), item.getAuthor(),
+                        item.getDateAdded()));
+            }
+            if (items.length < PAGE_SIZE) {
+                break;
+            }
+            page++;
+        }
+        return rows;
+    }
+
+    public NoteDetail noteDetail(String loanNumber, long noteId)
+            throws IOException, LavsException {
+        mainframe.client.messages.loanNote.Retrieve note =
+                noteService.retrieveNote(loanNumber, noteId);
+        return new NoteDetail(note.getId(), note.getType(), note.getLines(), note.getAuthor(),
+                note.getDateAdded());
+    }
+
+    public void addNote(String loanNumber, String lines, String type)
+            throws IOException, LavsException {
+        noteService.addNote(loanNumber, lines, type);
+    }
+
+    public void updateNote(String loanNumber, long noteId, String lines, String type)
+            throws IOException, LavsException {
+        noteService.updateNote(loanNumber, noteId, lines, type);
+    }
+
+    public void deleteNote(String loanNumber, long noteId) throws IOException, LavsException {
+        noteService.deleteNote(loanNumber, noteId);
     }
 
     // ------------------------------------------------------------------
